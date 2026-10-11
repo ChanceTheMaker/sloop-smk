@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '22'
       - run: node web/audio/test_smk_engine.mjs && node web/audio/test_smk_worklet.mjs
-      - run: node web/test_midi_input.mjs && node web/test_simulator_keys.mjs && node web/test_smk37_update.mjs && node web/test_smk37_public.mjs
+      - run: node web/test_sample_capability.mjs && node web/test_midi_input.mjs && node web/test_simulator_keys.mjs && node web/test_smk37_update.mjs && node web/test_smk37_public.mjs
       - run: sh tools/test_smk37_public.sh
       - run: cc -std=c11 -Wall -Wextra -Wno-unused-function tests/sloop_smk_storage_test.c -o /tmp/sloop-storage-test && /tmp/sloop-storage-test
       - run: python3 tools/make_smk_site.py build/smk-site

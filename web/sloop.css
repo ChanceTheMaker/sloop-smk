@@ -115,3 +115,19 @@ body { margin:0; }
 [data-mode=light] .sloop-smk-logo, [data-skin=space] .sloop-smk-logo, [data-skin=bauhaus] .sloop-smk-logo{filter:drop-shadow(0 1px 1px #0008);background:#18191d;border-radius:6px}
 @media(max-width:780px){.brand-home .sloop-smk-logo{width:230px}}
 @media(max-width:420px){.brand-home .sloop-smk-logo{width:210px}}
+
+/* Compact preset strip: selectors and actions share a row; help sits below. */
+#browser { grid-template-columns:140px minmax(180px,1fr) auto; align-items:end; gap:8px 14px; padding:12px 14px; }
+#browser .fld { min-width:0; gap:4px; }
+#browser select { height:34px; margin:0; }
+#browser .acts { padding:0; margin:0; grid-column:auto; width:auto; }
+#browser .acts .bar { display:flex; flex-wrap:wrap; gap:6px; margin:0; }
+#browser .acts button { min-height:34px; white-space:nowrap; }
+#browser #ctlhelp { grid-column:1/-1; margin:0; }
+@media(max-width:900px) {
+  #browser { grid-template-columns:140px minmax(0,1fr); }
+  #browser .acts { grid-column:1/-1; }
+}
+@media(max-width:480px) {
+  #browser { grid-template-columns:minmax(0,1fr); }
+}

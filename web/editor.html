@@ -428,7 +428,7 @@
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="skin.css">
 <link rel="stylesheet" href="interface.css">
-<link rel="stylesheet" href="sloop.css?v=b2-thumbs">
+<link rel="stylesheet" href="sloop.css?v=b2-connect-layout">
 <link rel="stylesheet" href="smk-studio.css">
 
 <script src="locales.js"></script><script src="i18n.js"></script><script src="skin.js"></script>
@@ -492,15 +492,15 @@
       <div class="card">
         <div class="browser" id="browser">
           <label class="fld"><span data-t="engine"></span><select id="engine"></select></label>
-          <label class="fld"><span data-t="presets"></span><select id="preset" size="10"></select></label>
+          <label class="fld"><span data-t="presets"></span><select id="preset" size="1"></select></label>
           <div class="acts">
             <p class="bar"><button id="init" class="warn" data-t="initSound"></button>
-              <button id="factlib" data-t="factoryToLib" data-ic="symbol_books"></button></p>
-            <p class="bar"><button id="savefile" data-t="saveFile" data-ic="symbol_download"></button>
+              <button id="factlib" data-t="factoryToLib" data-ic="symbol_books"></button>
+              <button id="savefile" data-t="saveFile" data-ic="symbol_download"></button>
               <button id="loadfile" data-t="loadFile" data-ic="symbol_upload"></button>
               <input type="file" id="file" accept=".json,application/json" hidden></p>
-            <p class="dim" id="ctlhelp"><span data-t="ctlHelp"></span> <span data-t="ctlDrag"></span></p>
           </div>
+          <p class="dim" id="ctlhelp"><span data-t="ctlHelp"></span> <span data-t="ctlDrag"></span></p>
         </div>
         <p class="dim" id="drumnote" data-t="drumNote" hidden></p>
       </div>
@@ -836,7 +836,9 @@ const parse = {
     const r = new Reader(a);
     const o = { nslots: r.b(), slotKiB: r.b(), slots: [] };
     for (let i = 0; i < o.nslots; i++) o.slots.push({ zones: r.b(), name: r.s(), kib: r.b() });
-    return o;
+    /* Zero slots is a valid capability reply (SMK b2), not an empty usable bank.
+       Use the same unavailable state as older firmware with no sample command. */
+    return o.nslots ? o : null;
   },
   [CMD.UP_LIST](a) {
     const r = new Reader(a);

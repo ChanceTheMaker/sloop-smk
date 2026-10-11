@@ -1,5 +1,7 @@
 # Current Sloop SMK integration
 
+2026-10-11 Studio hotfix: interpret the valid zero-slot SMP_INFO response as unavailable sample storage, so physical b2 connections finish loading instead of reading `zones` from a nonexistent slot. Compact the preset strip with one row of actions and a single-line preset selector. Regression executes the actual connect-load and sample renderer against the b2 response; native browser engine checks retain four working sample slots. Website-only change; firmware binary and upstream revision unchanged. No upstream contribution; physical reconnect confirmation remains with the owner.
+
 2026-10-11: Sloop 2.6 source `4365a1d0075b9194de1c44826325abbd39751bc1` adapted on `integrate/sloop-2.6-smk`. See [Sloop port status](SLOOP_SMK_PORT.md) for the current artifact, tests and hardware limitations. B2 now adds opt-in native persistence with model/layout and per-object ownership validation; it is privately built and staged at localhost:8774; the owner confirms b2 installation and playback; save/power-cycle testing is pending. Public b2 release authorized by the owner; save/power-cycle and stock-install hardware checks remain pending. No upstream PR. The records below describe the inherited Felucca baseline.
 
 # Upstream integration status
