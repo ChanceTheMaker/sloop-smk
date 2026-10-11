@@ -1,380 +1,74 @@
-# Felucca SMK
+# Sloop SMK
 
-**Custom synthesizer firmware, browser Studio and interactive simulator for M-VAVE SMK-37 Pro & Elite.**
+Sloop 2.6 adapted for **M-VAVE SMK-37 Pro & Elite**, with a themed browser Studio and a playable SMK simulator.
 
-By [Chance Roth (@ChanceTheMaker)](https://github.com/ChanceTheMaker), based on
-[Felucca](https://github.com/hugelton/Felucca) by Leo Kuroshita and Hügelton Instruments.
-Felucca SMK brings Felucca's synthesis and sequencing to the SMK's 37-key keyboard,
-pads, eight knobs, four faders, pitch/mod wheels and display.
+This repository carries the Felucca SMK hardware foundation and the Sloop musical/UI core. It is separate from [Felucca SMK](https://github.com/ChanceTheMaker/felucca-smk).
 
-[![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue.svg)](LICENSE)
-[![Version: 0.9.21 Beta](https://img.shields.io/badge/version-0.9.21%20Beta-orange.svg)](firmware/hal/smk37_version.h)
+## Current candidate: 2.6.0-b1
 
-[Source](https://github.com/ChanceTheMaker/felucca-smk) |
-[Issues](https://github.com/ChanceTheMaker/felucca-smk/issues) |
-[Development guide](docs/smk37/DEVELOPMENT.md) |
-[Known issues](#known-issues-and-remaining-work)
+- Native Sloop sound engines, three synth parts and a drum track, six-operator FM, synth drums, sequencing, song/arranger pages, parameter locks, microtiming, fill conditions, insert effects and texture.
+- SMK hardware adapters for the 37-key velocity keyboard, sixteen drum pads, eight encoders, four faders, pitch/mod wheels, sustain, display and indicator lights.
+- Grouped Studio controls with per-section knobs/sliders, drag ordering, themes and native editor protocol.
+- SMK simulator using the same musical and display source as the hardware candidate; color finishes, touch/mouse keys, full screen and a replayable tutorial.
+- USB MIDI input in **both Browser Studio and Simulator**: notes, velocity, sustain, bend and modulation. Browser MIDI input does not request SysEx permission or install firmware.
+- Browser sessions preserve virtual projects, user presets, four sample slots, synth drum kits, current FM6 voices and MIDI settings. Export a session file to keep an independent copy.
+- The hardware candidate includes the bounded SMK USB updater. Its image and a return-to-Felucca 0.9.22 package pass the host loader test.
 
-![Felucca SMK Studio in Stage Red, running browser audio](web/screenshots/smk/studio-browser.webp)
+**Hardware status:** this Sloop candidate has not been flashed. Projects/presets are RAM-only on hardware and reset at power-off. Physical sample writes, TRS routing and Bluetooth are disabled. Existing Felucca flash storage is preserved. The browser's virtual sample/storage support does not imply physical storage support.
 
-*Studio screenshot in Browser mode; no physical keyboard is required to try it.*
+## Try locally
 
-## Project status
-
-The product version is **0.9.21 Beta**, integrating upstream **Felucca 1.5.1**
-at `a4d7ca2e5d52a4c35e2468401f00d883cadbda03`. This is the standalone SMK
-repository. The [FM-1 Salt project](https://github.com/ChanceTheMaker/Felucca)
-is separate; its firmware images are not interchangeable with SMK images.
-
-| Component | Current state |
-| --- | --- |
-| Studio and Simulator | Included, with a prebuilt native WebAssembly audio/display runtime; usable locally without a device or vendor firmware. |
-| Hardware firmware | Test21 has been exercised on the owner's SMK-37 Pro. Device test records describe the checks and remaining work. |
-| Pro & Elite support | Both models are project targets. Stock-package comparisons cover both; the recorded physical tests are on Pro hardware. |
-| Normal USB updates | Tested on the owner's SMK running the custom updater. Existing private packages are tied to that test device. |
-| General public installation | In development. The portable Test22 candidate compiles, but the stock-to-Felucca installation path and broader-unit validation are not complete. |
-| Website deployment | Studio, Simulator and the homepage deploy through GitHub Pages; hardware firmware publication remains separate. |
-
-The website destination is [Felucca SMK](https://chancethemaker.github.io/felucca-smk/),
-with [Studio](https://chancethemaker.github.io/felucca-smk/editor.html) and
-[Simulator](https://chancethemaker.github.io/felucca-smk/simulator.html) pages.
-The local instructions below also let you run the site offline after cloning.
-
-Historical Test19-Test21 identities remain in their existing packages. Changing
-a website version label does not rebuild those packages. A successful compilation
-or website deployment does not establish that a new firmware image is ready to install.
-
-## What you can do
-
-### Synthesis and performance
-
-- **13 engines**, with factory sounds and engine-specific editing.
-- **Four tracks** and an eight-voice shared synthesis pool.
-- Velocity-sensitive keys and pads, sustain pedal, pitch bend and modulation.
-- Scales, chord playing, arpeggiation, glide and voice allocation controls.
-- Envelopes, LFOs and a four-slot modulation matrix per track.
-- Track distortion and slicer, chorus/delay/reverb sends and a master limiter.
-- Detailed FM6 operator/envelope editing and sample slicing.
-
-| Engine | Sound |
-| --- | --- |
-| ANALOG | Two oscillators, noise, drive and a resonant low-pass filter |
-| FM6 | Six-operator FM, 32 algorithms and full patch editing; Dexed-derived DSP |
-| PHASE | Phase-distortion synthesis |
-| LOFI | Chiptune oscillators, noise and low-resolution wave RAM |
-| SAMPLE | Built-in instruments, percussion and three user sample slots after initialization |
-| VOICE | Formant/vowel synthesis |
-| TRIO | Three oscillators with sync, ring modulation and multimode filtering |
-| WHEEL | Tonewheel organ, percussion, key click and rotary effects |
-| GRAIN | Granular synthesis from built-in or user material |
-| PHYS | Physical models of strings, membranes and resonators |
-| NOISE | Analog-style and digital noise textures |
-| SLICE | Playable slices of a break or user sample, with manual markers |
-| DRUM | Eight synthesized drum lanes on a General MIDI note map |
-
-### Sequencing and sound management
-
-- Up to **64 steps per track**, including chords, ties, accents, slides and probability.
-- Motion/parameter automation, live recording, step preview and factory phrases.
-- Song chains with up to 16 sections and per-track sources from saved projects A-D.
-- Sequence tools including reverse, shift, randomize and drum-lane operations.
-- One-level sound and pattern undo/redo; this is not an unlimited editing history.
-- **Four device projects**, **eight device user presets**, preset naming and favorites.
-- Browser Library import/export, plus browser session saving and export/import.
-
-### Display and navigation
-
-The SMK adapts Felucca's workflow to its own controls. It includes grouped
-navigation, settings, FM6 editing, presets/favorites, a waveform display and
-upstream-style rolling value digits, including master volume.
-
-Device preferences include palettes, high contrast, bold text, line/flat style,
-large parameter layout, animation, screen timeout, knob acceleration, hold time
-and lighting. The MIDI monitor offers **OFF / EVENTS / NOTES**; NOTES includes
-sustained notes, while EVENTS displays incoming USB MIDI. Notes are displayed
-chromatically, not classified into named chords.
-
-## Studio and Simulator
-
-| Mode | What it does |
-| --- | --- |
-| Connected device | Uses USB MIDI to edit a compatible Felucca SMK device. Available functions follow the device's advertised capabilities. |
-| Browser Studio | Runs the native SMK synthesis/sequencing code in WebAssembly, with browser audio and virtual storage. |
-| SMK Simulator | Presents the native display and musical engine inside an interactive SMK-style panel, on its own page or in Studio. |
-
-The Studio provides grouped, movable Sound cards, per-card knob/slider choices,
-an oscilloscope, sequencer, track mixer, Library, Samples, Projects and Settings.
-A docked keyboard can collapse to a tray and supports mouse/touch glissando.
-Browser mode uses browser storage rather than the connected keyboard's flash.
-Export sessions to keep a separate copy; clearing browser data can remove local saves.
-
-The Simulator includes 37 piano keys, pads, knobs, faders, pitch/mod wheels,
-buttons and lighting. It offers finish swatches, compact/expanded views,
-fullscreen and a dismissible tutorial that can be replayed from the question-mark
-button. It runs the ported musical/display code, not a cycle-accurate emulation
-of the JieLi processor or every hardware peripheral.
-
-The website has **12 themes with light and dark variants**: Stage Red, DX,
-Model D, Matrix, Chocolate, Vaporwave, Space, Ocean, Midnight, Bauhaus, Arcade
-and High Contrast. Hardware-inspired treatments include textured panels,
-knobs, wheels, screws, wood accents and speaker grilles where appropriate.
-The editor has eight language catalogs; some newer simulator labels remain English.
-
-Audio starts when the browser permits it. If autoplay is blocked, use the audio
-control or interact with the simulator. Chrome or Edge is recommended for
-connected-device editing and Web MIDI; localhost is supported for development.
-
-## SMK control quick reference
-
-### Knob banks
-
-| Physical knob | Bank 1: KNOB BANK off | Bank 2: KNOB BANK on |
-| --- | --- | --- |
-| K1 | Master volume | Track |
-| K2 | SELECT: tempo | Synth engine |
-| K3 | PRESETS: factory sound | Factory sound |
-| K4 | ALGORITHM: track 1-4 | Page |
-| K5-K8 | Current page's four parameters | Current page's four parameters |
-
-"ALGORITHM" here follows the FM-1 panel convention: it selects the track,
-not an FM6 synthesis algorithm. Knob-bank selection changes the mapping.
-
-### Navigation
-
-| Button or gesture | Action |
-| --- | --- |
-| Tap PATCH | Home/Mix |
-| Hold PATCH | Preset browser |
-| Tap PARA | Projects/Save page; opening the page does not write a project |
-| Hold PARA | Undo/Redo |
-| Tap BT | Cycle sound-editing pages, including engine-specific pages |
-| Hold BT | Settings; this does not enable Bluetooth |
-| Hold GLO | Grouped navigation: K5 selects family, K6 selects page, `>` opens, `<` returns |
-| OCT- / OCT+ | Shift keyboard octave |
-
-In the preset browser, K5 selects the engine/USER bank, K6 selects a preset,
-K7 chooses ALL/FAV and K8 changes its favorite status. `>` loads the selection.
-Settings use K5 to select, K6 to change and `>` to save. Actions depend on the
-current page; follow its displayed labels and confirmation prompts.
-
-See [panel mapping](docs/smk37/TEST14.md#physical-controls),
-[navigation and editing](docs/smk37/TEST18.md), and
-[settings/recording additions](docs/smk37/TEST19.md) for details.
-
-## Connections and storage
-
-- **USB MIDI:** connected editing and performance, including expressive controls.
-- **USB audio:** stereo recording of the synth output into the computer as
-  `Line (Felucca)`. Test19 captured signal at requested Windows rates of
-  44.1 and 48 kHz, including 90 seconds at each rate. Windows may resample;
-  these results do not prove native-rate switching or an extended soak test.
-- **TRS MIDI OUT:** optional physical output for local performance events.
-  Chords, sustain and pitch bend were reported working into an FM-1.
-  It is MIDI data, not audio; an uploaded SMK sample does not travel over TRS.
-- **Bluetooth:** excluded from this firmware line. The BT button currently
-  provides editing/settings navigation.
-
-The device has four project slots and eight user preset slots. Test21 adds
-**three 80 KiB user sample slots**, subject to format/metadata overhead and
-validated storage initialization. Initializing them replaces stock sample data
-and requires explicit confirmation. Sample uploading and USR1 playback were
-reported working; the after-restart check still needs completion.
-
-Manual slice markers need reserved space at the end of a sample slot. Full
-archive backup/restore, a 32-preset device bank and an independent writable FM6
-voice bank are not currently integrated. Browser exports are not full flash
-backups. See [sample storage and MIDI details](docs/smk37/TEST21.md).
-
-## Installation status
-
-**This is beta firmware.** Hardware tests have been performed, but installation
-can fail and firmware/storage changes can lose data. Preserve your sounds and
-settings and use only a package intended for your exact device and supported
-installation path. The software is supplied without warranty; see [LICENSE](LICENSE).
-
-Normal-USB updates have worked on the test SMK with the custom updater already
-installed. Those existing packages contain device-specific data and are not
-public downloads. Stock firmware does not already contain that updater.
-
-Work on broader public installation preserves model/layout checks, calibration
-and flash-write boundaries. The portable candidate and local package builder
-are development work, not a completed stock-first-install release. There is no
-general installation procedure to follow from a fresh clone yet. Neither the
-website nor this README should be treated as approval to flash a raw build.
-
-Vendor firmware, private device backups and calibration dumps are not distributed
-in this repository. **Do not install an FM-1 image on an SMK, or an SMK image on
-an FM-1.** Trying the Browser Studio or Simulator does not flash a device.
-
-## Run locally
-
-Python 3 is enough to preview the included website and prebuilt browser runtime:
-
-```sh
-git clone https://github.com/ChanceTheMaker/felucca-smk.git
-cd felucca-smk
-python tools/serve_smk37.py --port 8773
+```powershell
+python tools/serve_smk37.py --port 8774
 ```
 
-Open:
+- Studio: http://localhost:8774/editor.html
+- Simulator: http://localhost:8774/simulator.html
+- Homepage: http://localhost:8774/
 
-- Homepage: <http://localhost:8773/>
-- Studio: <http://localhost:8773/editor.html>
-- Simulator: <http://localhost:8773/simulator.html>
+Choose **Browser Studio** to enable audio, or open Simulator. If autoplay is blocked, press a key or Enable audio. To use a connected controller, choose **Enable USB MIDI input** and select its port. Device mode uses the hardware editor and requires a matching Sloop firmware installation.
 
-The server binds to loopback. Without an explicitly staged candidate, it serves
-no hardware update package. Website assets and the browser runtime are included;
-no sibling checkout, Git submodule or vendor firmware is needed to try them.
+Studio and Simulator use the same browser session, isolated from Felucca and the FM-1 Sloop website. Session files are tied to their browser runtime revision. The SMK panel is a firmware/UI simulation, not an emulation of the USB controller, flash silicon or Bluetooth radio.
 
-### Build and test
+Simulator shortcuts: **1-8** play the top pad row; **Shift+1-8** play the bottom row. Piano shortcuts are **A W S E D F T G Y H U J K O L P ;**; hold **Shift** to play an octave higher.
 
-See [DEVELOPMENT.md](docs/smk37/DEVELOPMENT.md) for complete dependency setup.
-Rebuilding the browser runtime requires Python 3.10+, Pillow with libraqm,
-Zig 0.13.0 and Node.js 22. Run these build commands in Linux or WSL:
+## SMK controls
+
+| Control | Sloop mapping |
+| --- | --- |
+| Knobs 1-4, bank 1 | Master level, tempo, preset, track |
+| Knobs 1-4, bank 2 | Track, engine, preset, page |
+| Knobs 5-8 | Four native page parameters |
+| Faders | Track levels; FADER BANK selects envelope ADSR |
+| Pads | Sixteen drum lanes |
+| PATCH / PARA / BT | Native HOME / SAVE / EDIT buttons |
+| ARP and repeat / scale and chord | Native ARP / scale page buttons |
+| GLO / FX / SEQ / PLAY / REC | Corresponding native Sloop controls |
+| Pitch / mod / sustain | Expressive playing controls |
+
+Native Sloop pages and hold gestures are retained where mapped. Hardware controls, lights and timing still need a complete device pass for this candidate.
+
+## Build and test
+
+The hardware build uses the existing Jieli toolchain with `JIELI_TOOLCHAIN` set to its root, Python dependencies and Pillow with libraqm:
 
 ```sh
-python3 -m venv build/browser-env
-build/browser-env/bin/python -m pip install -r tools/smk-browser-requirements.txt
-build/browser-env/bin/python tools/build_smk37_browser.py
+python3 tools/build_sloop_smk.py
+python3 tools/build_sloop_smk_browser.py --zig /path/to/zig
 node web/audio/test_smk_engine.mjs
 node web/audio/test_smk_worklet.mjs
-node web/test_keyboard_glide.mjs
-node web/test_analytics.mjs
-node web/test_web.mjs
+node web/test_midi_input.mjs
+node web/test_simulator_keys.mjs
+node web/test_smk37_update.mjs
+sh tools/test_smk37_public.sh
 ```
 
-The builder generates both `web/audio/smk-engine.wasm` and its matching
-`smk-build.json`; keep them together. Runtime revisions have separate browser
-session storage, so export a session before replacing the runtime.
+Zig 0.13.0 builds the WebAssembly runtime. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
 
-Hardware builds use `tools/build_smk37.py`, the JieLi pi32v2 toolchain and the
-SMK-specific loader/package tools. Inspect `python tools/build_smk37.py --help`
-and the development guide before building. [BUILDING.md](BUILDING.md) includes
-shared toolchain/SDK information; its FM-1 release procedure is not the SMK procedure.
+See [port status and validation](docs/SLOOP_SMK_PORT.md) for the pinned upstream revision, artifact hashes, remaining work and test evidence. See [workflow rules](docs/UPSTREAM_WORKFLOW.md) before importing updates or publishing firmware.
 
-With the native build dependencies and a host C compiler installed, run the
-SMK application regression suite in Linux/WSL:
+## Credits and license
 
-```sh
-sh tools/test_smk37_application.sh
-```
+Sloop firmware by **isod89**, based on Felucca by **Leo Kuroshita (@kurogedelic), Hugelton Instruments**. SMK adaptation, Studio and simulator by **Chance Roth (@ChanceTheMaker)**.
 
-Tests cover synthesis, controls, expression, protocol parsing, storage failures,
-rendering and updates. Passing host tests does not replace device testing.
-
-### Website publishing
-
-```sh
-python tools/make_smk_site.py build/smk-site
-```
-
-Use an output directory that does not already exist. The builder stages the
-website, runtime and licenses without copying private build directories or
-stock packages. Relative links support the `/felucca-smk/` Pages path.
-
-The [Pages workflow](.github/workflows/smk-pages.yml) runs browser/analytics tests
-and deploys on pushes to `main` or manual dispatch in `ChanceTheMaker/felucca-smk`.
-Website publishing and hardware firmware release are separate operations.
-
-## Analytics and privacy
-
-The website retains Google Analytics 4, measurement ID **G-JVF09MZEGD**.
-Analytics is allowed on the project's GitHub Pages path and the related FM-1
-Salt site, and is disabled for local previews and other forks.
-
-The consent notice and hamburger-menu **Analytics preferences** let visitors
-opt out without losing functionality. Advertising consent and Google signals
-are disabled. Instrumented events cover page views, themes, browser audio,
-download clicks and installation stages where those flows are available.
-A download click is not proof of a completed download or installation.
-
-Custom analytics fields exclude MIDI messages, device identifiers, preset names
-and raw error text. See [the analytics reference](web/ANALYTICS.md) for consent
-behavior, event definitions and reporting limits.
-
-## Known issues and remaining work
-
-- **TRS shutdown:** disabling TRS OUT while holding a note left the receiving
-  FM-1 sounding during testing. Release keys and sustain and let notes stop
-  before disabling output. The shutdown fix is deferred.
-- **TRS persistence:** output starts OFF after a power cycle. Saving this choice
-  is deferred; it is not currently a persistent preference.
-- **Modulation over TRS:** the audible result was inconclusive in the device test.
-- **Samples:** repeat the persistence check through the SMK's own audio output
-  and inspect the slot in Studio after restart.
-- **USB audio:** extended load testing and native-rate verification remain.
-- **FM-1 parity:** some performance hold layers, chord-entry preferences and
-  display details still differ. FM-1 key lighting has no matching hardware
-  beneath the SMK piano keys.
-- **Storage:** full archives, the expanded device preset bank and independent
-  FM6 bank remain separate work.
-- **Public installer:** complete broader-unit validation and the stock-first-install
-  workflow before publishing general firmware packages.
-
-The [work queue](docs/WORK_QUEUE.md) and [Test21 hardware results](docs/smk37/TEST21.md#hardware-follow-up)
-record deferred checks. Older test notes are historical snapshots; their local
-ports and "not yet implemented" statements describe that test, not every later build.
-
-## Repository guide
-
-| Path | Contents |
-| --- | --- |
-| `firmware/src/` | Synth, sequencer, UI and SMK application code |
-| `firmware/hal/` | Board interfaces, scanning, storage and hardware definitions |
-| `firmware/loader/` | Firmware-update loader sources |
-| `web/` | Homepage, Studio, Simulator, themes, translations and browser runtime |
-| `tools/` | Builders, local server, packaging, diagnostics and test runners |
-| `tests/` | Host-side firmware and protocol regressions |
-| `assets/` | Fonts, icons and sound assets |
-| `docs/smk37/` | Hardware evidence, porting notes, test history and development setup |
-| `LICENSES/` | Component license texts |
-
-For processor, RAM and flash details, read the
-[FM-1/SMK hardware comparison](docs/smk37/HARDWARE_COMPARISON.md). Shared processor
-family and boot configuration do not make the boards interchangeable.
-
-## Contributing and support
-
-Report SMK problems and requests in
-[felucca-smk Issues](https://github.com/ChanceTheMaker/felucca-smk/issues).
-Include the model, firmware identity, browser/OS, reproduction steps and whether
-the problem occurs on hardware, Browser Studio or Simulator. Do not attach private
-flash backups or calibration data to public issues.
-
-Contributions should preserve upstream protocol IDs, storage compatibility,
-licenses and credits. Keep feature changes focused and validate them with the
-relevant host and hardware checks. Follow [UPSTREAM_WORKFLOW.md](docs/UPSTREAM_WORKFLOW.md)
-and [the upstream status ledger](docs/UPSTREAM_STATUS.md); this port is not a
-wholesale replacement of upstream Felucca.
-
-To support original Felucca development, visit
-[Hügelton's GitHub Sponsors](https://github.com/sponsors/hugelton) or
-[itch.io](https://hugelton.itch.io/felucca).
-
-## Credits
-
-- **[Hügelton Instruments](https://hugelton.com)** (Leo Kuroshita, [@kurogedelic](https://github.com/kurogedelic)):
-  Felucca itself; the PHASE engine's waveforms (a C port of the oscillator of
-  [CrispyZebra](https://github.com/hugelton/CrispyZebra), GPL-3.0); the DRUM voices; the Hügelton Sample
-  Pack (the drum samples, GPL-3.0-only, not CC0); the [Fukiai](https://github.com/hugelton/Fukiai) icon
-  font ([MIT](LICENSES/MIT-Fukiai.txt))
-- Font: [Inter Tight](https://github.com/rsms/inter-tight) by The Inter Project Authors, [SIL OFL 1.1](LICENSES/OFL-InterTight.txt)
-- Samples: [Versilian Studios](https://versilian-studios.com/) [VSCO-2 Community Edition](https://github.com/sgossner/VSCO-2-CE) and [VCSL](https://github.com/sgossner/VCSL), CC0 1.0 ([attribution](assets/samples-cc0/ATTRIBUTION.txt))
-- VOICE engine: after [klattsch](https://github.com/tgies/klattsch) by Tony Gies (MIT); formant data from Klatt (1980) and Hillenbrand et al. (1995)
-- PHYS engine: models ported from [DaisySP](https://github.com/electro-smith/DaisySP) by Electrosmith and Emilie Gillet ([MIT](LICENSES/MIT-DaisySP.txt)) and from Emilie Gillet's [eurorack](https://github.com/pichenettes/eurorack) code ([MIT](LICENSES/MIT-Rings.txt))
-- FM6 engine: msfa from [Dexed](https://github.com/asb2m10/dexed) by Google Inc. and Pascal Gauthier ([Apache-2.0](LICENSES/Apache-2.0-msfa.txt))
-- Package format and boot files: [JieLi AC79 SDK](https://gitee.com/Jieli-Tech/fw-AC79_AIoT_SDK) ([Apache-2.0](LICENSES/Apache-2.0.txt); three of its files are in every package, none in this tree)
-- Contributions: [keremimo](https://github.com/keremimo) (white-key scales, #2), [ChanceTheMaker](https://github.com/ChanceTheMaker)
-  (TRS MIDI, bend, sustain and clock, palettes, favourites, editor display settings: #8, #10, #11, #12),
-  [andreahaku](https://github.com/andreahaku) (sample recording and trim, #29; SLICE manual slices and tests, #27, #22)
-- Felucca SMK port, Salt fork, browser Studio and SMK Simulator: Chance Roth ([@ChanceTheMaker](https://github.com/ChanceTheMaker));
-  content-driven TRS receive-buffer fix: [keremimo](https://github.com/keremimo)
-
-## Licence
-
-Free software: [GPL-3.0-only](LICENSE), the Hügelton Sample Pack included. The bundled font and the
-ported DSP keep their own licences ([LICENSES/](LICENSES/)); details in [LICENSING.md](LICENSING.md).
-
-M-VAVE, FM-1 and SMK-37 product names are trademarks of their respective owners. Felucca is not affiliated with or endorsed by them.
-
-Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments
+GPL-3.0; retain upstream copyright notices, [LICENSE](LICENSE), [LICENSING.md](LICENSING.md) and [LICENSES](LICENSES). Vendored Sloop source lives under `sloop/`. Vendor firmware, calibration records and private device backups are not distributed here. M-VAVE, FM-1 and SMK-37 are trademarks of their respective owners.

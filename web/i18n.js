@@ -2,14 +2,11 @@
 // Shared, local-only translations. User presets and firmware values are never translated.
 (() => {
   'use strict';
-  const catalogs = window.FeluccaLocales;
+  const catalogs = window.SloopLocales;
   const languages = [
     {code:'en', name:'English', flag:'US'}, {code:'ja', name:'日本語', flag:'JP'},
-    {code:'es', name:'Español', flag:'ES'}, {code:'fr', name:'Français', flag:'FR'},
-    {code:'de', name:'Deutsch', flag:'DE'}, {code:'ru', name:'Русский', flag:'RU'},
-    {code:'zh-CN', name:'简体中文', flag:'CN'}, {code:'pt-BR', name:'Português (Brasil)', flag:'BR'},
   ];
-  const key = 'felucca.web.language';
+  const key = 'sloop.smk.web.language';
   const resolve = value => {
     const prefix = String(value || '').toLowerCase().split('-')[0];
     return languages.find(l => l.code.toLowerCase().split('-')[0] === prefix)?.code;
@@ -77,7 +74,7 @@
     for (const attr of ['aria-label','title','placeholder','alt']) {
       for (const node of root.querySelectorAll(`[data-i18n-${attr}]`)) node.setAttribute(attr, t(node.getAttribute(`data-i18n-${attr}`), JSON.parse(node.dataset.i18nValues || '{}')));
     }
-    document.title = t(document.querySelectorAll('title[data-i18n]')[0]?.dataset.i18n || (document.body?.classList.contains('installer-page') ? 'ui.installerTitle' : 'ui.editorTitle'));
+    document.title = t(document.body?.classList.contains('installer-page') ? 'ui.installerTitle' : 'ui.editorTitle');
   }
   function setLanguage(value, persist = true) {
     const next = resolve(value) || 'en';
@@ -86,7 +83,7 @@
     apply();
     for (const fn of listeners) fn(next);
   }
-  window.FeluccaI18n = {languages, resolve, t, apply, setLanguage,
+  window.SloopI18n = {languages, resolve, t, apply, setLanguage,
     text(node, id, values = {}) { node.dataset.i18n = id; node.dataset.i18nValues = JSON.stringify(values); node.textContent = t(id, values); },
     get language() { return language; }, onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     namespace(prefix, locale = language) {

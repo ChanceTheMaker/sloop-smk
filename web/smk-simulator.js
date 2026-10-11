@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Browser panel for the native Felucca SMK input and LCD adapter.
+// Browser panel for the native Sloop SMK input and LCD adapter.
 import {createSMKTour} from './smk-tour.js';
 import {createKeyboardGlide} from './keyboard-glide.js';
+import {bindSimulatorKeyboard} from './simulator-keys.js?v=3';
 export function createSMKSimulator(host, synth) {
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
-  const toolbar=el('div','sim-toolbar'),title=el('strong','','SMK-37 · Felucca SMK');
+  const toolbar=el('div','sim-toolbar'),title=el('strong','','SMK-37 · Sloop SMK');
   const finishes=[['red','Pro Red','#b92832'],['white','Pro White','#e8e7e0'],['elite','Elite','linear-gradient(135deg,#687481 55%,#e76522 55%)'],['black','Pro Black','#16191b'],['pink','Pro Pink','#e5a2b4'],['charcoal','Pro Charcoal','#52575b']];
   const picker=el('div','sim-finish-picker'),finish=el('button','sim-icon-button sim-finish-toggle'),menu=el('div','sim-finish-menu');
   finish.type='button';finish.setAttribute('aria-haspopup','listbox');finish.setAttribute('aria-expanded','false');
@@ -24,15 +25,15 @@ export function createSMKSimulator(host, synth) {
   toolbar.append(title,picker,expanded,fullscreen,help,fullscreenStatus);
   const shell=el('div','smk-simulator-shell');shell.dataset.finish='red';
   function closeFinishes(focus=false){menu.hidden=true;finish.setAttribute('aria-expanded','false');if(focus)finish.focus();}
-  function chooseFinish(id,save=true){const f=finishes.find(f=>f[0]===id)||finishes[0];shell.dataset.finish=f[0];currentSwatch.style.background=f[2];finish.title='Device finish: '+f[1];finish.setAttribute('aria-label',finish.title);for(const b of menu.children)b.setAttribute('aria-selected',String(b.dataset.finish===f[0]));if(save)try{localStorage.setItem('felucca.smk.simFinish',f[0]);}catch{}}
+  function chooseFinish(id,save=true){const f=finishes.find(f=>f[0]===id)||finishes[0];shell.dataset.finish=f[0];currentSwatch.style.background=f[2];finish.title='Device finish: '+f[1];finish.setAttribute('aria-label',finish.title);for(const b of menu.children)b.setAttribute('aria-selected',String(b.dataset.finish===f[0]));if(save)try{localStorage.setItem('sloop.smk.simFinish',f[0]);}catch{}}
   for(const [id,name,color] of finishes){const b=el('button','sim-finish-option');b.type='button';b.dataset.finish=id;b.setAttribute('role','option');const swatch=el('span','sim-swatch');swatch.style.background=color;swatch.setAttribute('aria-hidden','true');b.append(swatch,el('span','',name));b.onclick=()=>{chooseFinish(id);closeFinishes(true);};menu.append(b);}
   finish.onclick=()=>{const open=menu.hidden;menu.hidden=!open;finish.setAttribute('aria-expanded',String(open));if(open)menu.querySelector('[aria-selected=true]').focus();};
   picker.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();closeFinishes(true);}else if(!menu.hidden&&['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();const list=[...menu.children],i=list.indexOf(document.activeElement),n=e.key==='Home'?0:e.key==='End'?list.length-1:(i+(e.key==='ArrowDown'?1:-1)+list.length)%list.length;list[n].focus();}};
   document.addEventListener('pointerdown',e=>{if(!picker.contains(e.target))closeFinishes();});
   picker.addEventListener('focusout',e=>{if(!picker.contains(e.relatedTarget))closeFinishes();});
-  let savedFinish='red';try{savedFinish=localStorage.getItem('felucca.smk.simFinish')||'red';}catch{}chooseFinish(savedFinish,false);
+  let savedFinish='red';try{savedFinish=localStorage.getItem('sloop.smk.simFinish')||'red';}catch{}chooseFinish(savedFinish,false);
   const top=el('div','sim-top'),left=el('div','sim-left'),center=el('div','sim-center'),right=el('div','sim-right');
-  const lcd=el('canvas','sim-lcd');lcd.width=lcd.height=240;lcd.setAttribute('role','img');lcd.setAttribute('aria-label','Live Felucca SMK firmware display');
+  const lcd=el('canvas','sim-lcd');lcd.width=lcd.height=240;lcd.setAttribute('role','img');lcd.setAttribute('aria-label','Live Sloop SMK firmware display');
   const bezel=el('div','sim-bezel');bezel.append(lcd);left.append(bezel);
   const owners=new Map(),counts=new Map(),buttons=[],pads=[],keys=[],faders=[];let shown=false;
   const send=(kind,id,value)=>synth.panel(kind,id,value);
@@ -61,7 +62,7 @@ export function createSMKSimulator(host, synth) {
     dial.onkeydown=e=>{const n={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key];if(n){e.preventDefault();turn(n*(e.shiftKey?10:1));}};
     dial.addEventListener('wheel',e=>{if(document.activeElement!==dial)return;e.preventDefault();turn(e.deltaY<0?1:-1);},{passive:false});box.append(label,dial,hint);knobs.append(box);
   });
-  const padGrid=el('div','sim-pads');for(let i=0;i<16;i++){const b=el('button','sim-pad',String(i+1));b.setAttribute('aria-label',`Pad ${i+1}`);wire(b,3,i,100);pads.push(b);padGrid.append(b);}
+  const padGrid=el('div','sim-pads');for(let i=0;i<16;i++){const b=el('button','sim-pad',String(i+1));const shortcut=(i<8?'':'Shift+')+String(i%8+1);b.setAttribute('aria-label',`Pad ${i+1}, key ${shortcut}`);b.title=`Pad ${i+1}: ${shortcut}`;b.setAttribute('aria-keyshortcuts',shortcut);b.append(el('small','sim-pad-shortcut',shortcut));wire(b,3,i,100);pads.push(b);padGrid.append(b);}
   center.append(knobs,padGrid);
   const faderRow=el('div','sim-faders');for(let i=0;i<4;i++){const label=el('label','sim-fader',`F${i+1}`),f=el('input');f.type='range';f.min=0;f.max=1023;f.value=0;f.setAttribute('aria-label',`Fader ${i+1}`);f.oninput=()=>send(4,i,+f.value);label.append(f);faders.push(f);faderRow.append(label);}right.append(faderRow);
   const bankRow=el('div','sim-banks'),panel=el('div','sim-buttons');
@@ -89,19 +90,17 @@ export function createSMKSimulator(host, synth) {
     buttons.forEach((b,i)=>b.classList.toggle('lit',!!(s[0]&(i===16?3<<16:i===17?1<<18:1<<i))));pads.forEach((b,i)=>b.classList.toggle('lit',!!(s[3]&(1<<i))));
     faders.forEach((f,i)=>{if(document.activeElement!==f)f.value=s[12+i];});
   };synth.listeners.add(listener);
-  const typing=['KeyA','KeyW','KeyS','KeyE','KeyD','KeyF','KeyT','KeyG','KeyY','KeyH','KeyU','KeyJ','KeyK','KeyO','KeyL','KeyP','Semicolon'];
-  document.addEventListener('keydown',e=>{if(!shown||e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable=true],.sim-tour,.sim-finish-picker'))return;const i=typing.indexOf(e.code);if(i>=0&&!e.repeat){e.preventDefault();press('q'+e.code,2,i,100,keys[i]);}});
-  document.addEventListener('keyup',e=>release('q'+e.code));
+  bindSimulatorKeyboard(document,{enabled:()=>shown,press,release,keys,pads});
   function releaseAll(){glide.clear();for(const owner of [...owners.keys()])release(owner);synth.release();}
   window.addEventListener('blur',()=>{if(shown)releaseAll();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&shown)releaseAll();});
   const tour=createSMKTour([
-    {target:document.getElementById('audio-mode'),title:'One instrument, two browser views',text:'SMK Simulator runs Felucca SMK in your browser. Browser Studio edits the same session. SMK Device connects to your physical keyboard.'},
+    {target:document.getElementById('audio-mode'),title:'One instrument, two browser views',text:'SMK Simulator runs Sloop SMK in your browser. Browser Studio edits the same session. SMK Device connects to your physical keyboard.'},
     {target:bezel,title:'The actual firmware display',text:'This screen is drawn by the SMK firmware. Pages, parameter changes and menus behave like the instrument. USB/TRS ports and Bluetooth radio hardware are not simulated.'},
     {target:knobs,title:'Eight hands-on knobs',text:'Drag a knob up or down, or focus it and press the arrow keys. Bank 1 maps to Volume, Tempo, Presets, Track and K1–K4. KNOB BANK switches to the alternate assignments.'},
-    {target:padGrid,title:'Sixteen playable pads',text:'Click or touch the pads to play. On step-editing pages, they enter steps. Choose the second pad bank in the firmware Settings menu.'},
+    {target:padGrid,title:'Sixteen playable pads',text:'Click or touch the pads, or use 1-8 for the top row and Shift+1-8 for the bottom row. Number-pad keys work too. The pads trigger the sixteen Sloop drum lanes.'},
     {target:faderRow,title:'Levels or an envelope',text:'The four faders control track levels. Press FADER BANK to switch them to attack, decay, sustain and release for the selected track.'},
-    {target:piano,title:'Play the keyboard',text:'Click or touch the 37 keys, or type A W S E D F T G Y H U J K O L P ;. Use the pitch and mod wheels for expression. Hold SUSTAIN to keep notes ringing.'},
-    {target:panel,title:'Tap a page. Hold for more.',text:'Tap PATCH for Home, PARA for Projects, or BT for editing. Hold GLO for navigation, PATCH for presets, PARA for undo, or BT for Settings. PLAY and REC control the sequencer.'},
+    {target:piano,title:'Play the keyboard',text:'Click or touch the 37 keys, or type A W S E D F T G Y H U J K O L P ;. Hold Shift with a piano shortcut to play one octave higher. Use the pitch and mod wheels for expression. Hold SUSTAIN to keep notes ringing.'},
+    {target:panel,title:'Tap a page. Hold for more.',text:'Tap PATCH for Home, PARA for Projects, or BT for editing. The native Sloop hold shortcuts remain available on the matching controls. PLAY and REC control the sequencer.'},
     {target:document.getElementById('browser-session'),title:'Keep your music',text:'Your session saves in this browser, including virtual projects, presets and samples. Export session keeps a file backup for this runtime version. Use the swatch to change finish, the corner icon to expand or compact, and ? to replay this tour.'}
   ],help);
   help.onclick=async()=>{releaseAll();if(document.fullscreenElement===host)await document.exitFullscreen();tour.start();};

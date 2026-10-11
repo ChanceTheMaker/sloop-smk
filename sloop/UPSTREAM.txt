@@ -1,0 +1,5 @@
+Source: https://github.com/isod89/sloop-fm1
+Revision: 4365a1d0075b9194de1c44826325abbd39751bc1 (main checked 2026-10-11)
+Release baseline: v2.6
+Local source changes: upreset.c preset cache allocated to .pool; editor.c SMK version text and disabled physical sample capability for the first SMK candidate.
+Other SMK adapters live outside this directory. Original licenses and copyright notices retained.

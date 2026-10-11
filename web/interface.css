@@ -35,6 +35,8 @@ html:has(.installer-page) { scroll-behavior:smooth; }
 .studio-preview-action { display:block; margin-top:6px; padding:9px 12px; border-radius:8px; background:var(--accent); color:var(--bg); text-align:center; font:700 16px/1.4 var(--ui-font); }
 .installer-page .studio-gallery-link { display:flex; flex-direction:row; flex-wrap:wrap; gap:4px 12px; align-items:baseline; justify-content:center; box-sizing:border-box; width:100%; text-align:center; font-size:16px; line-height:1.5; }
 .studio-gallery-subtitle { max-width:100%; white-space:normal; overflow-wrap:anywhere; font-size:1em; font-weight:500; text-transform:none; letter-spacing:normal; }
+.browser-audio #factlib,
+.browser-audio #play-channel, .browser-audio label:has(#play-channel) { display:none!important; }
 #audio-volume-label:not([hidden]) { display:inline-flex; align-items:center; gap:8px; font-size:12px; }
 #audio-volume { width:90px; }
 #audio-status { font-size:11px; color:var(--dim); }
@@ -211,7 +213,7 @@ h2 { font-family:var(--ui-font); }
 .editor-page .play-keyboard.collapsed { padding:6px 12px; border-radius:10px 10px 0 0; }
 .editor-page .play-keyboard.collapsed .play-controls { margin:0; }
 .editor-page .play-keyboard.collapsed .keyboard-tray { font-size:11px; }
-footer { color:var(--dim); font:11px/1.8 var(--ui-font); margin-top:22px; }
+footer { color:var(--dim); font:11px/1.8 var(--ui-font); margin-top:22px; text-align:center; }
 footer a { text-underline-offset:3px; }
 .hint { border:1px solid var(--line); border-radius:10px; color:var(--dim); }
 /* The finish follows each skin's personality without sacrificing legibility. */
@@ -802,7 +804,9 @@ footer a { text-underline-offset:3px; }
 }
 
 /* Shared navigation replaces the reciprocal installer/Studio header buttons. */
-.brand-row h1 .brand-home { color:inherit; font:inherit; letter-spacing:inherit; text-decoration:none; }
+.brand-row h1 .brand-home { display:inline-flex; align-items:center; gap:.16em; color:inherit; font:inherit; letter-spacing:inherit; text-decoration:none; }
+/* Preserve the generated silhouette; mirror it and tint with the title color. */
+.brand-home .brand-title { white-space:nowrap; }
 .brand-row h1 .brand-home:focus-visible { outline:2px solid currentColor; outline-offset:6px; border-radius:3px; }
 :root[data-skin] .brand-row { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,auto) auto; align-items:center; gap:6px 12px; padding-right:0; }
 .brand-row>.brand-links { display:flex; flex-direction:row; flex-wrap:nowrap; align-items:center; gap:8px; }
@@ -830,9 +834,115 @@ footer a { text-underline-offset:3px; }
  .brand-row .settings-menu>summary { padding:6px; }
  .brand-row .brand-links button.lang { width:30px; height:32px; padding:3px; }
 }
-.installer-page .back-to-top { position:fixed; z-index:1100; right:max(18px,env(safe-area-inset-right)); bottom:max(18px,env(safe-area-inset-bottom)); display:grid; place-items:center; width:46px; height:46px; padding:0; border:1px solid var(--line); border-radius:50%; background:var(--accent); color:var(--ink); box-shadow:0 4px 16px #0005; }
-.installer-page .back-to-top[hidden] { display:none; }
-.installer-page .back-to-top:hover { background:var(--accent); color:var(--ink); filter:brightness(1.08); }
-.installer-page .back-to-top:focus-visible { outline:2px solid var(--fg); outline-offset:3px; }
+.back-to-top { position:fixed; z-index:1100; right:max(18px,env(safe-area-inset-right)); bottom:max(18px,env(safe-area-inset-bottom)); display:grid; place-items:center; width:46px; height:46px; padding:0; border:1px solid var(--line); border-radius:50%; background:var(--accent); color:var(--ink); box-shadow:0 4px 16px #0005; }
+.back-to-top[hidden] { display:none; }
+.back-to-top:hover { background:var(--accent); color:var(--ink); filter:brightness(1.08); }
+.back-to-top:focus-visible { outline:2px solid var(--fg); outline-offset:3px; }
+.editor-page .back-to-top { z-index:21; bottom:calc(var(--keyboard-height,0px) + 12px); }
 .back-to-top svg { width:23px; height:23px; }
-#page-top:focus { outline:none; }
+#page-top:focus,#studio:focus { outline:none; }
+
+/* Studio signal panels: each functional family moves as one card. */
+/* DOM pickers let wheel input preview choices while the menu stays open.
+   Browsers without base-select retain their normal native dropdowns. */
+@supports (appearance:base-select) {
+ .editor-page select:not([multiple]):not([size]),
+ .editor-page select:not([multiple]):not([size])::picker(select) { appearance:base-select; }
+ .editor-page select:not([multiple]):not([size])::picker(select) { border:1px solid var(--line); border-radius:6px; padding:4px; background:var(--lcd-bg); color:var(--lcd); max-block-size:min(50dvh,320px); max-inline-size:calc(100vw - 24px); overflow:auto; overscroll-behavior:contain; box-shadow:0 8px 24px #0006; }
+ .editor-page select:not([multiple]):not([size]) option { min-block-size:28px; padding:4px 8px; white-space:normal; }
+ .editor-page select:not([multiple]):not([size]) option:checked { background:var(--lcd); color:var(--lcd-bg); }
+ .editor-page select:not([multiple]):not([size]) option:not(:checked):hover { background:color-mix(in srgb,var(--lcd) 18%,var(--lcd-bg)); color:var(--lcd); }
+}
+#groups.unified-groups { grid-template-columns:repeat(4,minmax(0,1fr)); align-items:start; }
+.groups .unified-card,.groups .unified-card[data-controls=knobs] { display:block; min-width:0; }
+.unified-card>.bank-sections { display:grid; gap:14px; }
+.unified-card .bank-section { min-width:0; position:relative; }
+.unified-card .bank-section h3 { margin:0 0 8px; padding:0; color:var(--dim); font:650 10px/1.4 var(--ui-font); letter-spacing:.8px; }
+.unified-card .bank-section+.bank-section { border-top:1px solid var(--line); padding-top:12px; }
+.unified-card[data-controls=knobs] .bank-rows { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:5px; }
+.groups .unified-card[data-controls=knobs] .row select { max-width:100%; min-width:0; }
+.groups .unified-card[data-controls=knobs] .row .v { box-sizing:border-box; max-width:100%; overflow-wrap:anywhere; }
+.unified-card .bank-rows+.bank-rows { margin-top:10px; }
+.unified-card[data-section=FX],.unified-card[data-section=MOD] { grid-column:1 / -1; }
+.groups .unified-card .row.modrow { display:grid; grid-template-columns:20px minmax(0,1fr) minmax(0,1fr) minmax(70px,1fr) 64px; align-items:center; gap:10px; }
+.unified-card .mod-head { display:grid; grid-template-columns:20px minmax(0,1fr) minmax(0,1fr) minmax(70px,1fr) 64px; gap:10px; color:var(--dim); font:600 11px/1.4 var(--ui-font); margin-bottom:6px; }
+.unified-card .mod-head>span:last-child { text-align:center; }
+.groups .unified-card .modrow select { width:100%; min-width:0; }
+.groups .unified-card[data-controls=knobs] .modrow .dial-control { margin:2px auto; }
+.groups .unified-card .modrow .v { width:auto; }
+.unified-card[data-section=FX]>.bank-sections { grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; }
+.unified-card[data-section=FX] .bank-section+.bank-section { border-top:0; padding-top:0; }
+.unified-card[data-section=FX] .bank-section h3:not(:first-child) { margin-top:12px; }
+.unified-card[data-section=ARP],.unified-card[data-section=SCL] { grid-column:span 2; }
+.unified-card[data-section=ARP]>.bank-sections,.unified-card[data-section=SCL]>.bank-sections { grid-template-columns:1fr 1fr; }
+.unified-card[data-section=ARP] .bank-section+.bank-section,.unified-card[data-section=SCL] .bank-section+.bank-section { border-top:0; padding-top:0; }
+.studio-widget { margin:0 0 12px; padding:8px; border:1px solid var(--line); border-radius:7px; background:var(--lcd-bg); color:var(--lcd); }
+.widget-caption { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:3px 8px; margin-bottom:8px; font:11px/1.4 var(--ui-font); overflow-wrap:anywhere; }
+.widget-caption>span:last-child { text-align:right; font-family:var(--display-font); }
+.widget-plot { position:relative; height:92px; }
+.widget-plot[hidden] { display:none; }
+.widget-plot svg { display:block; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.widget-grid { fill:none; stroke:currentColor; opacity:.15; stroke-width:1; vector-effect:non-scaling-stroke; }
+.widget-line { fill:none; stroke:currentColor; stroke-width:2; stroke-linejoin:round; vector-effect:non-scaling-stroke; }
+.widget-area { fill:currentColor; opacity:.09; }
+.studio-widget .widget-handle { position:absolute; z-index:1; width:28px; height:28px; min-width:0; min-height:28px; padding:0; transform:translate(-50%,-50%); border:0; border-radius:50%; background:transparent; box-shadow:none; color:inherit; cursor:ew-resize; touch-action:none; }
+.widget-handle::after { content:''; position:absolute; inset:8px; border:2px solid currentColor; border-radius:50%; background:var(--lcd-bg); }
+.studio-widget .widget-handle:not(:disabled):active { transform:translate(-50%,-50%); box-shadow:none; }
+.studio-widget .widget-handle:not(:disabled):hover { background:transparent; }
+.widget-handle[aria-orientation=vertical] { cursor:ns-resize; }
+.studio-widget button:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
+.widget-shortcuts { display:flex; gap:4px; margin-top:7px; }
+.widget-shortcuts:empty { display:none; }
+.studio-widget .widget-shortcuts button { flex:1; min-width:0; min-height:32px; padding:3px; font:600 11px var(--ui-font); color:inherit; border:1px solid var(--line); border-radius:4px; background:transparent; box-shadow:none; }
+.studio-widget .widget-shortcuts button[aria-pressed=true] { background:var(--lcd); color:var(--lcd-bg); border-color:var(--lcd); }
+.widget-scale .widget-shortcuts { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); }
+.widget-scale .widget-shortcuts button.in-scale { border-bottom:3px solid var(--lcd); }
+.widget-scale .widget-shortcuts button:not(.in-scale) { opacity:.72; }
+.widget-off .widget-line,.widget-off .widget-area { opacity:.25; }
+.widget-slicer .widget-plot,.widget-arp .widget-plot { height:58px; }
+.widget-arp .widget-line { stroke-width:4; }
+/* Silent rack details live only in space the controls already leave unused. */
+.bank-hardware,.bank-hardware-gap { pointer-events:none; user-select:none; }
+.bank-hardware { display:none; min-width:0; grid-column:span var(--spare-columns); }
+.unified-card[data-controls=knobs] .bank-hardware { display:grid; }
+.bank-hardware-gap { display:grid; position:absolute; inset:auto 0 0; }
+.bank-hardware-gap[hidden] { display:none; }
+.hardware-panel { position:relative; display:block; min-width:0; min-height:0; max-height:110px; overflow:hidden; border:1px solid color-mix(in srgb,var(--line) 75%,#000); border-radius:4px; background:repeating-linear-gradient(0deg,#ffffff05 0 1px,#00000004 1px 2px,transparent 2px 4px),linear-gradient(105deg,#ffffff05,transparent 35%,#ffffff0a 60%,#0000000a),color-mix(in srgb,var(--panel) 80%,#9ba2a6); box-shadow:inset 0 1px #ffffff18,inset 0 -1px #0003; }
+.hardware-grille::after { content:''; position:absolute; inset:10px; border-radius:2px; background:radial-gradient(circle at 2px 2px,#080b0ccc .85px,transparent 1.4px) 0 0 / 5px 5px; }
+.hardware-fastener { position:absolute; width:4px; height:4px; border-radius:50%; background:linear-gradient(135deg,#d0d4d5,#697074); box-shadow:0 0 0 1px #0005; }
+.hardware-fastener::after { content:''; position:absolute; left:1px; top:1.5px; width:2px; height:1px; background:#303638; transform:rotate(-35deg); }
+.hardware-fastener:nth-child(1) { left:5px; top:5px; }
+.hardware-fastener:nth-child(2) { right:5px; top:5px; }
+.hardware-fastener:nth-child(3) { left:5px; bottom:5px; }
+.hardware-fastener:nth-child(4) { right:5px; bottom:5px; }
+.hardware-vents::after { content:''; position:absolute; inset:14px 25%; border-radius:2px; background:repeating-linear-gradient(0deg,transparent 0 7px,#080b0c99 7px 9px,#ffffff18 9px 10px); }
+.hardware-engraving { position:absolute; inset:0 12px; display:flex; align-items:center; justify-content:center; white-space:pre; color:color-mix(in srgb,var(--dim) 65%,var(--panel)); font:8px/1.8 var(--ui-font); letter-spacing:1px; text-align:center; text-shadow:0 1px #ffffff12; }
+.hardware-serial::after { content:''; position:absolute; left:15%; right:15%; bottom:18%; height:1px; background:#0002; box-shadow:0 1px #ffffff12,0 -3px #0000000a; }
+[data-contrast=high] .hardware-panel { opacity:.5; box-shadow:none; }
+@media(max-width:1150px) {
+ #groups.unified-groups { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .unified-card[data-section=FX]>.bank-sections { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .unified-card[data-section=ARP],.unified-card[data-section=SCL] { grid-column:1 / -1; }
+}
+@media(max-width:600px) {
+ .groups .unified-card .row.modrow { grid-template-columns:16px minmax(0,1fr) minmax(0,1fr); gap:6px; }
+ .unified-card .mod-head { grid-template-columns:16px minmax(0,1fr) minmax(0,1fr); gap:6px; }
+ .unified-card .mod-head>span:last-child { display:none; }
+ .groups .unified-card .modrow .dial-control { grid-column:2; }
+ #groups.unified-groups { grid-template-columns:minmax(0,1fr); }
+ .unified-card[data-section=FX]>.bank-sections,.unified-card[data-section=ARP]>.bank-sections,.unified-card[data-section=SCL]>.bank-sections { grid-template-columns:minmax(0,1fr); }
+ .unified-card .bank-section+.bank-section { border-top:1px solid var(--line); padding-top:12px; }
+}
+
+#browser-transport[hidden] { display:none; }
+#browser-transport { margin:10px 0; }
+
+.mode-tip .mode-tip-copy {margin:0;padding:3px 22px 3px 2px;text-align:left;max-height:calc(100dvh - 70px);overflow-y:auto}
+.mode-tip-choice + .mode-tip-choice {margin-top:13px;padding-top:13px;border-top:1px solid color-mix(in srgb,var(--ink) 18%,transparent)}
+.mode-tip-choice strong {display:block;margin-bottom:4px;font-weight:800;font-size:14px}
+.mode-tip-choice span {display:block;font-weight:400;line-height:1.5}
+/* Keep the Studio's compact horizontal navigation when importing the 2.4
+   editor (whose upstream presentation uses a vertical sidebar). */
+.editor-page #tabs { flex-direction:row; flex-wrap:wrap; gap:4px; }
+.editor-page #tabs button { flex:0 0 auto; border-left:0; text-align:center; }
+.editor-page #connect { width:auto; }

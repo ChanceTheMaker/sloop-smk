@@ -1,6 +1,12 @@
+# Sloop SMK adaptation
+
+Primary musical upstream: isod89/sloop-fm1 at 4365a1d0075b9194de1c44826325abbd39751bc1 (2.6).
+SMK hardware baseline: Felucca SMK fb03412. Vendor packages and device backups stay private.
+This task explicitly authorizes the Sloop firmware/UI port. Never flash a device automatically.
+
 # Working with upstream Felucca
 
-These rules govern how **ChanceTheMaker/felucca-smk** receives updates from
+These rules govern how **ChanceTheMaker/sloop-smk** receives updates from
 **hugelton/Felucca** and offers selected improvements back. Keep Salt current,
 preserve a small, understandable set of differences, and send upstream changes
 that can be reviewed independently. This is our fork's policy; it does not claim
@@ -11,7 +17,7 @@ to be the upstream maintainers' contribution policy.
 | Repository or branch | Purpose | Write policy |
 | --- | --- | --- |
 | `hugelton/Felucca` | Upstream source and release reference | Fetch and inspect; no direct pushes |
-| `ChanceTheMaker/felucca-smk` | SMK development, Studio and simulator | Push authorized SMK work here |
+| `ChanceTheMaker/sloop-smk` | SMK development, Studio and simulator | Push authorized SMK work here |
 | `ChanceTheMaker/Felucca` | Separate FM-1 Salt project and existing upstream PR branches | Do not publish SMK work here |
 | Fork `main` | Integrated, reviewable Salt source | PRs with linear history; no force-pushes |
 | Fork `gh-pages` | Published website and selected firmware package | Publish the verified site; preserve the intended firmware version |
@@ -19,7 +25,7 @@ to be the upstream maintainers' contribution policy.
 | `upstream/<feature>` in the fork | A selected contribution based on upstream main | Only the relevant change, tests, and documentation |
 
 Legacy linked worktrees use **origin for upstream**. The standalone SMK clone
-uses **origin for ChanceTheMaker/felucca-smk** and **upstream for hugelton/Felucca**.
+uses **origin for ChanceTheMaker/sloop-smk** and **upstream for hugelton/Felucca**.
 The initial SMK migration creates `main` and preserves `feat/smk-studio-simulator`
 at the same source checkpoint; later work uses focused PRs. Never use a bare `git push` or
 assume a remote name identifies its owner. Check `git remote -v` and use explicit
@@ -128,7 +134,7 @@ first and substitute the chosen branch and reviewed upstream revision.
 git status --short
 git remote -v
 git fetch https://github.com/hugelton/Felucca.git main:refs/remotes/upstream/main --tags
-git fetch https://github.com/ChanceTheMaker/felucca-smk.git main:refs/remotes/smk/main
+git fetch https://github.com/ChanceTheMaker/sloop-smk.git main:refs/remotes/smk/main
 git log --oneline <previous-upstream-sha>..upstream/main
 git diff --stat <previous-upstream-sha> upstream/main
 
@@ -139,7 +145,7 @@ git diff upstream/main...HEAD
 git push https://github.com/ChanceTheMaker/Felucca.git HEAD:refs/heads/upstream/<feature>
 ```
 
-For an SMK PR, explicitly select `ChanceTheMaker/felucca-smk` and the intended base.
+For an SMK PR, explicitly select `ChanceTheMaker/sloop-smk` and the intended base.
 The upstream contribution push example above uses the original FM-1 fork only
 for a separately authorized, clean upstream contribution, never the SMK branch.
 For an authorized upstream PR, explicitly select `hugelton/Felucca`, base `main`,

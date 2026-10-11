@@ -1,3 +1,7 @@
+# Current Sloop SMK integration
+
+2026-10-11: Sloop 2.6 source `4365a1d0075b9194de1c44826325abbd39751bc1` adapted on `integrate/sloop-2.6-smk`. See [Sloop port status](SLOOP_SMK_PORT.md) for the current artifact, tests and hardware limitations. No upstream PR or public firmware release. The records below describe the inherited Felucca baseline.
+
 # Upstream integration status
 
 Last reviewed: **2026-10-10**. Update this record when importing or offering a

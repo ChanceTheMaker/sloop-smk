@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 export function createSMKTour(steps, replay) {
-  const key='felucca.smk.simTutorial.v1';
+  const key='sloop.smk.simTutorial.v1';
   const bubble=document.createElement('div');bubble.className='sim-tour';bubble.hidden=true;
   bubble.setAttribute('role','dialog');bubble.setAttribute('aria-label','SMK simulator tutorial');
   bubble.innerHTML='<div class="sim-tour-heading"><span class="sim-tour-count"></span><button type="button" class="sim-tour-close" aria-label="Close tutorial" title="Close tutorial">×</button></div><h3></h3><p></p><div class="sim-tour-actions"><button type="button" data-back>Back</button><button type="button" data-next>Next</button></div>';

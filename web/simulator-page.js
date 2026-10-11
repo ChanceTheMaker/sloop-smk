@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import {SMKBrowserSynth} from './audio/smk-browser.js?startup=2';
-import {createSMKSimulator} from './smk-simulator.js';
+import {mountMIDIInput} from './midi-input.js';
+import {createSMKSimulator} from './smk-simulator.js?keys=3';
+import {pianoCodes,padShortcut} from './simulator-keys.js?v=3';
 const $=id=>document.getElementById(id),synth=new SMKBrowserSynth();
 let panel=null,running=false,busy=false,starting=null;
-const title=()=>{document.title='Felucca SMK — Simulator';};
-document.addEventListener('DOMContentLoaded',title);window.FeluccaI18n.onChange(title);title();
+const title=()=>{document.title='Sloop SMK — Simulator';};
+document.addEventListener('DOMContentLoaded',title);window.SloopI18n.onChange(title);title();
 function controls(){for(const id of ['session-play','session-panic','session-export','session-import'])$(id).disabled=!running||busy;$('sim-audio').disabled=busy;$('sim-audio').textContent=running?'Pause audio':'Enable audio';}
 function startAudio(){
   if(starting)return starting;
@@ -25,7 +27,7 @@ function unlockAudio(){
 document.addEventListener('pointerdown',e=>{if(e.target.closest('.sim-key,.sim-pad'))unlockAudio();},true);
 document.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,select,textarea,[contenteditable=true],.sim-tour,.sim-finish-picker'))return;
-  if(['KeyA','KeyW','KeyS','KeyE','KeyD','KeyF','KeyT','KeyG','KeyY','KeyH','KeyU','KeyJ','KeyK','KeyO','KeyL','KeyP','Semicolon'].includes(e.code)||(['Space','Enter'].includes(e.code)&&e.target.closest('.sim-key,.sim-pad')))unlockAudio();
+  if(pianoCodes.includes(e.code)||padShortcut(e.code,e.shiftKey)>=0||(['Space','Enter'].includes(e.code)&&e.target.closest('.sim-key,.sim-pad')))unlockAudio();
 },true);
 $('sim-audio').onclick=async()=>{
   if(starting){try{await synth.context?.resume();}catch(e){$('audio-status').textContent=e.message;}return;}
@@ -41,7 +43,7 @@ $('session-play').onclick=()=>{synth.panel(0,16,1);setTimeout(()=>synth.panel(0,
 async function sessionTask(task){busy=true;controls();try{await task();}catch(e){$('audio-status').textContent=e.message;}finally{busy=false;controls();}}
 $('session-export').onclick=()=>sessionTask(async()=>{
   const data=await synth.exportSession(),url=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
-  const link=document.createElement('a');link.href=url;link.download='felucca-smk-browser-session.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const link=document.createElement('a');link.href=url;link.download='sloop-smk-browser-session.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 });
 $('session-import').onclick=()=>$('session-file').click();
 $('session-file').onchange=()=>sessionTask(async()=>{const file=$('session-file').files[0];$('session-file').value='';if(!file)return;if(file.size>2000000)throw Error('Session is too large');panel.release();await synth.importSession(JSON.parse(await file.text()));$('audio-status').textContent='Browser session restored';});
@@ -54,4 +56,5 @@ document.addEventListener('click',async e=>{
   try{panel.release();await synth.save();await synth.stop();location.assign(url.href);}catch(error){$('audio-status').textContent='Could not save before leaving: '+error.message;busy=false;controls();}
 });
 window.addEventListener('pagehide',()=>{panel?.release();});
+mountMIDIInput({container:$('browser-session'),getSynth:()=>synth,active:()=>running,enableAudio:async()=>{await startAudio();await synth.context?.resume();running=synth.context?.state==='running';controls();}});
 startAudio();

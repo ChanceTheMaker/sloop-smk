@@ -1,11 +1,11 @@
-# Felucca SMK repository instructions
+# Sloop SMK repository instructions
 
 Read [docs/UPSTREAM_WORKFLOW.md](docs/UPSTREAM_WORKFLOW.md) before importing
 upstream changes, preparing contributions, changing firmware protocols, or
 publishing a release. These are Salt's operating rules, not upstream policy.
 
-- Our writable repository is `ChanceTheMaker/felucca-smk`. Treat
-  `hugelton/Felucca` as read-only. In the legacy linked worktree, **origin points
+- Our writable repository is `ChanceTheMaker/sloop-smk`. Treat
+  `isod89/sloop-fm1` and `hugelton/Felucca` as read-only. In the legacy linked worktree, **origin points
   at upstream**; in the standalone SMK checkout it points at the SMK repository.
   Inspect remote URLs; never assume `origin` is the fork. Use an
   explicit fork URL for pushes unless a verified fork remote is configured.

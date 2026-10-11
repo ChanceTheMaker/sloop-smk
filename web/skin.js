@@ -2,23 +2,23 @@
 // Website appearance only: never writes device preferences or MIDI.
 (() => {
   const root = document.documentElement;
-  const I18N = window.FeluccaI18n;
-  const themes = [['stage', 'Stage Red'], ['matrix', 'Matrix'], ['dx', 'Vintage DX7'], ['modeld', 'Model D Walnut'],
+  const I18N = window.SloopI18n;
+  const themes = [['sloop', 'SLOOP Original'], ['stage', 'Stage Red'], ['matrix', 'Matrix'], ['dx', 'Vintage DX7'], ['modeld', 'Model D Walnut'],
     ['chocolate', 'Chocolate Factory'], ['vapor', 'Vaporwave'], ['midnight', 'Midnight Studio'],
     ['space', 'Space Mission'], ['bauhaus', 'Bauhaus'], ['ocean', 'Ocean Lab'], ['arcade', 'Arcade \u201984'], ['hicon', 'High Contrast']];
   const read = (key, fallback) => { try { return localStorage.getItem(key) || fallback; } catch { return fallback; } };
   const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* private browsing */ } };
   const requested = new URLSearchParams(location.search);
   if (themes.some(([id]) => id === requested.get('theme'))) {
-    save('felucca.web.skin', requested.get('theme'));
-    if (['light','dark'].includes(requested.get('mode'))) save('felucca.web.mode', requested.get('mode'));
+    save('sloop.smk.web.skin', requested.get('theme'));
+    if (['light','dark'].includes(requested.get('mode'))) save('sloop.smk.web.mode', requested.get('mode'));
   }
-  root.dataset.skin = themes.some(([id]) => id === read('felucca.web.skin')) ? read('felucca.web.skin') : 'stage';
+  root.dataset.skin = themes.some(([id]) => id === read('sloop.smk.web.skin')) ? read('sloop.smk.web.skin') : 'sloop';
   if (themes.some(([id]) => id === requested.get('theme'))) { root.dataset.skin = requested.get('theme'); }
-  root.dataset.defaultControls = read('felucca.web.controls') === 'sliders' ? 'sliders' : 'knobs';
-  root.dataset.mode = themes.some(([id]) => id === requested.get('theme')) && ['light','dark'].includes(requested.get('mode')) ? requested.get('mode') : read('felucca.web.mode') === 'light' ? 'light' : 'dark';
+  root.dataset.defaultControls = read('sloop.smk.web.controls') === 'sliders' ? 'sliders' : 'knobs';
+  root.dataset.mode = themes.some(([id]) => id === requested.get('theme')) && ['light','dark'].includes(requested.get('mode')) ? requested.get('mode') : read('sloop.smk.web.mode') === 'light' ? 'light' : 'dark';
   root.dataset.contrast = root.dataset.skin === 'hicon' ? 'high' : 'normal';
-  root.dataset.fullWidth = read('felucca.web.fullWidth') === 'true' ? 'true' : 'false';
+  root.dataset.fullWidth = read('sloop.smk.web.fullWidth') === 'true' ? 'true' : 'false';
   function sync(input) {
     const min = +input.min, max = +input.max;
     const fraction = max > min ? (+input.value - min) / (max - min) : 0;
@@ -58,7 +58,7 @@
     return shell;
   }
   const readJSON = (key, fallback) => { try { return JSON.parse(read(key)) ?? fallback; } catch { return fallback; } };
-  const storedCards = readJSON('felucca.web.cards', {});
+  const storedCards = readJSON('sloop.smk.web.cards', {});
   const cards = storedCards && typeof storedCards === 'object' && !Array.isArray(storedCards) ? storedCards : {};
   function applyCard(card) {
     const preference = cards[card.dataset.cardKey];
@@ -66,7 +66,7 @@
   }
   function decorate(container, layoutKey) {
     const sortable = container.id === 'groups';
-    const orderKey = `felucca.web.order.${layoutKey}`;
+    const orderKey = `sloop.smk.web.order.${layoutKey}`;
     const saveOrder = () => save(orderKey, JSON.stringify([...container.children].map(c => c.dataset.cardKey)));
     let announce = document.getElementById('card-announcement');
     if (!announce) {
@@ -84,7 +84,7 @@
       for (const value of ['default','knobs','sliders']) { const option = new Option(I18N.t('ui.'+value), value); option.dataset.i18n = 'ui.'+value; select.add(option); }
       select.value = ['knobs', 'sliders'].includes(cards[card.dataset.cardKey]) ? cards[card.dataset.cardKey] : 'default';
       select.addEventListener('change', () => {
-        cards[card.dataset.cardKey] = select.value; save('felucca.web.cards', JSON.stringify(cards)); applyCard(card);
+        cards[card.dataset.cardKey] = select.value; save('sloop.smk.web.cards', JSON.stringify(cards)); applyCard(card);
       });
       if (sortable) {
         const handle = document.createElement('button'); handle.type = 'button'; handle.className = 'card-grip';
@@ -110,7 +110,7 @@
         const cancel = () => finish(false);
         const escape = e => { if (e.key === 'Escape') { e.preventDefault(); cancel(); } };
         card.addEventListener('pointerdown', e => {
-          if (drag || e.button !== 0 || (e.target.closest('input,select,a,.dial-control,button') && !e.target.closest('.card-grip'))) return;
+          if (drag || e.button !== 0 || (e.target.closest('input,select,a,.dial-control,button,.studio-widget') && !e.target.closest('.card-grip'))) return;
           e.preventDefault(); handle.focus(); card.setPointerCapture(e.pointerId);
           const box = card.getBoundingClientRect();
           drag = { id:e.pointerId, startX:e.clientX, startY:e.clientY, x:e.clientX, y:e.clientY,
@@ -171,7 +171,7 @@
       container.append(...[...container.children].sort((a,b) => (ranks.get(a.dataset.cardKey) ?? 999) - (ranks.get(b.dataset.cardKey) ?? 999)));
     }
   }
-  window.FeluccaSkin = { enhance, sync, decorate };
+  window.SloopSkin = { enhance, sync, decorate };
   document.addEventListener('DOMContentLoaded', () => {
     const host = document.querySelector('[data-appearance]');
     if (!host) return;
@@ -181,19 +181,19 @@
       '<label class="width-toggle"><span data-i18n="ui.fullWidth"></span><input id="web-width" type="checkbox" data-i18n-aria-label="ui.fullWidth"></label>';
     const menu = document.createElement('details'); menu.className = 'settings-menu';
     const trigger = document.createElement('summary'); trigger.textContent = '☰'; trigger.dataset.i18nAriaLabel = 'ui.websiteSettings';
-    menu.append(trigger); document.querySelector('.brand-links').append(menu); menu.append(host);
+    menu.append(trigger); document.querySelector('.brand-links').append(menu); if(!document.body.classList.contains('standalone-synth'))menu.append(host);else menu.hidden=true;
     document.addEventListener('pointerdown', e => { if (!menu.contains(e.target)) menu.open = false; });
     menu.addEventListener('keydown', e => { if (e.key === 'Escape') { menu.open = false; trigger.focus(); } });
     const width = document.getElementById('web-width'); width.checked = root.dataset.fullWidth === 'true';
-    width.addEventListener('change', () => { root.dataset.fullWidth = String(width.checked); save('felucca.web.fullWidth', String(width.checked)); });
+    width.addEventListener('change', () => { root.dataset.fullWidth = String(width.checked); save('sloop.smk.web.fullWidth', String(width.checked)); });
     const skin = document.getElementById('web-skin'); skin.value = root.dataset.skin;
-    skin.addEventListener('change', () => { root.dataset.skin = skin.value; root.dataset.contrast = skin.value === 'hicon' ? 'high' : 'normal'; save('felucca.web.skin', skin.value); document.dispatchEvent(new Event('felucca:theme-change')); });
+    skin.addEventListener('change', () => { root.dataset.skin = skin.value; root.dataset.contrast = skin.value === 'hicon' ? 'high' : 'normal'; save('sloop.smk.web.skin', skin.value); document.dispatchEvent(new Event('sloop:theme-change')); });
     const mode = document.getElementById('web-mode'); mode.value = root.dataset.mode;
-    mode.addEventListener('change', () => { root.dataset.mode = mode.value; save('felucca.web.mode', mode.value); });
+    mode.addEventListener('change', () => { root.dataset.mode = mode.value; save('sloop.smk.web.mode', mode.value); });
     const controls = document.getElementById('web-controls');
     if (controls) {
       controls.value = root.dataset.defaultControls;
-      controls.addEventListener('change', () => { root.dataset.defaultControls = controls.value; save('felucca.web.controls', controls.value); document.querySelectorAll('[data-card-key]').forEach(applyCard); });
+      controls.addEventListener('change', () => { root.dataset.defaultControls = controls.value; save('sloop.smk.web.controls', controls.value); document.querySelectorAll('[data-card-key]').forEach(applyCard); });
     }
     const keyboard = document.querySelector('.play-keyboard');
     if (keyboard) {
@@ -201,17 +201,17 @@
       tray.setAttribute('aria-controls', 'play-keys');
       const setCollapsed = collapsed => {
         // Release held notes/sustain before hiding the performance controls.
-        if (collapsed) document.getElementById('play-stop')?.click();
+        if (collapsed) window.SloopPlay?.release();
         keyboard.classList.toggle('collapsed', collapsed);
         tray.textContent = collapsed ? '\u25b4 ' + I18N.t('ui.showKeyboard') : '\u25be';
         tray.setAttribute('aria-label', I18N.t(collapsed ? 'ui.showKeyboard' : 'ui.minimizeKeyboard'));
         tray.title = I18N.t(collapsed ? 'ui.showKeyboard' : 'ui.minimizeKeyboard');
         tray.setAttribute('aria-expanded', String(!collapsed));
-        save('felucca.web.keyboardCollapsed', String(collapsed));
+        save('sloop.smk.web.keyboardCollapsed', String(collapsed));
       };
       tray.addEventListener('click', () => setCollapsed(!keyboard.classList.contains('collapsed')));
       I18N.onChange(() => { const collapsed = keyboard.classList.contains('collapsed'); tray.textContent = collapsed ? '\u25b4 ' + I18N.t('ui.showKeyboard') : '\u25be'; tray.title = I18N.t(collapsed ? 'ui.showKeyboard' : 'ui.minimizeKeyboard'); tray.setAttribute('aria-label', tray.title); });
-      keyboard.querySelector('.play-controls').append(tray); setCollapsed(read('felucca.web.keyboardCollapsed') === 'true');
+      keyboard.querySelector('.play-controls').append(tray); setCollapsed(read('sloop.smk.web.keyboardCollapsed') === 'true');
       const measure = () => root.style.setProperty('--keyboard-height', `${Math.ceil(keyboard.getBoundingClientRect().height)}px`);
       new ResizeObserver(measure).observe(keyboard); measure();
     }

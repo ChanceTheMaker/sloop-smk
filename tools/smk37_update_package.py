@@ -10,7 +10,7 @@ LO,HI,HEADER=0x4000,0x9d000,1024
 
 def package(stock,app,product="SMK-37_911",version="SMK37 TEST11 USB"):
     import re
-    if not re.fullmatch(r"SMK-37_9[0-9]{2}",product) or not re.fullmatch(r"SMK37 TEST[0-9]{2} USB",version):raise ValueError("Invalid test identity")
+    if not re.fullmatch(r"SMK-37_9[0-9]{2}",product) or not re.fullmatch(r"(?:SMK37 TEST[0-9]{2} USB|SLOOP SMK [0-9.]+-b[0-9]+)",version):raise ValueError("Invalid test identity")
     image=replace_application(stock,app); payload=image[LO:HI]
     h=bytearray(HEADER); h[:16]=MAGIC
     struct.pack_into('<7I',h,16,1,LO,HI,len(payload),zlib.crc32(stock[:LO]),zlib.crc32(stock[0xc1000:0xc1000+556]),zlib.crc32(payload))
@@ -23,7 +23,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--backups',nargs=2,type=Path,required=True);p.add_argument('--stock-package',type=Path,required=True);p.add_argument('--manifest',type=Path,required=True);a=p.parse_args()
     stock=a.backups[0].read_bytes();inspect_backup(stock,a.backups[1].read_bytes(),a.stock_package.read_bytes())
     m=json.loads(a.manifest.read_text());app=(a.manifest.parent/m['image']).read_bytes()
-    if m['board']!='SMK-37 Pro' or not m.get('usb_update_support') or hashlib.sha256(app).hexdigest()!=m['sha256']:raise SystemExit('Not a verified updater-enabled SMK artifact')
+    if m['board'] not in ('SMK-37 Pro','SMK-37 Pro & Elite') or not m.get('usb_update_support') or hashlib.sha256(app).hexdigest()!=m['sha256']:raise SystemExit('Not a verified updater-enabled SMK artifact')
     product=m.get('update_product','SMK-37_911');version=m.get('update_version','SMK37 TEST11 USB')
     data,image=package(stock,app,product,version);out=a.manifest.parent
     number=product[-2:]

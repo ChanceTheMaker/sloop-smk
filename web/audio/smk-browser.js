@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import {BrowserSynth} from './browser.js';
-const DB='felucca-smk-browser-v1', KEY='session';
+const DB='sloop-smk-browser-v1', KEY='session';
 async function dbAccess(write,value,revision){
   return new Promise((resolve,reject)=>{
     const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('state');r.onerror=()=>reject(r.error);
@@ -37,10 +37,10 @@ export class SMKBrowserSynth extends BrowserSynth {
       this.gain=context.createGain();this.gain.gain.value=.35;this.node.connect(this.gain).connect(context.destination);
       this.analyser=context.createAnalyser();this.analyser.fftSize=2048;this.gain.connect(this.analyser);
       this.node.onprocessorerror=()=>{this.gain.gain.value=0;this.storageMessage='Browser audio stopped. Reload to restart.';};
-      this.input={id:'smk-browser-in',name:'Felucca SMK Browser',state:'connected',type:'input',open:async()=>{}};
-      const output={id:'smk-browser-out',name:'Felucca SMK Browser',state:'connected',type:'output',send:bytes=>{
+      this.input={id:'smk-browser-in',name:'Sloop SMK Browser',state:'connected',type:'input',open:async()=>{}};
+      const output={id:'smk-browser-out',name:'Sloop SMK Browser',state:'connected',type:'output',send:bytes=>{
         if(bytes[0]===0xf0){const cmd=bytes[4];this.request('command',{bytes:Array.from(bytes).slice(1,-1)}).then(d=>{if(d.bytes?.length)this.input.onmidimessage?.({data:d.bytes});}).catch(e=>console.error(e));
-          if([3,7,8,9,12,13,14,18,19,20,21,27,28,30,31,33,35,36,38,64,69,73,79].includes(cmd))this.scheduleSave();
+          if([3,7,8,9,12,13,14,18,19,20,21,27,28,30,31,33,35,36,38,40,42,64,69,71,74,75,79].includes(cmd))this.scheduleSave();
         }else this.midi(bytes);
       }};
       this.access={inputs:new Map([[this.input.id,this.input]]),outputs:new Map([[output.id,output]]),onstatechange:null};
@@ -55,14 +55,21 @@ export class SMKBrowserSynth extends BrowserSynth {
   scheduleSave(){clearTimeout(this.saveTimer);this.saveTimer=setTimeout(()=>this.save().catch(()=>{}),1800);}
   async save(){if(!this.node)return;const {buffer}=await this.request('snapshot');
     try{await dbAccess(true,{schema:1,revision:this.revision,buffer},this.revision);this.storageMessage='Session saved in this browser.';}catch(e){this.storageMessage='Could not save in browser storage. Export your session.';throw e;}}
-  async exportSession(){const {buffer}=await this.request('snapshot');return {format:'felucca-smk-browser',schema:1,revision:this.revision,data:btoa(Array.from(new Uint8Array(buffer),b=>String.fromCharCode(b)).join(''))};}
+  async exportSession(){const {buffer}=await this.request('snapshot');return {format:'sloop-smk-browser',schema:1,revision:this.revision,data:btoa(Array.from(new Uint8Array(buffer),b=>String.fromCharCode(b)).join(''))};}
   async importSession(data){
-    if(data?.format!=='felucca-smk-browser'||data.schema!==1||typeof data.data!=='string')throw Error('Not a Felucca SMK browser session');
+    if(data?.format!=='sloop-smk-browser'||data.schema!==1||typeof data.data!=='string')throw Error('Not a Sloop SMK browser session');
     if(data.revision!==this.revision)throw Error('This session belongs to a different browser runtime version');
     if(data.data.length>1600000)throw Error('Session is too large');
     const buffer=Uint8Array.from(atob(data.data),c=>c.charCodeAt(0)).buffer;
     await this.request('restore',{buffer});await this.save();
   }
+  async device(){return {access:this.access,stop:()=>{}};}
+  async export(){return JSON.stringify(await this.exportSession());}
+  async import(text){return this.importSession(JSON.parse(text));}
+  async close(){await this.stop();}
+  panic(){this.panel(7,0,0);this.release();for(let ch=0;ch<16;ch++){this.midi([0xb0+ch,64,0]);this.midi([0xb0+ch,120,0]);}}
+  transport(on=1){this.panel(7,0,on);}
+  async firmware(on){this.firmwareActive=on;this.visible(on);}
   async stop(){
     if(!this.context)return;
     if(this.stopping)return this.stopping;

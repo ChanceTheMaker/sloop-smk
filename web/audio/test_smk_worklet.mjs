@@ -18,8 +18,8 @@ for(const rate of [44100,48000]){
   }
   assert(peak>.001&&peak<=1);assert(messages.some(m=>m.type==='screen'&&m.pixels.byteLength===115200));
   send({type:'release'});send({type:'snapshot',id:1});const snapshot=messages.find(m=>m.id===1);
-  assert(snapshot.buffer.byteLength>1000000);send({type:'restore',id:2,buffer:snapshot.buffer});assert(messages.find(m=>m.id===2).restored);
+  assert(snapshot.buffer.byteLength>300000);send({type:'restore',id:2,buffer:snapshot.buffer});assert(messages.find(m=>m.id===2).restored);
   send({type:'restore',id:3,buffer:new ArrayBuffer(2)});assert.match(messages.find(m=>m.id===3).error,/Invalid session size/);
-  send({type:'command',id:4,bytes:[125,70,76,1]});assert.match(new TextDecoder().decode(messages.find(m=>m.id===4).bytes),/SMK37 BROWSER/);
+  send({type:'command',id:4,bytes:[125,70,76,1]});assert.match(new TextDecoder().decode(messages.find(m=>m.id===4).bytes),/SLOOP SMK/);
   console.log(`PASS: ${rate} Hz worklet audio, LCD/status, command transport, release, snapshot/restore and rejected malformed import; peak ${peak.toFixed(3)}`);
 }

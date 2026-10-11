@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
+// Adapted from Chance Roth's Felucca Salt website (GPL-3.0-only).
 // Optional website analytics. Never awaited by audio or firmware installation.
 (() => {
   'use strict';
-  const id = 'G-JVF09MZEGD', key = 'felucca.web.analyticsConsent';
-  const production = location.hostname === 'chancethemaker.github.io' &&
-    ['/Felucca/', '/felucca-smk/'].some(path => location.pathname.startsWith(path));
+  const id = 'G-JVF09MZEGD', key = 'sloop.smk.web.analyticsConsent';
+  const production = location.hostname === 'chancethemaker.github.io' && location.pathname.startsWith('/sloop-smk/');
   const allowed = new Set(['install_attempt', 'install_write_started', 'install_success', 'install_failed', 'install_resume_complete', 'browser_audio_started', 'download_click', 'theme_changed']);
-  const themes = new Set(['stage','matrix','dx','modeld','chocolate','vapor','midnight','space','bauhaus','ocean','arcade','hicon']);
-  const theme = () => themes.has(document.documentElement.dataset?.skin) ? document.documentElement.dataset.skin : 'stage';
+  const themes = new Set(['sloop','stage','matrix','dx','modeld','chocolate','vapor','midnight','space','bauhaus','ocean','arcade','hicon']);
+  const theme = () => themes.has(document.documentElement.dataset?.skin) ? document.documentElement.dataset.skin : 'sloop';
   let consent = '', loaded = false;
   try { consent = localStorage.getItem(key) || ''; } catch (_) {}
   if (!['granted', 'denied', 'basic'].includes(consent)) consent = '';
@@ -23,7 +23,7 @@
     loaded = true;
     tag('js', new Date());
     tag('config', id, {
-      theme: theme(), allow_google_signals: false, allow_ad_personalization_signals: false,
+      cookie_prefix: 'sloop', cookie_path: '/sloop-smk/', theme: theme(), allow_google_signals: false, allow_ad_personalization_signals: false,
       page_location: location.origin + location.pathname,
       page_referrer: (() => { try { return new URL(document.referrer).origin; } catch (_) { return ''; } })()
     });
@@ -32,7 +32,7 @@
     script.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
     document.head.append(script);
   }
-  window.FeluccaAnalytics = Object.freeze({
+  window.SloopAnalytics = Object.freeze({
     track(name, props = {}) {
       try {
         if (!production || consent === 'denied' || !allowed.has(name)) return;
@@ -85,26 +85,27 @@
   window.addEventListener('storage', event => {
     if (event.key === key || event.key === null) choose(['granted', 'denied', 'basic'].includes(event.newValue) ? event.newValue : '', false);
   });
+  const labels={"ui.cookieSettings": "Cookie settings", "ui.closeCookieSettings": "Close cookie settings", "ui.cookieChoices": "Your cookie choices", "ui.keepAnalytics": "Keep analytics on", "ui.essentialOnly": "Essential only", "ui.googlePrivacy": "Google privacy policy", "ui.cookieSummary": "We use browser storage for site features and your preferences. Optional Google Analytics cookies are on by default to help us understand how the site is used. Choose Essential only to turn analytics off.", "ui.cookieDetails": "We use browser storage for site features and preferences. Optional Google Analytics cookies are on by default to measure visits, theme choices, download clicks, and browser audio starts. Essential only turns analytics off. We do not send MIDI notes, audio, or preset names. Every feature works with essential storage only. You can change your choice here anytime."};
   function mountPreferences() {
+    for(const container of [panel,banner])for(const e of container.querySelectorAll('[data-i18n],[data-i18n-aria-label]')){if(e.dataset.i18n)e.textContent=labels[e.dataset.i18n]||'';else e.setAttribute('aria-label',labels[e.dataset.i18nAriaLabel]||'');}
     reflectChoice();
     document.body.append(panel, banner);
-    window.FeluccaI18n?.apply();
-    const host = document.querySelector('.settings-menu [data-appearance]');
-    if (!host) return;
+    window.SloopI18n?.apply();
+    const host = document.querySelector('.settings-menu [data-appearance]') || document.querySelector('footer') || document.body;
     const open = document.createElement('button');
     open.type = 'button';
     open.className = 'analytics-menu-button';
-    open.dataset.i18n = 'ui.cookieSettings';
+    open.dataset.i18n = 'ui.cookieSettings';open.textContent=labels['ui.cookieSettings'];
     open.setAttribute('aria-haspopup', 'dialog');
     open.setAttribute('aria-controls', panel.id);
     open.addEventListener('click', () => {
-      host.closest('.settings-menu').open = false;
+      const menu=host.closest('.settings-menu');if(menu)menu.open=false;
       reflectChoice();
       panel.showModal();
     });
-    panel.addEventListener('close', () => host.closest('.settings-menu').querySelector('summary').focus());
+    panel.addEventListener('close', () => (host.closest('.settings-menu')?.querySelector('summary')||open).focus());
     host.append(open);
-    window.FeluccaI18n?.apply();
+    window.SloopI18n?.apply();
   }
   if (document.readyState === 'complete') mountPreferences();
   else document.addEventListener('DOMContentLoaded', mountPreferences, {once:true});
@@ -113,8 +114,8 @@
     if (!link) return;
     const path = new URL(link.href, location.href).pathname;
     const match = path.match(/\.(zip|fwsc)$/i);
-    if (match) window.FeluccaAnalytics.track('download_click', {file_type: match[1].toLowerCase()});
+    if (match) window.SloopAnalytics.track('download_click', {file_type: match[1].toLowerCase()});
   });
-  document.addEventListener('felucca:theme-change', () => window.FeluccaAnalytics.track('theme_changed'));
+  document.addEventListener('sloop:theme-change', () => window.SloopAnalytics.track('theme_changed'));
   try { enable(); } catch (_) {}
 })();

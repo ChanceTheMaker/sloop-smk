@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import {parsePackage,installSmk} from './smk37-update.js';
-import {SMK_VERSION} from './smk-version.js?v=0.9.21';
+import {SMK_VERSION} from './smk-version.js?v=2.6.0-b1';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const localPreview=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 let candidate,busy=false;
 const sync=()=>{button.disabled=busy||!candidate||!ack.checked||!navigator.requestMIDIAccess;};
 const log=message=>{status.textContent=message;output.textContent+=message+'\n';};
 ack.addEventListener('change',sync);
+window.addEventListener('beforeunload',event=>{if(busy){event.preventDefault();event.returnValue='';}});
 try{
  if(!localPreview)throw Error('Public firmware installation is being prepared. You can use Studio and Simulator now without installing firmware.');
  const r=await fetch(new URL('./smk37-candidate.json',import.meta.url),{cache:'no-store'});

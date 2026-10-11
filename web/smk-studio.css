@@ -119,3 +119,9 @@
 @media(max-width:1050px) { .section-grid { grid-template-columns:1fr; } .sim-top { gap:12px; } .smk-simulator-shell { padding:20px 14px; } .sim-encoder small { display:none; } .sim-pads { gap:6px; padding:8px; } .sim-piano { height:150px; } }
 @media(max-width:700px) { #groups { grid-template-columns:1fr; } .section-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } #smk-simulator { overflow:auto; } .smk-simulator-shell { min-width:660px; } .sim-toolbar { position:sticky; left:0; } #session-status { width:100%; } }
 @media(max-width:480px) { .section-grid { grid-template-columns:1fr; } }
+
+body[data-editor-view="firmware"] :is(.panel,#tabs,#trackbar,.play-keyboard,.keyboard-pull-tab){display:none!important}
+#firmware-view{margin:24px auto;max-width:1400px}#firmware-view.sim-expanded{max-width:none}
+
+
+.sim-pad-shortcut{display:block;font:10px/1.4 system-ui,sans-serif;opacity:.85;pointer-events:none}
