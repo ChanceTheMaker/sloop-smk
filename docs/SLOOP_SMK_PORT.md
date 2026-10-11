@@ -2,13 +2,12 @@
 
 ## Current local candidate (2026-10-11)
 
-Public installer remains **2.6.0-b2**. Local **b7** adds the oscilloscope redraw
-fix on top of the b5/b6 persistence and TRS checks. Hardware and browser builds,
-visualizer scheduler regression and offline loader test pass. B7 is staged at
-localhost:8774, not flashed or published. See [candidate release notes](SLOOP_SMK_CANDIDATE.md)
-for current features, hashes, completed evidence and deferred checks. Existing
-b2 audio tests stand; no further routine recording is requested. Physical sample
-testing remains deferred. No upstream contribution or public migration rollout.
+B7 is the selected public beta after the owner's screen confirmation and
+publication authorization. It includes the b5/b6 persistence and TRS work;
+see [release notes](SLOOP_SMK_CANDIDATE.md) for exact artifacts and version-specific
+evidence. Source and public application are published together. Sample hardware
+testing remains deferred; prior b2 audio evidence is retained without repeat
+recordings. No upstream contribution or public legacy-migration workflow.
 
 The entries below retain their historical versions and validation status.
 
