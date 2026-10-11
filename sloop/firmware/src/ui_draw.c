@@ -374,7 +374,7 @@ static uint32_t graph_signature(void)
         for (i = 0; i < 4u; i++)
             h = str_hash(str_hash(str_hash(h ^ ui.big_c[i] * 31u, ui.big_v[i]), ui.big_l[i]), ui.big_u[i]);
     if (ui.home)
-        return h ^ (ui.frame / 2u);                  /* scope: redraw every other frame */
+        return h ^ ui.frame;                        /* scope: follow every UI tick */
     h ^= (uint32_t)pg->graph * 131u + TSEL->eng_req + song.sel * 7777u;
     for (i = 0; i < P_COUNT; i++)
         h = (h ^ (uint32_t)t->p[i]) * 16777619u;
@@ -453,7 +453,7 @@ static void graph_slots(void)
         if (sel)
             cv_rect(4, y + 6, 3, 3, C_WHITE);
         cv_text(14, y, &FONT_S, b, sel ? C_WHITE : C_GRAY);
-        cv_text(40, y, &FONT_S, project_used(i) ? "USED" : "EMPTY", project_used(i) ? (sel ? C_WHITE : C_HI) : C_DIM);
+        cv_text(40, y, &FONT_S, project_slot_label(i), project_used(i) ? (sel ? C_WHITE : C_HI) : C_DIM);
     }
 }
 

@@ -528,20 +528,43 @@ static void proj_fetch(uint32_t slot)
 #include "fm6_bank.c"                           /* the FM6 patch bank (eng_fm6.c PTCH B1..B27): staged in proj_tmp */
 #endif
 
-static void project_save(uint32_t slot)
+static project_t autosave_buf __attribute__((section(".pool")));
+
+/* Save result: 0 accepted, 1 transport busy, 2 flash unavailable, 3 write failed, 4 protected slot.
+ * SMK hardware publishes the RAM slot only after a verified flash commit. */
+static uint32_t project_save(uint32_t slot)
 {
     project_t *p = &proj_slot[slot & 3u];
 #if FELUCCA_ARRANGER
-    if (song.playing || transport_req) { ui_message("STOP BEFORE SAVE"); return; }
+    if (song.playing || transport_req) { ui_message("STOP BEFORE SAVE"); return 1; }
 #endif
+#if defined(SLOOP_SMK) && FELUCCA_FLASH
+    if (!flash_ok) { ui_message("NOT SAVED: NO FLASH"); return 2; }
+#ifdef SLOOP_PROJECT_WRITABLE
+    if (!SLOOP_PROJECT_WRITABLE(slot)) { ui_message("NOT SAVED: SLOT LOCKED"); return 4; }
+#endif
+    proj_capture(&autosave_buf);
+    int rc = st_save(OBJ_PROJECT0 + (slot & 3u), &autosave_buf, sizeof autosave_buf);
+    if (rc) {
+        char b[12]; fmt_int(b, rc); ui_say("FLASH ERROR ", b);
+        return 3;
+    }
+    memcpy(p, &autosave_buf, sizeof *p);
+    sec_dirty &= (uint8_t)~(1u << (slot & 3u));
+    ui_message("SAVED");
+    return 0;
+#else
     proj_capture(p);
 #if FELUCCA_FLASH
     if (flash_ok) {
-        ui_message(st_save(OBJ_PROJECT0 + (slot & 3u), p, sizeof *p) ? "SAVE ERROR" : "SAVED");
-        return;
+        uint32_t rc = st_save(OBJ_PROJECT0 + (slot & 3u), p, sizeof *p) ? 3u : 0u;
+        ui_message(rc ? "SAVE ERROR" : "SAVED");
+        return rc;
     }
 #endif
     ui_message("SAVED (RAM)");
+    return 0;
+#endif
 }
 
 /* SAVE > PROJECT > ERASE (SLOOP 2.6, after a YouTube comment): the slot (section A..D) empty again. In flash as the
@@ -620,7 +643,6 @@ static void project_load(uint32_t slot)
  * ~50 ms: never while something plays); loaded at power-on (autosave_resume) */
 #define AUTOSAVE_IDLE 2500u                    /* ms without input */
 #define AUTOSAVE_GAP 20000u                    /* ms between two saves at least */
-static project_t autosave_buf __attribute__((section(".pool")));
 static uint32_t autosave_hash, autosave_ms, autosave_checked;
 
 static int audio_quiet(void)
@@ -789,6 +811,15 @@ static void persist_boot(void)                    /* before settings_init / pane
 }
 
 static int project_used(uint32_t slot) { return proj_ok(&proj_slot[slot & 3u]); }
+static const char *project_slot_label(uint32_t slot)
+{
+#ifdef SLOOP_PROJECT_WRITABLE
+    if (!flash_ok) return "NO FLASH";
+    if (!SLOOP_PROJECT_WRITABLE(slot)) return "LOCKED";
+#endif
+    return project_used(slot) ? "USED" : "EMPTY";
+}
+
 
 #if FELUCCA_FLASH
 /* SLOOP 2.5: the settings object holds the SYN kits after persist_t (drum_synth.c dsu): firmware before 2.5 reads

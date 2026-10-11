@@ -8,8 +8,15 @@
 /* ------------------------------------------------------------ menu --- */
 enum { MI_COLOR, MI_ZOOM, MI_LIGHTS, MI_KEYS, MI_NOTES, MI_LOWCUT, MI_USB, MI_SERIAL, MI_PANEL, MI_LCLEAR, MI_ABOUT,
        MI_COUNT };
+#ifdef SLOOP_SMK
+static const char *const MI_NAME[MI_COUNT] = {"COLOR", "ZOOM", "PAD BRIGHTNESS", "PAD HITS", "PAD LIGHT TEST", "LOWCUT", "USB AUDIO",
+                                              "TRS MIDI OUT", "USER SAMPLES", "MIDI LEARN CLEAR", "ABOUT"};
+static uint32_t smk_sample_confirm_at;
+static uint8_t smk_sample_confirm,smk_pad_light_test;
+#else
 static const char *const MI_NAME[MI_COUNT] = {"COLOR", "ZOOM", "LIGHTS", "KEYS", "NOTES", "SPEAKER LOWCUT", "USB AUDIO",
                                               "USB SERIAL", "HARDWARE CALIBRATION", "MIDI LEARN CLEAR", "ABOUT"};
+#endif
 enum { MS_SCREEN, MS_LIGHTS, MS_AUDIO, MS_SYSTEM, MS_COUNT };
 static const char *const MS_NAME[MS_COUNT] = {"SCREEN", "LIGHTS", "AUDIO", "SYSTEM"};   /* (AUDIO: and USB) */
 static const uint8_t MS_FIRST[MS_COUNT + 1] = {MI_COLOR, MI_LIGHTS, MI_LOWCUT, MI_PANEL, MI_COUNT};   /* rows of each */
@@ -36,12 +43,46 @@ static const char *mi_value(uint32_t i, uint16_t *c)
     case MI_ZOOM: return settings.zoom ? "ON" : "OFF";
     case MI_LIGHTS: return LIGHTS_NAME[lights_lvl % LIGHTS_N];
     case MI_KEYS:
+#ifdef SLOOP_SMK
+        return lights_lvl?"BLUE":"OFF";
+#endif
         *c = lights_lvl ? C_HI : C_DIM;               /* (needs LIGHTS) */
         return KEYS_NAME[lights_keys % KEYS_N];
-    case MI_NOTES: return lights_notes ? "ON" : "OFF";
+    case MI_NOTES:
+#ifdef SLOOP_SMK
+#ifdef SLOOP_SMK_HARDWARE
+        if(!smk_pad_light_test)return "PLAY";
+        if(smk_pad_light_test==1)return "ALL OFF";
+        {static char b[20];unsigned p=smk_pad_light_test-2;
+         str_cpy(b,"PAD ",sizeof b);fmt_int(b+4,(int)(p%16)+1);
+         str_cpy(b+str_len(b),p<16?" BLUE":p<32?" GREEN":" RED",8);return b;}
+#else
+        return "DEVICE ONLY";
+#endif
+#endif
+        return lights_notes ? "ON" : "OFF";
     case MI_LOWCUT: return settings.lowcut ? "ON" : "OFF";
     case MI_USB: return usb_full ? "FULL" : "MASTER";
-    case MI_SERIAL: return usb_serial ? "ON" : "OFF";
+    case MI_SERIAL:
+#ifdef SLOOP_SMK
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_TRS
+        return smk37_trs_enabled?"ON":"OFF";
+#else
+        return "DEVICE ONLY";
+#endif
+#else
+        return usb_serial ? "ON" : "OFF";
+#endif
+#ifdef SLOOP_SMK
+    case MI_PANEL:
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
+        if(sloop_samples_owned)return "3 SLOTS READY";
+        if(smk_sample_confirm && (uint32_t)(fm1_ms-smk_sample_confirm_at)<10000u)return "REPLACE OEM? OCT+";
+        return "OCT+ TO PREPARE";
+#else
+        return "DEVICE ONLY";
+#endif
+#endif
     case MI_LCLEAR: {                                 /* (2.6) the CCs MIDI LEARN holds; OCT+ clears them */
         static char b[8];
         uint32_t n = ml_count();
@@ -65,6 +106,10 @@ static void draw_menu(void)
     uint32_t sig = ui.menu * 7u + ui.menu_sel * 131u + settings.palette * 1009u + settings.lowcut * 7919u +
                    settings.zoom * 104729u + lights_lvl * 1299709u + lights_keys * 15485863u + ml_count() * 2654435u +
                    lights_notes * 32452843u + usb_full * 49979687u + usb_serial * 86028121u;
+    #ifdef SLOOP_SMK
+    sig+=smk37_trs_enabled*86028121u+smk_pad_light_test*49979687u;
+    if(smk_sample_confirm && (uint32_t)(fm1_ms-smk_sample_confirm_at)>=10000u){smk_sample_confirm=0;ui.force=1;}
+#endif
     if (!ui.force && sig == ui.menu_sig)
         return;
     ui.menu_sig = sig;
@@ -118,7 +163,13 @@ static void draw_menu(void)
                 int cur = i == ui.menu_sel;
                 uint16_t vc;
                 const char *v = mi_value(i, &vc);
-                char k[4] = {'K', (char)('1' + r), 0, 0};
+                char k[4] = {'K', (char)(
+#ifdef SLOOP_SMK
+                    '5'
+#else
+                    '1'
+#endif
+                    + r), 0, 0};
                 cv_rect(4, y + 2, 4, MI_DY - 8, cur ? C_WHITE : TE_COL[r & 3u]);   /* the knob's colour */
                 xv = cv_text(14, y, &FONT_S, k, TE_COL[r & 3u]);
                 cv_text(xv + 6, y, &FONT_S, MI_NAME[i], cur ? C_WHITE : C_GRAY);
@@ -134,10 +185,18 @@ static void draw_menu(void)
                     for (q = 0; q < 5u; q++)
                         cv_rect(xv + 10 + (int32_t)q * 14, y + 28, 10, 10, pal[q]);
                 }
+                #ifndef SLOOP_SMK
                 if (i == MI_SERIAL && usb_serial != usb_cdc_now())
                     cv_text(xv + 8, y + 30, &FONT_S, "RESTART", C_AMB);   /* (usb.c: at the next start) */
+#endif
             }
-            cv_text(4, MI_Y0 + 3 * MI_DY + 6, &FONT_S, "SELECT SECTION  KNOB SETS", C_DIM);
+            cv_text(4, MI_Y0 + 3 * MI_DY + 6, &FONT_S,
+#ifdef SLOOP_SMK
+                    "K2 SECTION  K5-7 SET"
+#else
+                    "SELECT SECTION  KNOB SETS"
+#endif
+, C_DIM);
             cv_text(4, MI_Y0 + 3 * MI_DY + 22, &FONT_S, "OCT+ OK   OCT- CLOSE", C_DIM);   /* (rows .. 218) */
         }
         cv_oy = 0;
@@ -158,6 +217,9 @@ static void menu_close(void)
         settings_later = 1;                            /* (a flash write stops the audio: once stopped) */
     else
         settings_save();                               /* palette / panel table, if changed */
+#ifdef SLOOP_SMK
+    smk_pad_light_test=smk_sample_confirm=0;
+#endif
     ui.menu = 0;
     ui.force = 1;
     go_home();
@@ -182,13 +244,28 @@ static void mi_set(uint32_t i, int32_t s)
         usb_full = (uint8_t)(s > 0 ? 1u : s < 0 ? 0u : !usb_full);
         break;
     case MI_SERIAL:
+#ifdef SLOOP_SMK
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_TRS
+        smk37_trs_enabled=(uint8_t)(s>0?1:s<0?0:!smk37_trs_enabled);
+#endif
+        break;
+#endif
         usb_serial = (uint8_t)(s > 0 ? 1u : s < 0 ? 0u : !usb_serial);
         break;
     case MI_NOTES:
+#ifdef SLOOP_SMK
+#ifdef SLOOP_SMK_HARDWARE
+        smk_pad_light_test=(uint8_t)((smk_pad_light_test+(s<0?49:1))%50);
+#endif
+        break;
+#endif
         lights_notes = (uint8_t)(s > 0 ? 1u : s < 0 ? 0u : !lights_notes);
         break;
     case MI_LIGHTS:
-    case MI_KEYS: {                                    /* brighter / dimmer (stops at the ends); OCT+ steps round */
+    case MI_KEYS: {
+#ifdef SLOOP_SMK
+        if(i==MI_KEYS)break;
+#endif                                    /* brighter / dimmer (stops at the ends); OCT+ steps round */
         uint8_t *v = i == MI_LIGHTS ? &lights_lvl : &lights_keys;
         uint32_t n = i == MI_LIGHTS ? LIGHTS_N : KEYS_N;
         if (s > 0 && *v + 1u < n)
@@ -207,7 +284,19 @@ static void mi_set(uint32_t i, int32_t s)
         break;
     case MI_PANEL:                                     /* actions: OCT+ only */
         if (!s) {
+#ifdef SLOOP_SMK
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
+            if(sloop_samples_owned)ui_message("SAMPLES ALREADY READY");
+            else if(!flash_ok || song.playing || transport_req)ui_message("STOP - CHECK STORAGE");
+            else if(smk_sample_confirm && (uint32_t)(fm1_ms-smk_sample_confirm_at)<10000u){
+                smk_sample_confirm=0;sloop_samples_requested=1;
+            }else{smk_sample_confirm=1;smk_sample_confirm_at=fm1_ms;}
+#else
+            ui_message("DEVICE STORAGE ONLY");
+#endif
+#else
             panel_setup();
+#endif
             ui.force = 1;
         }
         break;
@@ -228,6 +317,9 @@ static void menu_input(uint32_t pressed)
     int32_t s;
     uint32_t k, ok = (pressed >> panel.btn[B_OCTUP]) & 1u, back = (pressed >> panel.btn[B_OCTDN]) & 1u;
     uint32_t sel = ui.menu_sel % MI_COUNT, sec = mi_sec(sel), n = MS_FIRST[sec + 1u] - MS_FIRST[sec];
+#ifdef SLOOP_SMK
+    if(back || sel!=MI_PANEL)smk_sample_confirm=0;
+#endif
     if (back) {
         if (ui.menu == 2)
             ui.menu = 1, ui.force = 1;
@@ -239,7 +331,10 @@ static void menu_input(uint32_t pressed)
         enc_drop();
         return;
     }
-    if ((s = panel_enc(EN_SELECT)) != 0) {             /* the section before / after (stops at the ends) */
+    if ((s = panel_enc(EN_SELECT)) != 0) {
+#ifdef SLOOP_SMK
+        smk_sample_confirm=0;
+#endif             /* the section before / after (stops at the ends) */
         int32_t to = clamp((int32_t)sec + (s > 0 ? 1 : -1), 0, MS_COUNT - 1);
         if ((uint32_t)to != sec) {
             ui.menu_sel = MS_FIRST[to];

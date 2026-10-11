@@ -21,18 +21,20 @@ import build
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--enable-storage',action='store_true',help='Build b2 with guarded native object persistence; no sample writes')
+    parser.add_argument('--enable-storage',action='store_true',help='Enable guarded native project/preset persistence')
+    parser.add_argument('--enable-samples',action='store_true',help='Candidate physical samples; explicit on-device initialization required')
+    parser.add_argument('--enable-trs',action='store_true',help='Candidate SMK TRS MIDI output')
     parser.add_argument('--skip-generate',action='store_true')
     parser.add_argument('--usb-test-number',type=int,default=None,choices=range(30,100))
     args = parser.parse_args()
-    if args.usb_test_number is None: args.usb_test_number=31 if args.enable_storage else 30
-    version="SLOOP SMK 2.6.0-b2" if args.enable_storage else "SLOOP SMK 2.6.0-b1"
+    if args.enable_samples and not args.enable_storage: parser.error('--enable-samples requires --enable-storage')
+    if args.usb_test_number is None: args.usb_test_number=36
+    version="SLOOP SMK 2.6.0-b7"
     args.public_release=True
     args.enable_saves=args.enable_presets=args.enable_storage
-    args.enable_samples=args.enable_trs=False
     args.enable_usb_audio=args.enable_usb_update=True
     evidence=None
-    out=build.SRC/('build/sloop-smk-2.6.0-b2' if args.enable_storage else 'build/sloop-smk-2.6.0-b1')
+    out=build.SRC/('build/sloop-smk-'+version.removeprefix('SLOOP SMK '))
     out.mkdir(parents=True,exist_ok=True)
     build.GEN=out/'gen';build.GEN.mkdir(parents=True,exist_ok=True)
     (build.GEN/'smk37_unit.h').write_text(

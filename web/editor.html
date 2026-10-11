@@ -818,7 +818,7 @@ const parse = {
   },
   [CMD.STEP_SET](a) { return parse[CMD.STEP_GET](a); },
   [CMD.PRESET](a) { const r = new Reader(a); return { engine: r.b(), preset: r.b() }; },
-  [CMD.PROJECT](a) { const r = new Reader(a); return { op: r.b(), slot: r.b(), used: r.b(), busy: a.length > 3 && a[3] === 1 }; },
+  [CMD.PROJECT](a) { const r = new Reader(a); return { op: r.b(), slot: r.b(), used: r.b(), status: a.length > 3 ? a[3] : null, busy: a.length > 3 && a[3] === 1 }; },
   [CMD.NAMES](a) {
     const r = new Reader(a);
     const o = { engine: r.b(), names: [] };
@@ -3810,7 +3810,7 @@ const TEXT = {
     kitUsing: "Drum track KIT: ", kitNoKit: "This firmware's drum track has no USR kits (SLOOP 2.4 and later).",
     kitConfirm: "Replace {x} with this kit?", kitAssigned: "Sorted: ",
     kitFull: "All 16 pads are taken", kitLoaded: "ZIP opened: ",
-    needDevice: "Connect the SMK-37 to edit.", smpNone: "This firmware has no user sample slots.",
+    needDevice: "Connect the SMK-37 to edit.", smpNone: "This firmware has no user sample slots.", smpPrepare: "Device sample slots are not initialized. Hold PATCH, select SYSTEM > USER SAMPLES, then confirm preparation and reconnect. Preparation replaces the factory sample contents.",
     bankConnect: "Connect the SMK-37 to see its user presets too.", bankNone: "This firmware has no user presets.",
     drumNote: "The drum track has no engine or presets. Level, pan and mute: Tracks; the kit and the pattern: Sequencer.",
     drumGridHelp: "Click: a hit / clear it (same level and roll). Shift+click: a hit one level louder (GHOST, SOFT, NORM, HARD). The 16 sounds of the white keys F3..G5.",
@@ -3938,7 +3938,7 @@ const TEXT = {
 };
 let lang = window.SloopI18n.language;
 let browserMode = false, browserSynth = null;
-const t = (k) => browserMode && window.SloopLocales.en['audio.editor.' + k] ? window.SloopI18n.t('audio.editor.' + k) : TEXT[lang][k] ?? k;
+const t = (k) => browserMode && window.SloopLocales.en['audio.editor.' + k] ? window.SloopI18n.t('audio.editor.' + k) : TEXT[lang][k] ?? TEXT.en[k] ?? k;
 let lastKey = null, lastArg = "";
 const ERR_KEYS = /fail|error|denied|nomidi|nodevice|noreply|lost|refused|full|bad/i;
 function sayK(k, arg = "") {
@@ -4000,7 +4000,7 @@ function renderPanels() {
     const mine = p.dataset.tab === want;
     let show = mine && (!("dev" in p.dataset) || ready);
     if (mine && "dev" in p.dataset && !dev) hint = "needDevice";   /* (while connecting the status line says it) */
-    if (show && (want === "samples" || want === "kits") && !dev.smp) { show = false; hint = "smpNone"; }
+    if (show && (want === "samples" || want === "kits") && !dev.smp) { show = false; hint = !browserMode && /^SLOOP SMK 2\.6\.0-b[34567]\b/.test(dev.info.version) ? "smpPrepare" : "smpNone"; }
     p.hidden = !show;
   }
   $("hint").hidden = !hint;
@@ -4230,8 +4230,9 @@ async function load(d) {
       d.names[e] = r.names;
       d.titles[e] = r.titles;
     }
-    for (let k = 0; k < 4; k++) {                    /* PROJECT op 2: is the slot used */
-      try { d.slotUsed[k] = parse[CMD.PROJECT](await d.link.request(req.project(2, k))).used; }
+    d.slotStatus = [];
+    for (let k = 0; k < 4; k++) {                    /* PROJECT op 2: occupancy and optional storage status */
+      try { const r = parse[CMD.PROJECT](await d.link.request(req.project(2, k))); d.slotUsed[k] = r.used; d.slotStatus[k] = r.status; }
       catch (e) { if (e.message === "closed") throw e; }
     }
     try { d.smp = parse[CMD.SMP_INFO](await d.link.request(req.smpInfo())); }
@@ -4655,18 +4656,19 @@ function refreshAll() {
 }
 function report(err) { if (err && err.message !== "closed") { console.warn(err); sayK("error", err.message); } }
 
-/* projects: the protocol cannot ask whether a slot is used without loading or saving it */
+/* Query replies distinguish protected physical slots when the firmware supports it. */
 function renderSlots() {
   const box = $("slots");
   box.replaceChildren();
   for (let i = 0; i < 4; i++) {
-    const u = dev.slotUsed[i];
+    const u = dev.slotUsed[i], status = dev.slotStatus?.[i];
+    const locked = status === 4, unavailable = status === 2;
     box.append(el("div", { class: "slot" + (u ? " used" : "") },
       el("b", { text: String(i + 1) }),
-      el("span", { class: "st", text: u == null ? t("unknown") : t(u ? "used" : "empty") }),
+      el("span", { class: "st", text: locked ? "Protected data" : unavailable ? "Storage unavailable" : u == null ? t("unknown") : t(u ? "used" : "empty") }),
       el("p", { class: "bar" },
         el("button", { class: u ? "pri" : null, ic: "symbol_folder_open", onclick: () => project(0, i) }, t("load")),
-        el("button", { ic: "port_disk", onclick: () => project(1, i) }, t("save")))));
+        el("button", { ic: "port_disk", disabled: locked || unavailable, title: locked ? "Existing flash data is protected; it has not been erased." : unavailable ? "Device flash storage is unavailable." : "", onclick: () => project(1, i) }, t("save")))));
   }
 }
 async function project(op, slot) {
@@ -4677,11 +4679,21 @@ async function project(op, slot) {
     /* save writes flash: a long timeout and no retry */
     if (!op) selfLoad();
     const r = parse[CMD.PROJECT](await rq(req.project(op, slot), { timeout: 4000, retries: 0 }));
+    if (r.status === 2 || r.status === 4 || r.status === 0) {
+      (dev.slotStatus ??= [])[slot] = r.status;
+      renderSlots();
+    }
     if (r.busy) throw new Error("Stop playback before loading or saving a section.");
+    if (r.status === 2) throw new Error("Not saved: device flash storage is unavailable. Keep the device on while investigating.");
+    if (r.status === 3) throw new Error("Not saved: flash write failed or the slot is protected. Keep the device on while investigating.");
+    if (r.status === 4) throw new Error("Not saved: this slot contains older, unrecognized or incomplete flash data and is protected. Try a different slot; do not erase it without a backup.");
+    if (r.status !== null && r.status !== 0) throw new Error("The device did not complete the project operation.");
     dev.slotUsed[slot] = r.used;
     renderSlots();
     if (!op && r.used) await afterSoundChange();
-    sayK(op ? "savedSlot" : r.used ? "loadedSlot" : "emptySlot", String(slot + 1));
+    if (op && !browserMode && r.status === null)
+      say("Save requested for slot " + String(slot + 1) + ". This firmware does not confirm flash persistence; check the device's save message.");
+    else sayK(op ? "savedSlot" : r.used ? "loadedSlot" : "emptySlot", String(slot + 1));
   } catch (err) { report(err); } finally { busy--; }
 }
 

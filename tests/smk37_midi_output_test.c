@@ -28,6 +28,18 @@ int main(void){
     unsigned pending=smk37_trs_queue.write;smk37_trs_output(0x643d9009);assert(smk37_trs_queue.write==pending);
     for(unsigned i=0;i<15;++i){SMK37_UART_REG(0x12100)|=0x8000;smk37_trs_poll();}
     assert(!smk37_trs_running&&smk37_trs_bytes==150); /* 6 note bytes + 16*9 panic bytes */
+    /* Disabling with a genuinely held note must send an explicit Note Off
+     * before shutting UART down, even if the receiver ignores channel-mode CCs. */
+    SMK37_UART_REG(0x12100)&=~0x8000u;
+    smk37_trs_enabled=1;smk37_trs_configure();smk37_trs_output(0x64409209);smk37_trs_poll();
+    smk37_trs_enabled=0;smk37_trs_configure();
+    uint8_t shutdown[256];unsigned count=0;
+    for(unsigned i=0;i<20 && smk37_trs_running;i++){
+        SMK37_UART_REG(0x12100)|=0x8000;smk37_trs_poll();
+        if(smk37_trs_busy){assert(count+smk37_trs_dma_count<=sizeof shutdown);memcpy(shutdown+count,smk37_trs_dma,smk37_trs_dma_count);count+=smk37_trs_dma_count;}
+    }
+    assert(!smk37_trs_running&&count==147&&!memcmp(shutdown+144,(uint8_t[]){0x82,64,0},3));
+    SMK37_UART_REG(0x12100)&=~0x8000u;
     smk37_trs_enabled=1;smk37_trs_configure();smk37_trs_output(0x643c9009);smk37_trs_poll();
     now=24000001;smk37_trs_poll();assert(!smk37_trs_running&&!smk37_trs_enabled&&smk37_trs_faults==1);
     puts("SMK TRS: OFF startup, stock mux masks, DMA ownership/completion, disable panic and stalled-UART timeout passed");

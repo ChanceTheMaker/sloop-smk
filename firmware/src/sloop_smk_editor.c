@@ -19,4 +19,7 @@ static int fl_write(uint32_t a,const void*p,uint32_t n){uint8_t*d=sloop_sample_a
 #if !FELUCCA_FLASH
 static int ed_flash_busy(void){return song.playing || transport_req;}
 #endif
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
+#define SLOOP_ED_SAMPLES 1
+#endif
 #include "../../sloop/firmware/src/editor.c"

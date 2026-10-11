@@ -92,7 +92,11 @@ static uint8_t usb_serial;                      /* menu USB SERIAL: 1 = the seri
 static uint8_t vis_style;                       /* the visualiser's style, 0..11 (ui_vis.c) */
 static uint32_t lights_word(void)
 {
-    return (uint32_t)lights_lvl | (uint32_t)lights_keys << 4 | (uint32_t)(lights_notes != 0u) << 8 |
+    return
+#ifdef SLOOP_SMK
+           ((uint32_t)(smk37_trs_enabled != 0u) << 26) |
+#endif
+           (uint32_t)lights_lvl | (uint32_t)lights_keys << 4 | (uint32_t)(lights_notes != 0u) << 8 |
            (uint32_t)(rec_tempo != 0u) << 9 | (uint32_t)(rec_count != 0u) << 10 | (uint32_t)(usb_full != 0u) << 11 |
            (uint32_t)(lights_sync % 3u) << 12 | (uint32_t)(lights_mout != 0u) << 14 | (uint32_t)(lights_min == 1u) << 15 |
            (uint32_t)(usb_serial != 0u) << 16 | (uint32_t)(vis_style % 12u) << 17 |
@@ -100,6 +104,9 @@ static uint32_t lights_word(void)
 }
 static void lights_from_word(uint32_t w)
 {
+#ifdef SLOOP_SMK
+    smk37_trs_enabled=(uint8_t)((w>>26)&1u);
+#endif
     lights_lvl = (uint8_t)((w & 15u) < LIGHTS_N ? (w & 15u) : LIGHTS_OFF);
     lights_keys = (uint8_t)(((w >> 4) & 15u) < KEYS_N ? ((w >> 4) & 15u) : KEYS_OFF);
     lights_notes = (uint8_t)((w >> 8) & 1u);

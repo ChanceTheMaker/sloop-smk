@@ -6,7 +6,8 @@
  *   7 TAPE  8 LCD  9 BOUNCE  10 ORBIT  11 WIRES  12 SLOOP (the logo: the sail's bands are the tracks)
  * It reads what the audio already leaves for the UI: the scope buffers (audio.c, the mix at 22 kHz, left and
  * right, as if MASTER were all the way up: the picture does not follow the volume knob, even at 0), the tracks' peaks (fx.c / drums.c, as the TRACKS meters read them), the notes that started
- * (voice.c vis_hit) and the transport clock. Everything is drawn in the main loop, every other frame, in two
+ * (voice.c vis_hit) and the transport clock. Everything is drawn in the main loop (scope every frame,
+ * other styles every other frame), in two
  * bands of 120 rows (the canvas holds 124): no cost to the audio. */
 #define VIS_N 12u
 static const char *const VIS_NAME[VIS_N] = {"OSCILLOSCOPE", "SPECTRUM", "SPECTROGRAM", "LISSAJOUS", "VU METERS",
@@ -596,16 +597,16 @@ static void vis_sloop(void)
     }
 }
 
-/* the visualiser, every other frame: the update, then both bands */
+/* The scope follows every UI tick; heavier styles keep the half-rate budget.
+ * Each band is fully composed before transfer. Never clear the panel first:
+ * forced redraws (including live input) would expose a black frame. */
 static void vis_draw(void)
 {
     uint32_t pass;
-    if (!vis_shown_last || ui.force) {
-        vis_shown_last = 1;
-        lcd_fill(0, 0, 240, 240, C_BLACK);
-    } else if (ui.frame & 1u) {
+    if (vis_shown_last && !ui.force && vis_style % VIS_N != 0u && (ui.frame & 1u)) {
         return;
     }
+    vis_shown_last = 1;
     vis_update();
     for (pass = 0; pass < 2u; pass++) {
         cv_begin(240, 120, C_BLACK);
@@ -638,7 +639,7 @@ static void vis_draw(void)
         cv_oy = 0;
         cv_blit(0, pass * 120u);
     }
-    if (vis_name_t)
+    if (vis_name_t && !(ui.frame & 1u))
         vis_name_t--;
 }
 /* SELECT on the visualiser: the next / previous style (round) */

@@ -39,6 +39,13 @@ static void lcd_blit(uint32_t,uint32_t,uint32_t,uint32_t,const uint16_t*);
 static void lcd_fill(uint32_t,uint32_t,uint32_t,uint32_t,uint16_t);
 #include "sloop_smk_runtime.c"
 #include "sloop_smk_editor.c"
+#if FELUCCA_FLASH
+#include "sloop_smk_storage_diag.c"
+#include "sloop_smk_storage_reset.c"
+#endif
+#if SMK37_ENABLE_TRS
+#include "smk37_midi_output.c"
+#endif
 #include "smk37_loader_image.h"
 /* TIMER5 owns USB polling; never enter the SIE again from the editor loop. */
 static uint32_t ota_now_ms(void){return fm1_ticks()/24000u;}
@@ -49,6 +56,9 @@ static void sloop_usb_service(void){
     if(ota_frame_get(&p,&n)&&n==sizeof query&&!memcmp(p,query,n)){
         ota_frame_done();ota_wire_send(smk37_update_identity_wire,sizeof smk37_update_identity_wire);return;
     }
+#if FELUCCA_FLASH
+    if(ota_frame_get(&p,&n) && (sloop_storage_reset(p,n)||sloop_storage_diag(p,n))){ota_frame_done();return;}
+#endif
     ed_service();
     /* Unknown vendor frames must not wedge the one-frame receive queue. */
     if(ota_frame_get(&p,&n))ota_frame_done();
@@ -56,7 +66,7 @@ static void sloop_usb_service(void){
 
 volatile smk37_bootguard_t smk37_boot_state __attribute__((section(".noinit")));
 
-static int32_t smk37_dma[HALF_FRAMES * 4u] __attribute__((aligned(4)));
+static int32_t smk37_dma[HALF_FRAMES * 4u] __attribute__((aligned(4),section(".pool")));
 #if FELUCCA_FLASH
 static void sloop_storage_silence(void){memset(smk37_dma,0,sizeof smk37_dma);}
 #endif
@@ -183,10 +193,28 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 static void lcd_fill(uint32_t x,uint32_t y,uint32_t w,uint32_t h,uint16_t c){uint16_t row[240];if(w>240||x+w>240||y+h>240)return;for(unsigned i=0;i<w;i++)row[i]=swap16(c);for(unsigned i=0;i<h;i++)lcd_blit(x,y+i,w,1,row);}
 static uint8_t smk37_light_buffer[SMK37_LIGHT_BYTES] __attribute__((aligned(4)));
 static void smk37_light_service(void){
+    static uint32_t previous=UINT32_MAX;
+    static uint8_t failed;
+    if(failed)return;
+    static const uint8_t brightness[4]={0,2,4,8};
+    fm1_irq_off();
     smk37_scan_indicator_bits=sloop_get_status()[0];
-    smk37_light_encode_mask(smk37_light_buffer,sloop_pads,2,3);
-    if(!smk37_lights_send(smk37_light_buffer,4000000u))smk37_scan_indicator_bits=0;
+    uint16_t pads=smk37_pad_feedback_mask(&sloop_pad_feedback,fm1_ms);
+    unsigned level=brightness[lights_lvl%4],color=2;
+    if(smk_pad_light_test){
+        pads=smk_pad_light_test==1?0:(uint16_t)(1u<<((smk_pad_light_test-2)%16));
+        if(smk_pad_light_test>1){color=2-(smk_pad_light_test-2)/16;if(!level)level=2;}
+    }
+    fm1_irq_on();
+    /* Always show a physical hit when lights are enabled. Do not translate
+     * FM-1 piano-key or sequencer lighting into unrelated physical pads. */
+    uint32_t state=pads|(level<<16)|(color<<24);
+    if(state==previous)return;
+    smk37_light_encode_mask(smk37_light_buffer,pads,color,level);
+    if(smk37_lights_send(smk37_light_buffer,4000000u))previous=state;
+    else {failed=1;smk37_scan_indicator_bits=0;}
 }
+
 void smk37_audio_irq(void)
 {
     ++smk37_audio_irqs;
@@ -357,7 +385,7 @@ void smk37_cstart(const uint32_t *boot_parameters)
 #endif
 
 #if SMK37_ENABLE_SAMPLES
-        if(smk37_samples_owned)slc_store_poll();
+        sloop_samples_service();
 #endif
         if (smk37_scan_frames != health_scan && smk37_rendered != health_audio) {
             health_scan = smk37_scan_frames;
