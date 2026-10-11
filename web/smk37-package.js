@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Build locally from the owner's official package. Vendor binaries are never
 // fetched by this module or uploaded; the public download is our GPL app only.
-import {Package,crc16,sha256hex} from './fm1pkg.js';
-import {crc32,HEADER,LO,HI} from './smk37-update.js';
+import {Package,crc16,sha256hex} from './fm1pkg.js?v=2.6.0-b2-r1';
+import {crc32,HEADER,LO,HI} from './smk37-update.js?v=2.6.0-b2-r1';
 const profiles = Object.freeze({
   '2d98ce72530e71d617384963423820536f094501299e2cfec0a8d3c3fb6bcfb0': {model:'SMK-37 Pro',blocks:36,appBytes:619704},
   'b2ee38abfef3ae922e4eecdb8a551e14345300ae6f270265feacd33b6ef99cb6': {model:'SMK-37 Elite',blocks:20,appBytes:621320}
@@ -23,6 +23,7 @@ export function smkLogicalImage(bytes){
 }
 class SMKPackage extends Package {
   parseUfw(){
+    this.container=this.raw.slice();
     const {raw,blocks}=smkLogicalImage(this.raw);this.blocks=blocks;this.skew=blocks;
     const h=raw.slice();enc(h.subarray(0,64));this.ufw=h;this.nent=u16(h,8);
     if(this.nent<1||this.nent>128||64+this.nent*80>h.length||crc16(h.subarray(64,64+this.nent*80))!==u16(h,2))throw Error('SMK package directory checksum failed.');
@@ -38,18 +39,26 @@ class SMKPackage extends Package {
     }
     const matches=this.entries.filter(e=>e.type===0&&e.name==='flash.bin');
     if(matches.length!==1)throw Error('Expected one SMK flash payload.');
-    this.flashEntry=matches[0];this.flashFileOff=this.flashEntry.dataOff+blocks;this.flashSize=this.flashEntry.size;
+    // Pro's marker bytes extend into flash.bin: work in logical coordinates.
+    this.raw=raw;
+    this.flashEntry=matches[0];this.flashFileOff=this.flashEntry.dataOff;this.flashSize=this.flashEntry.size;
   }
   setProduct(name){
     if(name.length>this.blocks)throw Error('SMK product identity is too long.');
-    for(let i=0;i<this.blocks;i++){const value=i<name.length?(name.charCodeAt(i)+i+1)&255:125;if(i<name.length&&value===125)throw Error('Invalid product identity.');this.raw[i*48+47]=value;}
+    for(let i=0;i<this.blocks;i++){const value=i<name.length?(name.charCodeAt(i)+i+1)&255:125;if(i<name.length&&value===125)throw Error('Invalid product identity.');this.container[i*48+47]=value;}
   }
-  hdrFileOff(i){return i<this.blocks*47?Math.floor(i/47)*48+i%47:i+this.blocks;}
+  hdrFileOff(i){return i;}
+  serialize(){
+    const logical=super.serialize(),out=this.container.slice();
+    for(let i=0;i<this.blocks;i++)out.set(logical.subarray(i*47,i*47+47),i*48);
+    out.set(logical.subarray(this.blocks*47),this.blocks*48);
+    return out;
+  }
 }
 export async function buildSmkPublicPackage(stock,app,release){
   const profile=profiles[await sha256hex(stock)];
   if(!profile)throw Error('Choose the unmodified official SMK-37 Pro 016 or Elite 016 .fwsc file.');
-  if(!release||release.public!==true||!/^SMK-37_9\d\d$/.test(release.product)||typeof release.version!=='string'||!/^Felucca SMK [0-9.]+ Beta$/.test(release.version)||release.version.length>31||await sha256hex(app)!==release.sha256||app.length!==release.bytes||app.length%4||app.length<4||u32(app,0)!==0x00808104)throw Error('Public SMK application verification failed.');
+  if(!release||release.public!==true||!/^SMK-37_9\d\d$/.test(release.product)||typeof release.version!=='string'||!/^SLOOP SMK [0-9.]+-b[0-9]+$/i.test(release.version)||release.version.length>31||await sha256hex(app)!==release.sha256||app.length!==release.bytes||app.length%4||app.length<4||u32(app,0)!==0x00808104)throw Error('Public SMK application verification failed.');
   const pkg=new SMKPackage(stock);
   if(pkg.blocks!==profile.blocks||pkg.flashSize!==HI||pkg.appBase!==LO||pkg.appOff!==0x4120||pkg.app.size!==profile.appBytes||pkg.chipKey!==0x980f||crc32(pkg.flash.subarray(0,LO))!==0x3a04ad23)throw Error('Unsupported SMK flash layout.');
   const before=pkg.flash.slice();pkg.setApp(app);

@@ -24,8 +24,8 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 | Projects and user presets on hardware | RAM-only; lost at power-off | Persistent storage for four projects and 32 presets |
 | Settings, autosave and FM6 bank | No persistent hardware saves | Guarded native Sloop storage |
 | Boot splash | Initial SMK splash | Centered SLOOP SMK title; actual version in small gray text at the bottom |
-| Test status | Owner reports installation from the local page and playing on the SMK | Compiled; offline storage and package tests pass; device persistence tests pending |
-| Installer status | Staged in the maintainer's local installer | Private candidate; not staged or published |
+| Test status | Owner reports installation from the local page and playing on the SMK | Owner confirms installation and playback; offline tests pass; device persistence tests pending |
+| Installer status | Previous local candidate | Public beta installer; device persistence testing pending |
 
 The owner has played Sloop on the physical SMK. A complete check of controls, lights, USB audio and updater re-entry remains. Browser and host tests are tracked separately from device tests in the [port status](docs/SLOOP_SMK_PORT.md).
 
@@ -39,11 +39,18 @@ Host tests cover interrupted commits, recovery of the prior committed copy and r
 
 ## Installation and availability
 
-The current Sloop SMK installer is a **local test workflow for an SMK already running the Felucca SMK USB updater**. It is not yet a public stock-to-Sloop release. The owner reports successful installation over a normal USB connection.
+Open the [Sloop SMK installer](https://chancethemaker.github.io/sloop-smk/) in Chrome or Edge. The [Studio](https://chancethemaker.github.io/sloop-smk/editor.html) and [Simulator](https://chancethemaker.github.io/sloop-smk/simulator.html) also work without installing firmware.
 
-When a candidate is staged, close Studio and other MIDI apps, connect the SMK directly by USB, open the local homepage and follow the install prompts. Check the displayed candidate version before proceeding and leave power and USB connected throughout writing. Firmware updates replace the application; browser session exports are not device backups.
+1. Select **SMK-37 Pro** or **SMK-37 Elite**.
+2. Choose **First installation** for official 016 firmware, or **Update** for Felucca SMK 0.9.22 / Sloop SMK. Older private builds need a separate migration.
+3. The page downloads the checksum-verified official model-specific firmware and prepares b2 in the browser. An optional file selector is available if the automatic download fails.
+4. Close Studio and other MIDI apps, connect the SMK directly by USB, confirm the beta notice, and click **Install SMK beta**. Keep USB and power connected until completion.
 
-Cloning this repository supplies the source, Studio and Simulator. It does **not** supply the maintainer's private update package, calibration or device backups. Starting the preview server without a candidate enables the website but does not stage firmware. Browser Studio and Simulator require no firmware installation.
+The public download contains the GPL application only. Official firmware is fetched from a pinned external mirror and processed locally; private device backups and calibration are not published. The portable updater retains model/layout validation and each instrument's calibration. It writes the application area; b2 runtime storage follows the separate ownership rules above.
+
+The owner confirmed b2 installation and playback and explicitly approved this beta release with save/power-cycle testing still pending. The public stock-install path is host-tested, not yet confirmed on hardware. Browser session exports are not device backups.
+
+Cloning this repository includes the public app, Studio and Simulator. Running the preview server without a private candidate uses the public installer. A staged private candidate remains available only on localhost; add `?public` to preview the public path locally.
 
 ## Try locally
 
@@ -95,6 +102,7 @@ node web/audio/test_smk_worklet.mjs
 node web/test_midi_input.mjs
 node web/test_simulator_keys.mjs
 node web/test_smk37_update.mjs
+node web/test_smk37_public.mjs
 sh tools/test_smk37_public.sh
 
 # Native storage checks (Linux/WSL with a C compiler)

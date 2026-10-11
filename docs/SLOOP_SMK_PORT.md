@@ -1,4 +1,4 @@
-# Sloop SMK 2.6.0-b1 port status
+# Sloop SMK 2.6.0-b2 port status
 
 Upstream: isod89/sloop-fm1 main `4365a1d0075b9194de1c44826325abbd39751bc1` (2.6).
 SMK hardware baseline: Felucca SMK `fb03412`, with the subsequent 0.9.22 public updater validation changes retained.
@@ -44,19 +44,27 @@ Host tests passed all nine objects, distinct addresses, save/load, interruption 
 
 An interrupted first-ever save without any valid commit deliberately needs recovery; the firmware will not infer ownership from partial contents. Returning to Felucca after writing Sloop records does not convert those records: incompatible sectors may be refused by Felucca. Export backups before switching firmware. No existing Felucca project is silently migrated or overwritten.
 
-B2 is built and privately packaged, **not staged in the installer or flashed**. Localhost:8774 still serves b1 for the initial Sloop hardware boot/control check. Storage power-cycle and fault behavior still require a device pass.
+B2 is built, privately packaged and **staged at localhost:8774 at the owner's request**. The owner confirms b2 installation and playback; save and power-cycle testing are pending. Storage power-cycle and fault behavior still require a device pass.
 
 ## Not yet hardware validated
 
 The owner reports installing Sloop from the local webpage and playing it on the physical SMK. This confirms a basic boot/play check; the exact displayed version has not yet been read back. Exhaustive controls, LEDs, long-run audio and re-entry to the USB updater still need a device pass. Host tests and browser DSP tests are not device validation.
-In staged b1, hardware projects and presets are RAM-only and reset on power-off. Physical sample storage, TRS MIDI routing and Bluetooth are disabled. Browser virtual storage does not imply hardware storage support. Existing device flash data outside the application is preserved, not imported into Sloop.
+In the previous b1 candidate, hardware projects and presets are RAM-only and reset on power-off. Physical sample storage, TRS MIDI routing and Bluetooth are disabled. Browser virtual storage does not imply hardware storage support. Existing device flash data outside the application is preserved, not imported into Sloop.
 
-Next: first controlled hardware boot/audio/control check; confirm USB identity/editor and updater re-entry; then validate b2 persistence on device; physical sample integration, TRS routing and longer USB audio tests remain.
+Next: complete hardware controls/LED checks; confirm USB identity/editor and updater re-entry; then validate b2 persistence on device; physical sample integration, TRS routing and longer USB audio tests remain.
 
 ## Publication
 
-Private packages, baseline images and calibration remain in ignored `build/`. The source branch and browser assets may be pushed independently. No public Sloop firmware release or upstream contribution has been made by this round. Do not flash automatically.
+Private packages, baseline images and calibration remain in ignored `build/`. The source branch and browser assets may be pushed independently. The owner explicitly approved public b2 publication after confirming installation/playback, with save/power-cycle checks still pending. The public release publishes only the GPL app and prepares model-specific packages in the browser. No upstream contribution is included. Do not flash automatically.
 
 ## SMK splash
 
 The boot title is centered on the 240-by-240 display, with the build version in the small font, centered ten pixels above the bottom. The version comes from the firmware identity rather than a hard-coded b1 string. Sloop's native font renders the title as `SLOOP SMK`.
+
+## Public b2 release
+
+The installer supports official Pro/Elite 016 first installation and portable updates from Felucca SMK 0.9.22 or Sloop SMK. Official fixtures are SHA-checked against the pinned public mirror. Both models passed container/CRC round trips, protected-area checks, corruption rejection and the actual C loader host test (152 changed sectors on synthetic stock baselines; saved tails preserved). The Pro parser uses logical coordinates across its interleaved marker bytes, carried over from the proven Felucca public packaging fix.
+
+The web release allowlist contains only `public-release.json` and `sloop-smk-2.6.0-b2-app.bin`; no private update packages, device images or vendor firmware are staged. Application SHA-256 remains `f88fa4c828f1ca4f80c311ab2a3f2e2b35f9344cf5c1058ae78ac9aa7f1a2000`. Device b2 persistence and public stock-install testing remain pending.
+
+All 24 light/dark theme thumbnails were recaptured from the native browser Studio with the Sloop SMK header and b2 runtime label; gallery and hover-preview URLs are cache-busted.

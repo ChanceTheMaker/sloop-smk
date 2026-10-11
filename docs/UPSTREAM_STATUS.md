@@ -1,6 +1,6 @@
 # Current Sloop SMK integration
 
-2026-10-11: Sloop 2.6 source `4365a1d0075b9194de1c44826325abbd39751bc1` adapted on `integrate/sloop-2.6-smk`. See [Sloop port status](SLOOP_SMK_PORT.md) for the current artifact, tests and hardware limitations. B2 now adds opt-in native persistence with model/layout and per-object ownership validation; it is privately built but not flashed or staged. No upstream PR or public firmware release. The records below describe the inherited Felucca baseline.
+2026-10-11: Sloop 2.6 source `4365a1d0075b9194de1c44826325abbd39751bc1` adapted on `integrate/sloop-2.6-smk`. See [Sloop port status](SLOOP_SMK_PORT.md) for the current artifact, tests and hardware limitations. B2 now adds opt-in native persistence with model/layout and per-object ownership validation; it is privately built and staged at localhost:8774; the owner confirms b2 installation and playback; save/power-cycle testing is pending. Public b2 release authorized by the owner; save/power-cycle and stock-install hardware checks remain pending. No upstream PR. The records below describe the inherited Felucca baseline.
 
 # Upstream integration status
 
