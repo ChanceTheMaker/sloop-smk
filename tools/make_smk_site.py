@@ -19,7 +19,7 @@ def main():
     out.mkdir(parents=True)
     web = ROOT / 'web'
     for source in web.iterdir():
-        if source.is_file() and (source.suffix in ('.js', '.css', '.ttf', '.txt', '.svg', '.png') or
+        if source.is_file() and (source.suffix in ('.js', '.css', '.ttf', '.txt', '.svg', '.png', '.ico') or
                                 source.name in ('index.html', 'editor.html', 'simulator.html')):
             shutil.copy2(source, out / source.name)
     for name in ('fonts', 'screenshots'):
