@@ -2,9 +2,16 @@
  * Sloop 2.6 musical/UI core on SMK peripherals. No FM-1 GPIO or flash driver. */
 #include <stdint.h>
 #define FELUCCA_ARRANGER 1
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAVES
+#define FELUCCA_FLASH 1
+#else
 #define FELUCCA_FLASH 0
+#endif
 #define FELUCCA_ICONS 1
-#define FELUCCA_VERSION "SLOOP SMK 2.6.0-b1"
+#ifndef SLOOP_SMK_VERSION
+#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b1"
+#endif
+#define FELUCCA_VERSION SLOOP_SMK_VERSION
 #include "felucca_tables.h"
 #include "../../sloop/firmware/src/libc.c"
 static struct { volatile uint32_t notes,buttons; } fm1_in;
@@ -34,6 +41,9 @@ static void midi_out_event(uint32_t p){(void)p;}
 #include "../../sloop/firmware/src/arranger.c"
 #include "../../sloop/firmware/src/seq.c"
 #include "../../sloop/firmware/src/gfx.c"
+#if FELUCCA_FLASH
+#include "sloop_smk_storage.c"
+#endif
 #include "sloop_smk_ui.c"
 static uint8_t sloop_knob_bank,sloop_fader_bank,sloop_pad_bank;
 static uint64_t sloop_keys;
@@ -51,7 +61,12 @@ static void sloop_init(void){
     }
     TDRUM->p[P_E0]=DRUM_DEFAULT_KIT;song.master_q12=1024;
     memset(proj_slot,0,sizeof proj_slot);memset(up_bank,0,sizeof up_bank);
-    persist_boot();panel_init();settings_init();layers_init();bank_resolve();
+#if !FELUCCA_FLASH
+    persist_boot();
+#else
+    arr_defaults(&arrangement);
+#endif
+    panel_init();settings_init();layers_init();bank_resolve();
     settings.palette=4;palette_set(4);go_home();ui.force=1;
 #ifndef SLOOP_SMK_HARDWARE
     memset(sample_memory,255,sizeof sample_memory);
@@ -110,7 +125,7 @@ static void sloop_release(void){
     for(unsigned t=0;t<NPART;t++){midi_cc(&trk[t],64,0);trk[t].bend=0;}
     sloop_keys=sloop_pads=sloop_sustain=fm1_in.notes=fm1_in.buttons=0;edges_btn=notes_seen=0;memset(encs,0,sizeof encs);layer_unlock();ui.home_t0=ui.hold_kind=ui.step_held=0;lk_r=lk_w;panic_req=15;
 }
-static void sloop_tick(void){ui_input();ui_leds();ui_draw();sections_flush();}
+static void sloop_tick(void){ui_input();ui_leds();ui_draw();autosave_tick();sections_flush();}
 static uint32_t *sloop_get_status(void){
     uint32_t leds=0;for(unsigned k=2;k<18;k++){unsigned q=led_pos[panel.btn[(unsigned)sloop_buttons[k]]];if(q!=255&&((fm1_led[q>>3]>>(q&7))&1))leds|=1u<<k;}
     leds|=sloop_knob_bank|(sloop_fader_bank<<1);

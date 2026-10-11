@@ -51,6 +51,9 @@ static uint32_t st_crc32(const void *p, uint32_t n)   /* zlib CRC-32, 4 bits per
 
 static uint32_t st_sector(uint32_t obj, uint32_t copy)  /* flash offset of copy A (0) / B (1) */
 {
+#ifdef SLOOP_STORAGE_SECTOR
+    return SLOOP_STORAGE_SECTOR(obj, copy);
+#else
     if (obj == OBJ_SETTINGS)
         return 0xFC000u + copy * ST_SECTOR;
     if (obj == OBJ_AUTOSAVE)
@@ -60,9 +63,10 @@ static uint32_t st_sector(uint32_t obj, uint32_t copy)  /* flash offset of copy 
     if (obj >= OBJ_UPRESET0 && obj < OBJ_AUTOSAVE)
         return 0xDC000u + (obj - OBJ_UPRESET0) * 2u * ST_SECTOR + copy * ST_SECTOR;
     return 0x97000u + (obj - OBJ_PROJECT0) * 2u * ST_SECTOR + copy * ST_SECTOR;
+#endif
 }
 
-static uint8_t st_buf[ST_PAYLOAD_MAX] __attribute__((aligned(4)));
+static uint8_t st_buf[ST_PAYLOAD_MAX] __attribute__((aligned(4),section(".pool")));
 
 static int st_head(uint32_t obj, uint32_t copy, st_hdr_t *h)   /* commit record valid: 0 */
 {

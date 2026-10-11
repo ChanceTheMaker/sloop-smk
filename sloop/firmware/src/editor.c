@@ -96,9 +96,15 @@ static void ed_pack7(const uint8_t *p, uint32_t n)      /* pack7: a top-bits byt
         n -= k;
     }
 }
-static uint8_t ed_smp_buf[512] __attribute__((aligned(4)));
+static uint8_t ed_smp_buf[512] __attribute__((aligned(4),section(".pool")));
 static uint8_t ed_smp_open[SMP_USER_SLOTS];        /* SMP_BEGIN done, END not yet: WRITE / END may act */
-static uint32_t ed_smp_slot(uint32_t k) { return SMP_USER_OFF(k); }
+static uint32_t ed_smp_slot(uint32_t k) {
+#ifdef SLOOP_SMK_HARDWARE
+    (void)k;return 0x100000u; /* physical sample commands disabled */
+#else
+    return SMP_USER_OFF(k);
+#endif
+}
 static void ed_smp_inval(uint32_t k)
 {
     fm1_irq_off();

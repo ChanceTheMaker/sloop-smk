@@ -14,7 +14,9 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 - Browser sessions preserve virtual projects, user presets, four sample slots, synth drum kits, current FM6 voices and MIDI settings. Export a session file to keep an independent copy.
 - The hardware candidate includes the bounded SMK USB updater. Its image and a return-to-Felucca 0.9.22 package pass the host loader test.
 
-**Hardware status:** this Sloop candidate has not been flashed. Projects/presets are RAM-only on hardware and reset at power-off. Physical sample writes, TRS routing and Bluetooth are disabled. Existing Felucca flash storage is preserved. The browser's virtual sample/storage support does not imply physical storage support.
+A separate **2.6.0-b2 storage candidate** now builds and passes interruption/boundary tests for projects, presets, settings, autosave and FM6 banks. It refuses existing Felucca or unknown records. It is not staged or hardware-tested; see the [storage map and limits](docs/SLOOP_SMK_PORT.md).
+
+**Hardware status of staged b1:** this Sloop candidate has not been flashed. Projects/presets are RAM-only on hardware and reset at power-off. Physical sample writes, TRS routing and Bluetooth are disabled. Existing Felucca flash storage is preserved. The browser's virtual sample/storage support does not imply physical storage support.
 
 ## Try locally
 

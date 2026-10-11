@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
-/* Sloop SMK 2.6.0-b1 target. No FM-1 pin driver and no storage writes. */
+/* Sloop SMK target. Native UI/DSP, SMK peripherals and optional guarded storage. */
 #include <stdint.h>
 #define SLOOP_SMK_HARDWARE 1
 #define FELUCCA_OTA 1
@@ -7,7 +7,9 @@
 #define FELUCCA_UART 0
 #define FELUCCA_CDC 0
 #define FELUCCA_UAC 1
-#define FELUCCA_ID "SMK-37_930"
+#include "smk37_unit.h"
+#define FELUCCA_ID SMK37_UPDATE_PRODUCT
+#define SLOOP_SMK_VERSION SMK37_UPDATE_VERSION
 #include "fm1_time.h"
 #include "fm1_sys.h"
 #include "fm1_irq.h"
@@ -55,6 +57,9 @@ static void sloop_usb_service(void){
 volatile smk37_bootguard_t smk37_boot_state __attribute__((section(".noinit")));
 
 static int32_t smk37_dma[HALF_FRAMES * 4u] __attribute__((aligned(4)));
+#if FELUCCA_FLASH
+static void sloop_storage_silence(void){memset(smk37_dma,0,sizeof smk37_dma);}
+#endif
 static volatile uint32_t smk37_rendered, smk37_late, smk37_scan_frames;
 static volatile uint32_t smk37_audio_irqs;
 static volatile uint32_t smk37_frame_ticks, smk37_last_velocity;
@@ -310,8 +315,8 @@ void smk37_cstart(const uint32_t *boot_parameters)
     smk37_display_ok = (uint8_t)smk37_panel_init(&smk37_panel_io);
     /* One-shot branding; retain normal startup timing and USB identity. */
     lcd_fill(0,0,240,240,C_BLACK);
-    draw_text_box(0,96,240,&FONT_L,"SLOOP SMK",C_WHITE,1);
-    draw_text_box(0,214,240,&FONT_S,"2.6.0-B1",C_WHITE,1);
+    draw_text_box(0, (240 - FONT_L.h) / 2, 240, &FONT_L, "Sloop SMK", C_WHITE, 1);
+    draw_text_box(0, 240 - FONT_S.h - 10, 240, &FONT_S, SMK37_RELEASE_VERSION, RGB(156, 156, 156), 1);
     smk37_boot_state.stage = SMK37_BOOT_SCANNER;
     smk37_adc_init(&smk37_adc);
     /* Stock PC10 idle is low/output. Keep it defined between RGB frames. */
@@ -328,14 +333,9 @@ void smk37_cstart(const uint32_t *boot_parameters)
 #endif
     fm1_irq_enable_all();
     smk37_boot_state.stage = SMK37_BOOT_RUNNING;
-#if SMK37_ENABLE_SAVES
-    /* IRQs and audio/scanner are initialized before the read helpers restore
-     * interrupts. No auto-save: resume reads only and leaves transport stopped. */
-    if(!smk37_storage_probe()){
-        smk37_notice=smk37_restore_last?(smk37_session_resume()?"PROJECT SLOTS EMPTY":"PROJECT RESTORED"):"NEW SESSION";
-        if(smk37_up_ready)smk37_prefs_restore();
-    }else smk37_notice="STORAGE NEEDS RECOVERY";
-    smk37_notice_at=fm1_ms;
+#if FELUCCA_FLASH
+    /* Probe/read only after interrupts are initialized. No erase or format on boot. */
+    persist_boot();panel_init();settings_init();palette_set(settings.palette);autosave_resume();
 #endif
     for (;;) {
         uint32_t now = fm1_ticks();

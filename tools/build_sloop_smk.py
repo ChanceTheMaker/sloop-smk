@@ -21,13 +21,18 @@ import build
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--usb-test-number',type=int,default=30,choices=range(30,100))
+    parser.add_argument('--enable-storage',action='store_true',help='Build b2 with guarded native object persistence; no sample writes')
+    parser.add_argument('--skip-generate',action='store_true')
+    parser.add_argument('--usb-test-number',type=int,default=None,choices=range(30,100))
     args = parser.parse_args()
+    if args.usb_test_number is None: args.usb_test_number=31 if args.enable_storage else 30
+    version="SLOOP SMK 2.6.0-b2" if args.enable_storage else "SLOOP SMK 2.6.0-b1"
     args.public_release=True
-    args.enable_saves=args.enable_presets=args.enable_samples=args.enable_trs=False
+    args.enable_saves=args.enable_presets=args.enable_storage
+    args.enable_samples=args.enable_trs=False
     args.enable_usb_audio=args.enable_usb_update=True
     evidence=None
-    out=build.SRC/'build/sloop-smk-2.6.0-b1'
+    out=build.SRC/('build/sloop-smk-2.6.0-b2' if args.enable_storage else 'build/sloop-smk-2.6.0-b1')
     out.mkdir(parents=True,exist_ok=True)
     build.GEN=out/'gen';build.GEN.mkdir(parents=True,exist_ok=True)
     (build.GEN/'smk37_unit.h').write_text(
@@ -36,10 +41,12 @@ def main():
         '#define SMK37_UNIT_HEAD_CRC 0x3a04ad23u\n'
         '#define SMK37_UNIT_SAMPLE_CRCS {0,0,0}\n'
         f'#define SMK37_UPDATE_PRODUCT "SMK-37_9{args.usb_test_number:02d}"\n'
-        '#define SMK37_UPDATE_VERSION "SLOOP SMK 2.6.0-b1"\n')
+        f'#define SMK37_UPDATE_VERSION "{version}"\n'
+        f'#define SMK37_RELEASE_VERSION "{version.removeprefix("SLOOP SMK ")}"\n')
     from build_smk37_loader import build_loader
     build_loader(out,build.GEN,f"SMK-37_9{args.usb_test_number:02d}")
     for script,header in [('gen_tables.py','felucca_tables.h'),('gen_samples.py','felucca_samples.h'),('gen_fm6_patches.py','felucca_fm6.h'),('gen_drumkits.py','felucca_drumkits.h'),('gen_font.py','felucca_font.h'),('gen_icons.py','felucca_icons.h')]:
+        if args.skip_generate and (build.GEN/header).exists(): continue
         subprocess.run([sys.executable,str(build.SRC/'sloop/tools'/script),str(build.GEN/header)],check=True,cwd=build.SRC/'sloop')
     flags = [*build.CFLAGS, f"-DSMK37_ENABLE_SAMPLES={int(args.enable_samples)}", f"-DSMK37_ENABLE_USB_AUDIO={int(args.enable_usb_audio)}", "-Ifirmware/hal", "-Ifirmware/src", f"-I{build.GEN.relative_to(build.SRC)}", f"-DSMK37_ENABLE_PRESETS={int(args.enable_presets)}", f"-DSMK37_ENABLE_SAVES={int(args.enable_saves)}", f"-DSMK37_ENABLE_USB_UPDATE={int(args.enable_usb_update)}"]
     flags += [f'-DSMK37_ENABLE_TRS={int(args.enable_trs)}']
@@ -82,17 +89,17 @@ def main():
     for forbidden in ("fm1_flash", "ota_session", "uart_midi_init", "fm1_adc_init", "fm1_input_init"):
         if re.search(r"\b" + forbidden + r"\w*$", symbols, re.M):
             raise SystemExit("wrong-board/flash routine linked: " + forbidden)
-    if re.search(r'\b(fl_erase4k_ram|fl_prog_ram|fm1_flash)\b',symbols):
+    if not args.enable_storage and re.search(r'\b(fl_erase4k_ram|fl_prog_ram|fm1_flash)\b',symbols):
         raise SystemExit('Unexpected flash writer in RAM-only Sloop candidate')
     name = "smk37-integration-NOT-FOR-INSTALL.bin"
     (out / name).write_bytes(image)
     manifest = {
-        "board": "SMK-37 Pro & Elite", "firmware": "Sloop SMK 2.6.0-b1", "installable": False,
+        "board": "SMK-37 Pro & Elite", "firmware": version, "installable": False,
         "public_build": args.public_release,
         "purpose": "offline linked application integration",
-        "storage_mode": "RAM-only projects/presets; browser exports persist separately", "image": name, "bytes": len(image), "sha256": hashlib.sha256(image).hexdigest(),
+        "storage_mode": "Native Sloop A/B objects; blank or Sloop-owned pairs only" if args.enable_storage else "RAM-only projects/presets; browser exports persist separately", "image": name, "bytes": len(image), "sha256": hashlib.sha256(image).hexdigest(),
         "entry": hex(sym("_start")), "bss_end": hex(sym("_bss_end")),
-        "pool_end": hex(sym("_pool_end")), "flash_write_support": args.enable_saves, "preset_storage_support": args.enable_presets, "preset_sectors": ["0xf3000", "0xfe000"] if args.enable_presets else [], "usb_update_support": args.enable_usb_update,
+        "pool_end": hex(sym("_pool_end")), "flash_write_support": args.enable_saves, "preset_storage_support": args.enable_presets, "preset_sectors": ["0xb3000", "0xb4000", "0xb5000", "0xb6000"] if args.enable_presets else [], "usb_update_support": args.enable_usb_update,
         "usb_update_hardware_validated": False,
         "usb_audio_support": args.enable_usb_audio,
         "usb_audio_hardware_validated": False,
@@ -106,11 +113,11 @@ def main():
         "trs_midi_output_default": "OFF",
         "trs_midi_output_hardware_validated": False,
         "usb_audio_rates": [44100, 48000] if args.enable_usb_audio else [],
-        "update_product": f"SMK-37_9{args.usb_test_number:02d}", "update_version": "SLOOP SMK 2.6.0-b1",
+        "update_product": f"SMK-37_9{args.usb_test_number:02d}", "update_version": version,
         "upstream_revision": "4365a1d0075b9194de1c44826325abbd39751bc1",
         "upstream_version": "2.6",
         "prior_unit_evidence": "Felucca SMK 0.9.22 on the owner Pro; Sloop artifact not flashed.",
-        "flash_write_gate": "Only embedded bounded RAM updater; application has no storage writer",
+        "flash_write_gate": "Protected model/trim check; per-object blank or valid Sloop commit; foreign data refused" if args.enable_storage else "Only embedded bounded RAM updater; application has no storage writer",
         "pending_hardware_checks": ["Sloop startup and all controls", "USB update/restart", "long-run USB/audio timing"],
 
     }

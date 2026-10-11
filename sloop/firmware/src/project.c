@@ -325,7 +325,7 @@ static int proj_from_v3(project_t *q, const project_v3_t *v3, int n)
     return 1;
 }
 
-static project_v3_t proj_v3_tmp;               /* (formats 1, 2: through format 3) */
+static project_v3_t proj_v3_tmp __attribute__((section(".pool")));               /* (formats 1, 2: through format 3) */
 /* a format 2 project (n bytes in *v2) -> slot q as format 5 */
 static int proj_from_v2(project_t *q, const project_v2_t *v2, int n)
 {
@@ -517,7 +517,7 @@ static union {
     project_v3_t v3;
     project_v2_t v2;
     project_v1_t v1;
-} proj_tmp;
+} proj_tmp __attribute__((section(".pool")));
 static void proj_fetch(uint32_t slot)
 {
     project_t *q = &proj_slot[slot & 3u];
@@ -703,7 +703,7 @@ _Static_assert(__builtin_offsetof(persist_t, arrangement) == 48u && sizeof(arr_c
 #define PERSIST_MAGIC 0x50455232u
 #endif
 #if FELUCCA_FLASH
-static persist_t persist_saved;
+static persist_t persist_saved __attribute__((section(".pool")));
 static void dsu_boot(void);
 #endif
 
@@ -714,6 +714,10 @@ static void persist_boot(void)                    /* before settings_init / pane
 #endif
 #if FELUCCA_FLASH
     persist_t p;
+#ifdef SLOOP_STORAGE_PROBE
+    flash_ok = SLOOP_STORAGE_PROBE();
+    if (!flash_ok) return;
+#else
     uint32_t f = irq_save();
     flash_ok = FL_FAR(fl_jedec_ram)() == 0x856014u;       /* the expected 1 MiB part, else stay RAM-only */
     irq_restore(f);
@@ -721,6 +725,7 @@ static void persist_boot(void)                    /* before settings_init / pane
         return;
     fl_plain_window_init();                        /* flash above 0x93000 reads as plaintext through XIP
                                                     * (user sample sets are played from there) */
+#endif
     {
         uint32_t k;
         for (k = 0; k < SMP_USER_SLOTS; k++)
@@ -796,7 +801,7 @@ static int project_used(uint32_t slot) { return proj_ok(&proj_slot[slot & 3u]); 
  * builds wrote 32 (the map) or 36 bytes (and the channels) */
 #define MIDI_PART (2u * ML_N + 8u)
 _Static_assert(sizeof(persist_t) + sizeof(dsu_bank_t) + MIDI_PART <= ST_PAYLOAD_MAX, "the settings object fits its sector");
-static uint8_t midi_saved[MIDI_PART];
+static uint8_t midi_saved[MIDI_PART] __attribute__((section(".pool")));
 static uint8_t drch_seed;                           /* a settings object as 2.5 wrote it: the drum channel was the
                                                      * project's then (autosave_resume takes it from a 2.5 autosave) */               /* the part as flash has it (settings_save: written when it differs) */
 static void midi_part_fill(uint8_t *b)
