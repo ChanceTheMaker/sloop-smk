@@ -100,6 +100,6 @@ Validation policy for this round (owner feedback, 2026-10-11): prior completed
 Do not repeat them as a routine b6 acceptance task without a concrete regression
 or relevant new audio-path change. Duplicate b6 capture stopped; no new pass claimed.
 
-- [ ] **Physical b7 oscilloscope check.** Local candidate removes full-screen
+- [x] **Physical b7 oscilloscope check.** Local candidate removes full-screen
   pre-redraw black clears and doubles scope scheduling to every 40 ms UI tick.
-  Host regression/builds passed; no flash or physical screen result yet.
+  Host regression/builds passed; owner reported "Looks good" and authorized publication.

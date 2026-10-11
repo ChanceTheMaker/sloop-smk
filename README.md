@@ -16,11 +16,11 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 
 ## Firmware status
 
-**The public installer remains on 2.6.0-b2.** Local development is on
-**2.6.0-b7**, following the owner's b5/b6 hardware checks. The beta suffix
+**The public beta is 2.6.0-b7**, following the owner's b5/b6 hardware checks
+and b7 screen confirmation. The beta suffix
 identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
 
-| Area | Local candidate status |
+| Area | Current beta status |
 | --- | --- |
 | Project storage | Verified flash commits before reporting Saved; protected slots show LOCKED. Owner confirmed A-D persistence during b5 testing. |
 | User presets | 32 slots; U01 save, restart, full readback and load checked on b6. |
@@ -28,9 +28,9 @@ identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
 | USB audio | b2 stereo captures at requested 44.1/48 kHz passed; Windows may resample. These are not fresh b7 timing measurements. |
 | Pads and lights | Same-pad blue feedback and individual color diagnostic; rare green flash remains on the watch list. |
 | Physical samples | Three 80 KiB slots, guarded preparation and uploads implemented; physical upload/restart testing deferred. Browser retains four virtual slots. |
-| Oscilloscope | b7 removes pre-redraw black clears and refreshes the scope every UI tick. Builds and host regression pass; physical display confirmation pending. |
+| Oscilloscope | b7 removes pre-redraw black clears and refreshes the scope every UI tick. Builds and host regression pass; owner confirmed the screen improvement. |
 
-The candidate is not automatically promoted to the public installer. See
+B7 publication was explicitly authorized after the device checks. See
 [candidate release notes](docs/SLOOP_SMK_CANDIDATE.md) and the detailed
 [port status](docs/SLOOP_SMK_PORT.md) for version-specific evidence and limits.
 Bluetooth remains outside this round; physical TRS is output only.
@@ -55,12 +55,12 @@ Open the [Sloop SMK installer](https://chancethemaker.github.io/sloop-smk/) in C
 
 1. Select **SMK-37 Pro** or **SMK-37 Elite**.
 2. Choose **First installation** for official 016 firmware, or **Update** for Felucca SMK 0.9.22 / Sloop SMK. Older private builds need a separate migration.
-3. The page downloads the checksum-verified official model-specific firmware and prepares b2 in the browser. An optional file selector is available if the automatic download fails.
+3. The page downloads the checksum-verified official model-specific firmware and prepares b7 in the browser. An optional file selector is available if the automatic download fails.
 4. Close Studio and other MIDI apps, connect the SMK directly by USB, confirm the beta notice, and click **Install SMK beta**. Keep USB and power connected until completion.
 
-The public download contains the GPL application only. Official firmware is fetched from a pinned external mirror and processed locally; private device backups and calibration are not published. The portable updater retains model/layout validation and each instrument's calibration. It writes the application area; b2 runtime storage follows the separate ownership rules above.
+The public download contains the GPL application only. Official firmware is fetched from a pinned external mirror and processed locally; private device backups and calibration are not published. The portable updater retains model/layout validation and each instrument's calibration. It writes the application area; b7 runtime storage follows the separate ownership rules above.
 
-The owner confirmed b2 installation and playback and explicitly approved this beta release with save/power-cycle testing still pending. The public stock-install path is host-tested, not yet confirmed on hardware. Browser session exports are not device backups.
+The owner confirmed project/preset persistence on b5/b6 and the b7 display improvement before approving b7 publication. The public stock-install path is host-tested, not yet confirmed on hardware. Browser session exports are not device backups.
 
 Cloning this repository includes the public app, Studio and Simulator. Running the preview server without a private candidate uses the public installer. A staged private candidate remains available only on localhost; add `?public` to preview the public path locally.
 
@@ -131,7 +131,6 @@ See [port status and validation](docs/SLOOP_SMK_PORT.md) for the pinned upstream
 
 ## Remaining checks
 
-- Confirm the b7 oscilloscope improvement on the physical screen.
 - Physical sample upload and restart persistence remain deferred.
 - Watch for stray pad LEDs; confirm modulation with a known responsive receiver patch.
 - Elite first-install and exhaustive hardware coverage remain separate from the owner's Pro results.

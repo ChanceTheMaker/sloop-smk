@@ -1,7 +1,8 @@
 # Sloop SMK candidate: 2.6.0-b7
 
-2026-10-11. Public firmware remains **b2**. The owner's installed and tested
-candidate is **b6**; **b7 is built and staged locally, not flashed or published**.
+2026-10-11. The owner confirmed the b7 screen improvement ("Looks good") and authorized
+public b7 publication. B7 replaces public b2; earlier b5/b6 checks remain
+version-specific evidence.
 Upstream musical/UI source remains Sloop 2.6 at
 `4365a1d0075b9194de1c44826325abbd39751bc1`. These are fork changes, not an upstream PR.
 
@@ -24,8 +25,7 @@ Upstream musical/UI source remains Sloop 2.6 at
   second tick (nominal ceiling 25 vs 12.5 fps). Full-screen visualizer redraws
   replace completed bands directly, without first transmitting a black clear.
   Heavier styles retain half-rate scheduling and title duration is preserved.
-  Audio clocks, interrupt scheduling and SPI clock are unchanged. Actual display
-  frame rate and flicker improvement still require physical observation.
+  Audio clocks, interrupt scheduling and SPI clock are unchanged. The owner confirmed the screen improvement; actual frame rate was not measured.
 
 ## Validation
 
@@ -49,7 +49,7 @@ Upstream musical/UI source remains Sloop 2.6 at
 
 ## Remaining / deferred
 
-Physical b7 screen check; physical sample upload/restart (owner deferred);
+Physical sample upload/restart (owner deferred);
 pad LED watch; audible TRS modulation with a suitable patch; Elite first-install.
 Do not repeat long audio captures absent a concrete regression or relevant
 audio-path change. Bluetooth and public legacy migration are outside this round.

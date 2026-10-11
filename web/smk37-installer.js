@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b2-r1';
-import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b2-r1';
-import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b2-r1';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b7-r1';
+import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b7-r1';
+import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b7-r1';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
 const loopback=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
@@ -39,11 +39,11 @@ try{
     pkg=await parsePackage(await fetchBytes('./firmware/smk37-candidate.smkupdate'),release.sha256);
     if(pkg.product!==release.product)throw Error('Local migration identity mismatch.');
     document.getElementById('public-package-controls').hidden=true;
-    log(release.migration?'Sloop SMK 2.6.0-b2 is ready for your Test21 device. Confirm the beta notice, then Install.':`${release.version}: local device-specific preview ready.`);
-    document.getElementById('release').textContent=release.migration?'Sloop SMK 2.6.0-b2 - local migration':release.version;
+    log(release.migration?`${release.version} is ready for your Test21 device. Confirm the beta notice, then Install.`:`${release.version}: local device-specific preview ready.`);
+    document.getElementById('release').textContent=release.migration?`${release.version} - local migration`:release.version;
   }else{
     release=JSON.parse(new TextDecoder().decode(await fetchBytes('./firmware/public-release.json')));
-    if(release.public!==true||release.product!=='SMK-37_931'||release.app!=='sloop-smk-2.6.0-b2-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
+    if(release.public!==true||release.product!=='SMK-37_936'||release.app!=='sloop-smk-2.6.0-b7-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
     document.getElementById('release').textContent=release.version;
     await prepare();
   }
