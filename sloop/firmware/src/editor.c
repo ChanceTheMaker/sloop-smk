@@ -637,6 +637,9 @@ static int ed_backup(uint32_t cmd, const uint8_t *a, uint32_t na)   /* no flash:
 #include "editor_fm6.c"                               /* v9: the FM6 patches (68..71) */
 #include "editor_dsyn.c"                              /* v10: the SYN drum kits (72..76) */
 
+#ifdef SLOOP_ED_SAMPLES
+#include "../../../firmware/src/sloop_smk_editor_samples.c"
+#endif
 static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0 and F7 */
 {
     uint32_t cmd = f[3], i;
@@ -645,6 +648,9 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
     int16_t *vp;
     const param_desc_t *d;
     ed_begin(cmd);
+#ifdef SLOOP_ED_SAMPLES
+    if(sloop_ed_samples(cmd,a,na)){ed_send();return;}
+#endif
     if (ed_backup(cmd, a, na)) {                           /* v6: backup / restore */
         ed_send();
         return;
@@ -736,7 +742,8 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
         ed_b(ed_eng(TSEL));
         ed_b(TSEL->preset);
         break;
-    case ED_PROJECT:                                       /* 0 = load, 1 = save, 2 = query; slot 0..3 */
+    case ED_PROJECT: {                                     /* 0 = load, 1 = save, 2 = query; slot 0..3 */
+        uint32_t project_rc = 0;
         if (na < 2u || a[0] > 2u)
             return;
 #if FELUCCA_ARRANGER
@@ -747,13 +754,22 @@ static void ed_handle(const uint8_t *f, uint32_t n)   /* f: the bytes between F0
         }
 #endif
         if (a[0] == 1u)
-            project_save(a[1] & 3u);
+            project_rc = project_save(a[1] & 3u);
         else if (a[0] == 0u)
             project_load(a[1] & 3u);
+#ifdef SLOOP_PROJECT_WRITABLE
+        if (a[0] == 2u)
+            project_rc = !flash_ok ? 2u : !SLOOP_PROJECT_WRITABLE(a[1]) ? 4u : 0u;
+#endif
         ed_b(a[0]);
         ed_b(a[1] & 3u);
         ed_b(project_used(a[1] & 3u));
+#if defined(SLOOP_SMK) && FELUCCA_FLASH
+        /* Existing optional status tail: old editors ignore it. No new command ID. */
+        ed_b(project_rc);
+#endif
         break;
+    }
     case ED_NAMES:                                         /* preset names of an engine */
         if (na < 1u || a[0] >= NENGINES)
             return;

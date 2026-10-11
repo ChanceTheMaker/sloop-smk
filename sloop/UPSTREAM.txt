@@ -3,3 +3,23 @@ Revision: 4365a1d0075b9194de1c44826325abbd39751bc1 (main checked 2026-10-11)
 Release baseline: v2.6
 Local source changes: large preset/project/editor buffers allocated to .pool; editor.c SMK version text and disabled physical sample addresses/capability; storage.c platform sector hook; project.c platform probe hook. Default upstream storage mapping remains unchanged without those hooks.
 Other SMK adapters live outside this directory. Original licenses and copyright notices retained.
+
+Local b3 candidate changes (not upstream contributions): usb.c optional outgoing MIDI hook; panel.c SMK TRS preference in previously unused packed bit26; ui_menu.c conditional SMK labels, device-only TRS/sample actions and pad-light diagnostic; editor.c optional physical-sample adapter hook. Upstream IDs and non-SMK behavior remain unchanged. Physical samples use the separate SMK map/ownership journal; browser keeps four RAM slots.
+
+Local SMK persistence follow-up: project.c/ui.c return save status and commit
+before publishing RAM slot on SMK flash builds; editor.c appends existing
+optional PROJECT status tail. No upstream command IDs or storage formats change.
+Cold-reload/failure tests and hardware failure evidence: docs/SLOOP_SMK_PORT.md.
+
+SMK b4 adds an independent, capability-negotiated read-only storage diagnostic
+namespace in the adapter; native upstream editor command IDs remain unchanged.
+See docs/SMK_STORAGE_DIAGNOSTICS.md.
+
+SMK b5 adds a separate explicit legacy A-C reset namespace in the adapter.
+Native editor IDs/storage formats are unchanged; this is local fork repair work,
+not an upstream contribution. Evidence: docs/SMK_STORAGE_DIAGNOSTICS.md.
+
+SMK b7: ui_draw.c refreshes the home scope every UI tick; ui_vis.c removes
+pre-redraw LCD clears and draws the scope every tick while heavier styles keep
+their half-rate budget. Shared with the browser simulator. Host scheduler test
+and both builds pass; physical display confirmation pending. No upstream PR.

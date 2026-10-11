@@ -1,15 +1,22 @@
 /* SPDX-License-Identifier: GPL-3.0-only
  * Sloop 2.6 musical/UI core on SMK peripherals. No FM-1 GPIO or flash driver. */
 #include <stdint.h>
+#define SLOOP_SMK 1
+static uint8_t smk37_trs_enabled;
+static uint32_t smk37_trs_bytes;
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_TRS
+static void smk37_trs_output(uint32_t packet);
+#define MIDI_OUTPUT_HOOK(p) smk37_trs_output(p)
+#endif
 #define FELUCCA_ARRANGER 1
-#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAVES
+#if (defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAVES) || defined(SLOOP_STORAGE_TEST_BACKEND)
 #define FELUCCA_FLASH 1
 #else
 #define FELUCCA_FLASH 0
 #endif
 #define FELUCCA_ICONS 1
 #ifndef SLOOP_SMK_VERSION
-#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b2"
+#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b7"
 #endif
 #define FELUCCA_VERSION SLOOP_SMK_VERSION
 #include "felucca_tables.h"
@@ -19,10 +26,17 @@ static struct { volatile uint32_t notes,buttons; } fm1_in;
 static void fm1_irq_off(void){}
 static void fm1_irq_on(void){}
 static uint8_t sample_memory[4][0x14000];
+#ifndef SMP_USER_XIP
 #define SMP_USER_XIP(k) sample_memory[k]
+#endif
 #else
 static const uint8_t empty_sample[512];
+#if SMK37_ENABLE_SAMPLES
+static const uint8_t *sloop_sample_xip(unsigned k);
+#define SMP_USER_XIP(k) sloop_sample_xip(k)
+#else
 #define SMP_USER_XIP(k) empty_sample
+#endif
 #endif
 #include "../../sloop/firmware/src/core.h"
 #include "../../sloop/firmware/src/engines.c"
@@ -34,7 +48,13 @@ static const uint8_t empty_sample[512];
 #ifndef SLOOP_SMK_HARDWARE
 #define MQ 256u
 static uint32_t midi_in_q[MQ],mi_r,mi_w;
-static void midi_out_event(uint32_t p){(void)p;}
+static void midi_out_event(uint32_t p){
+#ifdef MIDI_OUTPUT_HOOK
+    MIDI_OUTPUT_HOOK(p);
+#else
+    (void)p;
+#endif
+}
 #else
 #include "../../sloop/firmware/src/usb.c"
 #endif
@@ -42,13 +62,30 @@ static void midi_out_event(uint32_t p){(void)p;}
 #include "../../sloop/firmware/src/seq.c"
 #include "../../sloop/firmware/src/gfx.c"
 #if FELUCCA_FLASH
+#ifdef SLOOP_STORAGE_TEST_BACKEND
+#include SLOOP_STORAGE_TEST_BACKEND
+#else
 #include "sloop_smk_storage.c"
 #endif
+#endif
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
+#include "sloop_smk_samples.c"
+#endif
 #include "sloop_smk_ui.c"
+#if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
+static void sloop_samples_service(void){
+    if(!sloop_samples_requested)return;
+    sloop_samples_requested=0;
+    ui_message(sloop_sample_initialize_request()?"SAMPLES INIT FAILED":"3 SAMPLE SLOTS READY");
+    ui.force=1;
+}
+#endif
 static uint8_t sloop_knob_bank,sloop_fader_bank,sloop_pad_bank;
 static uint64_t sloop_keys;
+#include "smk37_pad_feedback.h"
+static smk37_pad_feedback_t sloop_pad_feedback;
 static uint16_t sloop_pads;
-static uint8_t sloop_note[53][4],sloop_n[53],sloop_owner[53],sloop_key_layer[37];
+static uint8_t sloop_note[53][4],sloop_n[53],sloop_owner[53],sloop_channel[53],sloop_key_layer[37];
 static uint8_t sloop_sustain;
 static uint32_t sloop_status[16];
 static void sloop_init(void){
@@ -82,13 +119,13 @@ static void sloop_note_event(unsigned key,unsigned velocity){
     if(key>=53)return;
     if(!velocity){
         if(key<37&&sloop_key_layer[key]){fm1_in.notes&=~(1u<<(key-5));sloop_key_layer[key]=0;return;}
-        unsigned t=sloop_owner[key];for(unsigned i=0;i<sloop_n[key];i++){input_off(&trk[t],sloop_note[key][i]);midi_out_note(trk_midi_ch(t),sloop_note[key][i],0);}
+        unsigned t=sloop_owner[key];for(unsigned i=0;i<sloop_n[key];i++){input_off(&trk[t],sloop_note[key][i]);midi_out_note(sloop_channel[key],sloop_note[key][i],0);}
         sloop_n[key]=0;return;
     }
     if(sloop_n[key])return;
     if(key>=5&&key<32&&layer_now()!=LY_PLAY){fm1_in.notes|=1u<<(key-5);sloop_key_layer[key]=1;return;}
     unsigned t=key>=37?TRK_DRUM:song.sel%NTRK;
-    sloop_owner[key]=t;
+    sloop_owner[key]=t;sloop_channel[key]=(uint8_t)trk_midi_ch(t);
     if(t==TRK_DRUM){unsigned lane=key>=37?key-37:lane_of_note(48+key);drum_input(lane,vel_lvl(velocity),0,1);midi_out_note(trk_midi_ch(t),LANE_NOTE[lane],velocity);sloop_n[key]=1;sloop_note[key][0]=LANE_NOTE[lane];return;}
     int note=clamp(48+(int)key+song.octave*12,0,127);
     if(trk[t].p[P_CHORD])sloop_n[key]=chord_play_notes(&trk[t],note,chord_mods(),sloop_note[key]);
@@ -103,7 +140,6 @@ static void sloop_event(unsigned kind,unsigned id,int value){
     if(kind==0&&id<18){
         if(id<2){if(value){if(id==0)sloop_knob_bank^=1;else sloop_fader_bank^=1;}return;}
         unsigned b=sloop_buttons[id];
-        if(b==B_OCTUP&&value&&ui.menu==1&&ui.menu_sel==MI_PANEL){ui.menu=0;ui_message("SMK PANEL FIXED");return;}
         uint32_t bit=1u<<panel.btn[b];if(value){if(!(fm1_in.buttons&bit))edges_btn|=bit;fm1_in.buttons|=bit;}else fm1_in.buttons&=~bit;
     }
     if(kind==1&&id<8){
@@ -115,20 +151,25 @@ static void sloop_event(unsigned kind,unsigned id,int value){
         unsigned role=roles[id];encs[panel.enc[role]]+=value;ui.enc_t[role]=fm1_ticks()-61000u*FM1_TICKS_PER_US;
     }
     if(kind==2&&id<37){if(value)sloop_keys|=(uint64_t)1<<id;else sloop_keys&=~((uint64_t)1<<id);sloop_note_event(id,clamp(value,0,127));}
-    if(kind==3&&id<16){if(value)sloop_pads|=1u<<id;else sloop_pads&=~(1u<<id);sloop_note_event(37+id,clamp(value,0,127));}
+    if(kind==3&&id<16){smk37_pad_feedback_event(&sloop_pad_feedback,id,value,fm1_ms);if(value)sloop_pads|=1u<<id;else sloop_pads&=~(1u<<id);sloop_note_event(37+id,clamp(value,0,127));}
     if(kind==4&&id<4){unsigned p=sloop_fader_bank?P_ATK+id:P_LEVEL;track_t*t=sloop_fader_bank?TSEL:&trk[id];t->p[p]=clamp(value,0,1023)*127/1023;ui.force=1;}
-    if(kind==5){for(unsigned t=0;t<NPART;t++)if(t==song.sel||sloop_sustain||trk[t].nheld){if(!id)trk[t].bend=clamp(value,-8192,8191);else midi_cc(&trk[t],1,clamp(value,0,127));}}
-    if(kind==6){sloop_sustain=!!value;for(unsigned t=0;t<NPART;t++)midi_cc(&trk[t],64,value?127:0);}
+    if(kind==5){for(unsigned t=0;t<NPART;t++)if(t==song.sel||sloop_sustain||trk[t].nheld){if(!id){trk[t].bend=clamp(value,-8192,8191);unsigned bend=trk[t].bend+8192;if(trk_midi_ch(t)<16)midi_out_event(14u|((0xe0u|trk_midi_ch(t))<<8)|((bend&127u)<<16)|((bend>>7)<<24));}else{unsigned mod=clamp(value,0,127);midi_cc(&trk[t],1,mod);if(trk_midi_ch(t)<16)midi_out_event(11u|((0xb0u|trk_midi_ch(t))<<8)|(1u<<16)|(mod<<24));}}}
+    if(kind==6){sloop_sustain=!!value;for(unsigned t=0;t<NPART;t++){midi_cc(&trk[t],64,value?127:0);if(trk_midi_ch(t)<16)midi_out_event(11u|((0xb0u|trk_midi_ch(t))<<8)|(64u<<16)|((value?127u:0u)<<24));}}
 }
 static void sloop_release(void){
     for(unsigned k=0;k<53;k++)sloop_note_event(k,0);
-    for(unsigned t=0;t<NPART;t++){midi_cc(&trk[t],64,0);trk[t].bend=0;}
+    for(unsigned t=0;t<NPART;t++){
+        midi_cc(&trk[t],64,0);trk[t].bend=0;
+        unsigned ch=trk_midi_ch(t);
+        if(ch<16){midi_out_event(11u|((0xb0u|ch)<<8)|(64u<<16));midi_out_event(14u|((0xe0u|ch)<<8)|(64u<<24));}
+    }
+    memset(&sloop_pad_feedback,0,sizeof sloop_pad_feedback);
     sloop_keys=sloop_pads=sloop_sustain=fm1_in.notes=fm1_in.buttons=0;edges_btn=notes_seen=0;memset(encs,0,sizeof encs);layer_unlock();ui.home_t0=ui.hold_kind=ui.step_held=0;lk_r=lk_w;panic_req=15;
 }
 static void sloop_tick(void){ui_input();ui_leds();ui_draw();autosave_tick();sections_flush();}
 static uint32_t *sloop_get_status(void){
     uint32_t leds=0;for(unsigned k=2;k<18;k++){unsigned q=led_pos[panel.btn[(unsigned)sloop_buttons[k]]];if(q!=255&&((fm1_led[q>>3]>>(q&7))&1))leds|=1u<<k;}
     leds|=sloop_knob_bank|(sloop_fader_bank<<1);
-    sloop_status[0]=leds;sloop_status[1]=sloop_keys;sloop_status[2]=sloop_keys>>32;sloop_status[3]=sloop_pads;sloop_status[4]=ui.page;sloop_status[5]=song.sel;sloop_status[6]=song.playing;sloop_status[7]=sloop_knob_bank;sloop_status[8]=sloop_fader_bank;sloop_status[9]=song.octave+3;sloop_status[10]=sloop_pad_bank;sloop_status[11]=song.master_q12;
+    sloop_status[0]=leds;sloop_status[1]=sloop_keys;sloop_status[2]=sloop_keys>>32;sloop_status[3]=smk37_pad_feedback_mask(&sloop_pad_feedback,fm1_ms);sloop_status[4]=ui.page;sloop_status[5]=song.sel;sloop_status[6]=song.playing;sloop_status[7]=sloop_knob_bank;sloop_status[8]=sloop_fader_bank;sloop_status[9]=song.octave+3;sloop_status[10]=sloop_pad_bank;sloop_status[11]=song.master_q12;
     for(unsigned i=0;i<4;i++)sloop_status[12+i]=(sloop_fader_bank?TSEL->p[P_ATK+i]:trk[i].p[P_LEVEL])*1023u/127u;return sloop_status;
 }

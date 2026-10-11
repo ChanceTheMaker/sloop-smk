@@ -5,7 +5,7 @@
 #ifndef FELUCCA_VERSION
 #define FELUCCA_VERSION "SLOOP 2.6"  /* the beat machine firmware for the FM-1 (based on Felucca) */
 #endif
-static void project_save(uint32_t slot);
+static uint32_t project_save(uint32_t slot);
 static void arrangement_save(void);
 static void panel_setup(void);
 static void project_load(uint32_t slot);

@@ -43,3 +43,17 @@ assert.equal(e.fw_command(0),0);console.log('PASS: all native engine descriptors
 e.fw_event(7,0,1);for(let b=0;b<10;b++)e.synth_render();assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[6],1);
 e.fw_event(7,0,0);for(let b=0;b<10;b++)e.synth_render();assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[6],0);
 console.log("PASS: explicit browser transport starts and stops sequencing");
+
+// Physical pad IDs and short-tap feedback must survive a status-frame gap.
+e.fw_release();
+for(let pad=0;pad<16;pad++){
+  e.fw_event(3,pad,100); e.fw_event(3,pad,0);
+  assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[3],1<<pad);
+  for(let n=0;n<220;n++)e.synth_render();
+  assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[3],0);
+}
+e.fw_event(3,1,100);e.fw_event(3,9,100);
+for(let n=0;n<220;n++)e.synth_render();
+assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[3],(1<<1)|(1<<9));
+e.fw_release();assert.equal(new Uint32Array(e.memory.buffer,e.fw_status(),16)[3],0);
+console.log('PASS: 16 pad identities, short-tap light hold, independent held pads and release');

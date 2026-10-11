@@ -4,7 +4,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 mkdir -p build/smk37-tests
-for component in contacts controls button_watch rawscan analog_scan analog_watch analog_controls adc response velocity pedal store trim keyscan events audio lcd panel lights scanner boot bootguard time memory; do
+for component in contacts controls button_watch rawscan analog_scan analog_watch analog_controls pad_feedback adc response velocity pedal store trim keyscan events audio lcd panel lights scanner boot bootguard time memory; do
     cc -std=c99 -Wall -Wextra -Werror -fsanitize=undefined,address \
         "tests/smk37_${component}_test.c" -o "build/smk37-tests/$component"
     "build/smk37-tests/$component"

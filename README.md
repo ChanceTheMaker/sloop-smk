@@ -16,26 +16,38 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 
 ## Firmware status
 
-**b2 is the next development step after b1.** Both use Sloop 2.6; the beta suffix identifies this SMK adaptation, not a new upstream Sloop release.
+**The public installer remains on 2.6.0-b2.** Local development is on
+**2.6.0-b7**, following the owner's b5/b6 hardware checks. The beta suffix
+identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
 
-| | 2.6.0-b1 | 2.6.0-b2 |
-| --- | --- | --- |
-| Sloop engine, native pages and SMK controls | Included | Included |
-| Projects and user presets on hardware | RAM-only; lost at power-off | Persistent storage for four projects and 32 presets |
-| Settings, autosave and FM6 bank | No persistent hardware saves | Guarded native Sloop storage |
-| Boot splash | Initial SMK splash | Centered SLOOP SMK title; actual version in small gray text at the bottom |
-| Test status | Owner reports installation from the local page and playing on the SMK | Owner confirms installation and playback; offline tests pass; device persistence tests pending |
-| Installer status | Previous local candidate | Public beta installer; device persistence testing pending |
+| Area | Local candidate status |
+| --- | --- |
+| Project storage | Verified flash commits before reporting Saved; protected slots show LOCKED. Owner confirmed A-D persistence during b5 testing. |
+| User presets | 32 slots; U01 save, restart, full readback and load checked on b6. |
+| TRS MIDI OUT | Notes/chords, sustain, pitch, saved ON preference and held-note shutdown checked on b5/b6. Receiver expression check used FM-1 Sloop 2.6. |
+| USB audio | b2 stereo captures at requested 44.1/48 kHz passed; Windows may resample. These are not fresh b7 timing measurements. |
+| Pads and lights | Same-pad blue feedback and individual color diagnostic; rare green flash remains on the watch list. |
+| Physical samples | Three 80 KiB slots, guarded preparation and uploads implemented; physical upload/restart testing deferred. Browser retains four virtual slots. |
+| Oscilloscope | b7 removes pre-redraw black clears and refreshes the scope every UI tick. Builds and host regression pass; physical display confirmation pending. |
 
-The owner has played Sloop on the physical SMK. A complete check of controls, lights, USB audio and updater re-entry remains. Browser and host tests are tracked separately from device tests in the [port status](docs/SLOOP_SMK_PORT.md).
+The candidate is not automatically promoted to the public installer. See
+[candidate release notes](docs/SLOOP_SMK_CANDIDATE.md) and the detailed
+[port status](docs/SLOOP_SMK_PORT.md) for version-specific evidence and limits.
+Bluetooth remains outside this round; physical TRS is output only.
 
-**Physical sample writes, TRS MIDI routing and Bluetooth are currently disabled in both candidates.** Browser sample uploads and virtual storage work independently of these hardware limits. USB audio code supports 44.1 and 48 kHz; sustained capture on the Sloop hardware port still needs testing.
+### Storage protection
 
-### How b2 protects stored data
+Paired records hold projects, two banks of sixteen presets, settings, autosave
+and FM6 data. Model/layout and ownership checks prevent silent replacement of
+Felucca saves or unknown records. A failed project commit leaves the previous
+RAM slot intact; Studio reports the device's save result. Older b2 replies do
+not provide that result and are identified accordingly.
 
-B2 uses paired storage records for projects, two banks of sixteen presets, settings/drum-synth/MIDI-learn data, autosave and the FM6 patch bank. It checks the model/layout and accepts writes only to blank object pairs or valid Sloop-owned records. Existing Felucca saves and unknown data are refused, not converted or silently overwritten. Occupied incompatible slots therefore cannot be used for Sloop saves without a separate migration or storage-initialization workflow.
-
-Host tests cover interrupted commits, recovery of the prior committed copy and rejection of protected or foreign areas. An interrupted first-ever save without a valid commit deliberately blocks further writes to that object after reboot. Hardware power-cycle testing remains the next validation step. See the [storage map and limitations](docs/SLOOP_SMK_PORT.md#storage-enabled-b2-candidate-separate-from-staged-b1).
+Host tests cover interrupted writes and protected areas. The owner's legacy
+A-C project pairs were backed up and explicitly repaired during b5 testing;
+that is a separate local operation, not automatic migration or a public upgrade
+requirement. See [storage diagnostics](docs/SMK_STORAGE_DIAGNOSTICS.md).
+Physical sample preparation is also explicit and never runs automatically at boot.
 
 ## Installation and availability
 
@@ -82,18 +94,19 @@ Simulator shortcuts: **1-8** play the top pad row; **Shift+1-8** play the bottom
 | GLO / FX / SEQ / PLAY / REC | Corresponding native Sloop controls |
 | Pitch / mod / sustain | Expressive playing controls |
 
-Native Sloop pages and hold gestures are retained where mapped. Hardware controls, lights and timing still need a complete device pass for this candidate.
+Native Sloop pages and hold gestures are retained where mapped. Hold PATCH for
+settings; bank-1 K2 selects SCREEN / LIGHTS / AUDIO / SYSTEM. K5-K7 edit the
+three rows; OCT- exits and saves. LIGHTS includes brightness and the individual
+pad-color diagnostic; AUDIO includes TRS MIDI OUT. SYSTEM offers explicit user
+sample preparation. Sample preparation is deferred for this test round.
 
 ## Build and test
 
 The hardware build uses the existing Jieli toolchain with `JIELI_TOOLCHAIN` set to its root, Python dependencies and Pillow with libraqm:
 
 ```sh
-# RAM-only b1 hardware candidate
-python3 tools/build_sloop_smk.py
-
-# b2 hardware candidate with guarded persistent storage
-python3 tools/build_sloop_smk.py --enable-storage
+# Local b7 candidate with guarded storage, samples and TRS output
+python3 tools/build_sloop_smk.py --enable-storage --enable-samples --enable-trs
 
 # Browser engine
 python3 tools/build_sloop_smk_browser.py --zig /path/to/zig
@@ -105,28 +118,32 @@ node web/test_smk37_update.mjs
 node web/test_smk37_public.mjs
 sh tools/test_smk37_public.sh
 
-# Native storage checks (Linux/WSL with a C compiler)
-mkdir -p build
-cc -std=c11 -Wall -Wextra -Wno-unused-function tests/sloop_smk_storage_test.c -o build/sloop-storage-test
-./build/sloop-storage-test
+# Candidate checks (Linux/WSL with a C compiler)
+sh tools/test_sloop_smk_candidate.sh
+python3 tests/test_sloop_smk_storage_reset.py
+node web/test_project_save.mjs
+node web/test_sample_capability.mjs
 ```
 
-Zig 0.13.0 builds the WebAssembly runtime. Hardware outputs are separated into `build/sloop-smk-2.6.0-b1/` and `build/sloop-smk-2.6.0-b2/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
+Zig 0.13.0 builds the WebAssembly runtime. Current hardware outputs are isolated in `build/sloop-smk-2.6.0-b7/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
 
 See [port status and validation](docs/SLOOP_SMK_PORT.md) for the pinned upstream revision, artifact hashes, remaining work and test evidence. See [workflow rules](docs/UPSTREAM_WORKFLOW.md) before importing updates or publishing firmware.
 
-## Next hardware milestones
+## Remaining checks
 
-- Complete the Sloop controls, LEDs, editor connection and USB updater re-entry checks.
-- Validate b2 project/preset/settings saves and restore behavior across power cycles.
-- Integrate physical sample storage and uploads, then TRS MIDI routing.
-- Run longer USB audio captures and combined playback/control tests.
+- Confirm the b7 oscilloscope improvement on the physical screen.
+- Physical sample upload and restart persistence remain deferred.
+- Watch for stray pad LEDs; confirm modulation with a known responsive receiver patch.
+- Elite first-install and exhaustive hardware coverage remain separate from the owner's Pro results.
 
-Bluetooth remains outside this porting round. Website publication and firmware release are separate: pushing source does not promote a candidate to the installer.
+Prior audio testing is retained; another long capture is not a routine acceptance
+requirement without a relevant change or regression. See [work queue](docs/WORK_QUEUE.md).
+Website publication and firmware release are separate: pushing source does not
+promote a candidate to the installer.
 
 ## Source and project layout
 
-The current integration branch is `integrate/sloop-2.6-smk`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.6 commit `4365a1d0075b9194de1c44826325abbd39751bc1`.
+Current development is on `feat/sloop-smk-b3-hardware-ui`, following `integrate/sloop-2.6-smk`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.6 commit `4365a1d0075b9194de1c44826325abbd39751bc1`.
 
 | Directory | Contents |
 | --- | --- |
