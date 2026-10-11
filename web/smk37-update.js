@@ -66,13 +66,13 @@ export async function installStockSmk(access,pkg,log=()=>{}){
     const ota=await up.waitFor(id=>id.model==='ota-'+pkg.stockModel,30000);
     if(!ota)throw Error('The official SMK loader did not appear. Stop and inspect the device.');
     link=ota.link;
-    log('Official loader connected. Installing Felucca SMK beta; keep power and USB connected.');
+    log('Official loader connected. Installing Sloop SMK beta; keep power and USB connected.');
     if(!link.send(START))throw Error('SMK loader disconnected.');
     const result=await up.serve(link,pkg.image,0xf0000000,180000,n=>{if(n%64===0)log(`Installing: ${n} transfer requests`);});
     if(!result.finished)throw Error('Installation did not finish. Keep the SMK powered on and save this log before attempting recovery.');
     link.close();link=null;
     const back=await up.waitFor(id=>id.model==='SMK-37',40000);
-    if(!back)throw Error('The loader completed, but Felucca SMK did not return. Inspect the device.');
+    if(!back)throw Error('The loader completed, but Sloop SMK did not return. Inspect the device.');
     link=back.link;
     if(back.id.text!==pkg.product)throw Error(`Expected ${pkg.product}; received ${back.id.text}.`);
     log(`Installed ${pkg.version}. Device returned as ${back.id.text}.`);

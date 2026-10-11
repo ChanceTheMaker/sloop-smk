@@ -9,7 +9,7 @@
 #endif
 #define FELUCCA_ICONS 1
 #ifndef SLOOP_SMK_VERSION
-#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b1"
+#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b2"
 #endif
 #define FELUCCA_VERSION SLOOP_SMK_VERSION
 #include "felucca_tables.h"

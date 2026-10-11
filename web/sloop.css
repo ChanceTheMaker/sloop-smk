@@ -112,6 +112,6 @@ body { margin:0; }
 /* Keep the sail, lettering and track palette consistent on every SMK page. */
 .brand-home:has(.sloop-smk-logo){display:flex;align-items:center;gap:0}
 .brand-home .sloop-smk-logo{display:block;width:284px;height:auto;max-width:100%}
-[data-mode=light] .sloop-smk-logo{filter:drop-shadow(0 1px 1px #0008);background:#18191d;border-radius:6px}
+[data-mode=light] .sloop-smk-logo, [data-skin=space] .sloop-smk-logo, [data-skin=bauhaus] .sloop-smk-logo{filter:drop-shadow(0 1px 1px #0008);background:#18191d;border-radius:6px}
 @media(max-width:780px){.brand-home .sloop-smk-logo{width:230px}}
 @media(max-width:420px){.brand-home .sloop-smk-logo{width:210px}}

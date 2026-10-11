@@ -1,0 +1,18 @@
+{
+  "public": true,
+  "version": "Sloop SMK 2.6.0-b2",
+  "product": "SMK-37_931",
+  "app": "sloop-smk-2.6.0-b2-app.bin",
+  "bytes": 572424,
+  "sha256": "f88fa4c828f1ca4f80c311ab2a3f2e2b35f9344cf5c1058ae78ac9aa7f1a2000",
+  "supported_models": [
+    "SMK-37 Pro",
+    "SMK-37 Elite"
+  ],
+  "stock_version": "016",
+  "upstream_version": "2.6",
+  "upstream_revision": "4365a1d0075b9194de1c44826325abbd39751bc1",
+  "hardware_validation": "Owner confirms b2 installation and playback. B2 persistence and public stock-install hardware tests pending.",
+  "source": "https://github.com/ChanceTheMaker/sloop-smk",
+  "license": "GPL-3.0-only"
+}
