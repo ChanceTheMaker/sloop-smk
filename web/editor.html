@@ -707,7 +707,9 @@
     <p id="play-help"></p>
     <p id="play-navigation" class="sr-only" data-i18n="play.navigation"></p>
   </section>
-  <footer>SLOOP firmware by isod89, based on Felucca by Leo Kuroshita (@kurogedelic), <a href="https://hugelton.com" target="_blank" rel="noopener">Hügelton Instruments</a>. GPL-3.0.<br>
+  <footer>
+<nav class="smk-family" aria-label="SMK family"><span>Explore the SMK family</span><a href="https://chancethemaker.github.io/smklab/">SMKLab ↗</a><a href="https://chancethemaker.github.io/felucca-smk/">Felucca SMK ↗</a><a href="https://chancethemaker.github.io/sloop-smk/">Sloop SMK ↗</a><a href="https://chancethemaker.github.io/melodee-smk/">Melodee SMK ↗</a></nav>
+SLOOP firmware by isod89, based on Felucca by Leo Kuroshita (@kurogedelic), <a href="https://hugelton.com" target="_blank" rel="noopener">Hügelton Instruments</a>. GPL-3.0.<br>
     Sloop SMK website, browser simulator &amp; editor enhancements by <a href="https://github.com/ChanceTheMaker" target="_blank" rel="noopener">Chance Roth (ChanceTheMaker)</a>.<br>
     <span data-t="foot"></span> M-VAVE and FM-1 are trademarks of their respective owners.<br>
     <a href="FUKIAI-LICENSE.txt" data-t="iconsCredit"></a></footer>
@@ -7740,7 +7742,7 @@ function audioControls(enabled) {
 }
 let firmwareView, externalMIDI, nativeListener;
 async function ensureFirmwareView() {
-  if(!firmwareView){const {createSMKSimulator}=await import('./smk-simulator.js?keys=3');firmwareView=createSMKSimulator($('firmware-view'),browserSynth);}
+  if(!firmwareView){const {createSMKSimulator}=await import('./smk-simulator.js?pads=1');firmwareView=createSMKSimulator($('firmware-view'),browserSynth);}
 }
 async function setEditorView(on) {
   externalMIDI?.release();

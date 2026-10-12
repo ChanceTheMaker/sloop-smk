@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Browser panel for the native Sloop SMK input and LCD adapter.
 import {createSMKTour} from './smk-tour.js';
-import {createKeyboardGlide} from './keyboard-glide.js';
+import {createPanelGlide} from './panel-glide.js?v=1';
 import {bindSimulatorKeyboard} from './simulator-keys.js?v=3';
 export function createSMKSimulator(host, synth) {
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
@@ -39,13 +39,10 @@ export function createSMKSimulator(host, synth) {
   const send=(kind,id,value)=>synth.panel(kind,id,value);
   function release(owner){const v=owners.get(owner);if(!v)return;owners.delete(owner);const n=counts.get(v.key)-1;if(n)counts.set(v.key,n);else{counts.delete(v.key);send(v.kind,v.id,0);}v.button?.setAttribute('aria-pressed',String(n>0));}
   function press(owner,kind,id,value,button){if(owners.has(owner))return;const key=kind+':'+id,n=counts.get(key)||0;counts.set(key,n+1);owners.set(owner,{key,kind,id,button});if(!n)send(kind,id,value);button?.setAttribute('aria-pressed','true');}
-  const glide=createKeyboardGlide((x,y)=>{const key=document.elementFromPoint(x,y)?.closest('.sim-key');return key&&host.contains(key)?key:null;},
-    (id,key)=>{release('p'+id);if(key)press('p'+id,2,+key.dataset.key,100,key);},id=>release('p'+id));
+  const glide=createPanelGlide(host,press,release);
   function wire(button,kind,id,velocity=1){
     button.type='button';button.setAttribute('aria-pressed','false');
-    button.onpointerdown=e=>{if(e.button&&e.pointerType==='mouse')return;e.preventDefault();button.focus({preventScroll:true});button.setPointerCapture(e.pointerId);if(kind===2)glide.start(e.pointerId,e.clientX,e.clientY);else press('p'+e.pointerId,kind,id,velocity,button);};
-    if(kind===2)button.onpointermove=e=>{if(e.pointerType==='mouse'&&!(e.buttons&1)){glide.end(e.pointerId);return;}glide.move(e.pointerId,e.clientX,e.clientY);};
-    for(const name of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(name,e=>{if(kind===2)glide.end(e.pointerId);else release('p'+e.pointerId);});
+    glide.bind(button,kind,id,velocity);
     button.onkeydown=e=>{if(['Space','Enter'].includes(e.code)){e.preventDefault();if(!e.repeat)press('k'+e.code,kind,id,velocity,button);}};
     button.onkeyup=e=>{if(['Space','Enter'].includes(e.code)){e.preventDefault();release('k'+e.code);}};
     button.onblur=()=>{release('kSpace');release('kEnter');};
@@ -62,7 +59,7 @@ export function createSMKSimulator(host, synth) {
     dial.onkeydown=e=>{const n={ArrowUp:1,ArrowRight:1,ArrowDown:-1,ArrowLeft:-1}[e.key];if(n){e.preventDefault();turn(n*(e.shiftKey?10:1));}};
     dial.addEventListener('wheel',e=>{if(document.activeElement!==dial)return;e.preventDefault();turn(e.deltaY<0?1:-1);},{passive:false});box.append(label,dial,hint);knobs.append(box);
   });
-  const padGrid=el('div','sim-pads');for(let i=0;i<16;i++){const b=el('button','sim-pad',String(i+1));const shortcut=(i<8?'':'Shift+')+String(i%8+1);b.setAttribute('aria-label',`Pad ${i+1}, key ${shortcut}`);b.title=`Pad ${i+1}: ${shortcut}`;b.setAttribute('aria-keyshortcuts',shortcut);b.append(el('small','sim-pad-shortcut',shortcut));wire(b,3,i,100);pads.push(b);padGrid.append(b);}
+  const padGrid=el('div','sim-pads');for(let i=0;i<16;i++){const b=el('button','sim-pad',String(i+1));const shortcut=(i<8?'':'Shift+')+String(i%8+1);b.setAttribute('aria-label',`Pad ${i+1}, key ${shortcut}`);b.title=`Pad ${i+1}: ${shortcut}`;b.setAttribute('aria-keyshortcuts',shortcut);b.append(el('small','sim-pad-shortcut',shortcut));b.dataset.pad=String(i);wire(b,3,i,100);pads.push(b);padGrid.append(b);}
   center.append(knobs,padGrid);
   const faderRow=el('div','sim-faders');for(let i=0;i<4;i++){const label=el('label','sim-fader',`F${i+1}`),f=el('input');f.type='range';f.min=0;f.max=1023;f.value=0;f.setAttribute('aria-label',`Fader ${i+1}`);f.oninput=()=>send(4,i,+f.value);label.append(f);faders.push(f);faderRow.append(label);}right.append(faderRow);
   const bankRow=el('div','sim-banks'),panel=el('div','sim-buttons');
@@ -97,7 +94,7 @@ export function createSMKSimulator(host, synth) {
     {target:document.getElementById('audio-mode'),title:'One instrument, two browser views',text:'SMK Simulator runs Sloop SMK in your browser. Browser Studio edits the same session. SMK Device connects to your physical keyboard.'},
     {target:bezel,title:'The actual firmware display',text:'This screen is drawn by the SMK firmware. Pages, parameter changes and menus behave like the instrument. USB/TRS ports and Bluetooth radio hardware are not simulated.'},
     {target:knobs,title:'Eight hands-on knobs',text:'Drag a knob up or down, or focus it and press the arrow keys. Bank 1 maps to Volume, Tempo, Presets, Track and K1–K4. KNOB BANK switches to the alternate assignments.'},
-    {target:padGrid,title:'Sixteen playable pads',text:'Click or touch the pads, or use 1-8 for the top row and Shift+1-8 for the bottom row. Number-pad keys work too. The pads trigger the sixteen Sloop drum lanes.'},
+    {target:padGrid,title:'Sixteen playable pads',text:'Click, touch or drag across the pads, or use 1-8 for the top row and Shift+1-8 for the bottom row. Number-pad keys work too. The pads trigger the sixteen Sloop drum lanes.'},
     {target:faderRow,title:'Levels or an envelope',text:'The four faders control track levels. Press FADER BANK to switch them to attack, decay, sustain and release for the selected track.'},
     {target:piano,title:'Play the keyboard',text:'Click or touch the 37 keys, or type A W S E D F T G Y H U J K O L P ;. Hold Shift with a piano shortcut to play one octave higher. Use the pitch and mod wheels for expression. Hold SUSTAIN to keep notes ringing.'},
     {target:panel,title:'Tap a page. Hold for more.',text:'Tap PATCH for Home, PARA for Projects, or BT for editing. The native Sloop hold shortcuts remain available on the matching controls. PLAY and REC control the sequencer.'},

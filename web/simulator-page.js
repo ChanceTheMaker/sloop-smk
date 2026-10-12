@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 import {SMKBrowserSynth} from './audio/smk-browser.js?startup=2';
 import {mountMIDIInput} from './midi-input.js';
-import {createSMKSimulator} from './smk-simulator.js?keys=3';
+import {createSMKSimulator} from './smk-simulator.js?pads=1';
 import {pianoCodes,padShortcut} from './simulator-keys.js?v=3';
 const $=id=>document.getElementById(id),synth=new SMKBrowserSynth();
 let panel=null,running=false,busy=false,starting=null;

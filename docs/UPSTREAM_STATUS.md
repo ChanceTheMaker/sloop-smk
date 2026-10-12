@@ -535,3 +535,7 @@ Pedal mapping and runtime flash reads require the next hardware pass. Details,
 limitations and save-enablement prerequisites are in smk37/SOUND_CONTROLS.md.
 
 Test09 hardware follow-up: owner confirmed velocity response, pedal ADC23, runtime read probe, bidirectional editor, lit step editing/playback and pad bank2. Test10 SAVE is a private sustain/persistence candidate with separate save-only adapter recovery preparation. Tests pass; adapter hardware verification, new-image approval and physical save/load/reboot tests remain pending. No push, PR or publication.
+
+## Website family navigation — 2026-10-11
+
+Added footer links among SMKLab, Felucca SMK, Sloop SMK and Melodee SMK on the homepage, Studio and simulator. Website-only change; published firmware and protocols remain unchanged. Local link/markup checks pass. No upstream contribution is intended for this branding/navigation change.
