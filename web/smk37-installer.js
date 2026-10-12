@@ -1,9 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b7-r2';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=sloop-doom-r1';
 import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b7-r2';
 import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b7-r2';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
+const dialog=document.getElementById('loader-confirm');
+async function confirmGeneric({identity,port,model}){
+  document.getElementById('loader-identity').textContent=identity+' on '+port;
+  document.getElementById('loader-model').textContent=model;
+  dialog.returnValue='cancel';
+  return new Promise(resolve=>{
+    dialog.addEventListener('close',()=>resolve(dialog.returnValue==='continue'),{once:true});
+    dialog.showModal();
+  });
+}
 const loopback=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 const privateRequested=loopback&&new URLSearchParams(location.search).has('private');
 const publicPreview=loopback&&new URLSearchParams(location.search).has('public');
@@ -62,6 +72,6 @@ button.addEventListener('click',async()=>{
   try{
     const midi=await navigator.requestMIDIAccess({sysex:true});
     if(usingPrivate||path.value==='update')await installSmk(midi,pkg,log);
-    else await installStockSmk(midi,pkg,log);
+    else await installStockSmk(midi,pkg,log,{confirmGeneric});
   }catch(e){log(e.message);}finally{busy=false;sync();}
 });

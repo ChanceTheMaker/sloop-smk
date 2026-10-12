@@ -1,3 +1,14 @@
+## Doom SMK installer compatibility - 2026-10-12
+
+Main installation now shares the automatic stock/portable/resume flow with the
+Elite retry page. Compatible Doom-SMK-37 and ota-Doom-SMK-37 identities (007+)
+use the portable package, retain the Doom loader identity at handoff and require
+the exact returned Sloop identity. Doom-FM-1 and old private updaters are excluded.
+Package bounds and calibration protection are unchanged. Tests cover stock,
+portable, Doom, loader resume, rejected models and incomplete transfer. The
+owner installed b8-dc1 from the active Doom 008 loader on the Pro; USB reports
+SLOOP SMK 2.6.0-b8-dc1 and CPU1 online. FM6 load and cold restart remain pending.
+
 # Current Sloop SMK integration
 
 ## Current local candidate (2026-10-11)
