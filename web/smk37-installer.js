@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b7-r1';
-import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b7-r1';
-import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b7-r1';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b7-r2';
+import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b7-r2';
+import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b7-r2';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
 const loopback=['localhost','127.0.0.1','[::1]'].includes(location.hostname);

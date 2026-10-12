@@ -20,7 +20,7 @@ let sent=0,closed=0,serve=0;
 const link=()=>({send:()=>{sent++;return true},close:()=>closed++});
 const original={};for(const n of ['find','waitFor','serve'])original[n]=Updater.prototype[n];
 try{
- Updater.prototype.find=async function(filter){assert.equal(filter({model:'FM-1'}),false);assert.equal(filter({model:'ota-FM-1'}),false);return null;};
+ Updater.prototype.find=async function(filter){assert.ok(this.portPattern.test('Melodee'));assert.ok(this.portPattern.test('Sloop'));assert.equal(filter({model:'FM-1'}),false);assert.equal(filter({model:'ota-FM-1'}),false);return null;};
  await assert.rejects(installSmk({},pkg),/one-time/);assert.equal(sent,0);
  Updater.prototype.find=async()=>({id:{model:'SMK-37'},link:link()});
  let waiting=0;

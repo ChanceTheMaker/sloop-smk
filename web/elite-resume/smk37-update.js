@@ -18,21 +18,21 @@ export async function parsePackage(bytes,expectedSha){
   if(!expectedSha||sha!==expectedSha)throw Error('This package is not the reviewed candidate for this local installer.');
   return {bytes,product,version,sha,format};
 }
-const SMK_PORT=/smk|felucca|ota|composite|sinco|usb-midi/i;
+const SMK_PORT=/smk|felucca|sloop|melodee|ota|composite|sinco|usb-midi/i;
 const START=[0xf0,0x22,0x24,0x35,0x7f,0xf7];
-export async function installSmk(access,pkg,log=()=>{}){
+export async function installSmk(access,pkg,log=()=>{},{device}={}){
   const up=new Updater(access,log,SMK_PORT);let link;
   try {
     // Exact model filter; the shared transport never sends START to FM-1.
-    let dev=await up.find(id=>id.model==='ota-SMK-37'||id.model==='SMK-37');
-    if(!dev)throw Error('Updater-enabled SMK not found. Test10 and stock firmware need the one-time adapter installation first. Close Studio and other MIDI apps.');
+    let dev=device||await up.findAny(id=>id.model==='ota-SMK-37'||id.model==='SMK-37');
+    if(!dev)throw Error('No updater-enabled SMK replied. Close other MIDI apps, or choose Automatic install / resume for official 016 firmware.');
     link=dev.link;
     if(pkg.format===2 && (!Number.isInteger(dev.id.version)||dev.id.version<922))throw Error('This older private updater cannot accept the portable package. It needs a separate migration; no update was started.');
     if(dev.id.model==='SMK-37'){
       log('Entering SMK update mode. No flash has been written.');
       if(!link.send(START))throw Error('SMK disconnected before update mode.');
-      link.close();link=null;
-      dev=await up.waitFor(id=>id.model==='ota-SMK-37',30000);
+      await link.close();link=null;
+      dev=await up.waitForAny(id=>id.model==='ota-SMK-37',30000);
       if(!dev)throw Error('SMK RAM loader did not appear. No browser programming started.');
       link=dev.link;
     }
@@ -40,13 +40,13 @@ export async function installSmk(access,pkg,log=()=>{}){
     if(!link.send(START))throw Error('Loader disconnected.');
     const r=await up.serve(link,pkg.bytes,0xf0000000,20000,(n)=>{if(n%64===0)log(`Transfer request ${n}`);});
     if(!r.finished)throw Error('Update stopped. Keep SMK powered on; retry while its loader is connected. If power was lost during programming, use the recovery adapter.');
-    link.close();link=null;log('Application readback verified. Waiting for restart...');
-    const back=await up.waitFor(id=>id.model==='SMK-37',40000);
+    await link.close();link=null;log('Application readback verified. Waiting for restart...');
+    const back=await up.waitForAny(id=>id.model==='SMK-37',40000);
     if(!back)throw Error('Programming verified, but normal USB identity did not return. Inspect the device before taking further action.');
     link=back.link;
     if(back.id.text!==pkg.product)throw Error(`Unexpected returned version: ${back.id.text}`);
     log(`Installed ${pkg.version}. Device returned as ${back.id.text}.`);
-  } finally {link?.close();}
+  } finally {await link?.close();}
 }
 
 // Stock installation and an already-running official loader use the same flow.
@@ -66,10 +66,15 @@ export async function installStockSmk(access,pkg,log=()=>{},{confirmGeneric}={})
   if(!pkg?.image||!['SMK-37 Pro','SMK-37 Elite'].includes(pkg.stockModel)||pkg.format!==2)throw Error('A verified SMK stock-derived package is required.');
   const up=new Updater(access,log,SMK_PORT);let link;
   const loader=id=>id.model==='ota-'+pkg.stockModel||id.model==='ota-FM-1';
+  const portable=id=>id.model==='SMK-37'||id.model==='ota-SMK-37';
   try{
     log('Looking for '+pkg.stockModel+' or its active loader...');
-    let dev=await up.findAny(id=>loader(id)||(id.model===pkg.stockModel&&id.version===16));
+    let dev=await up.findAny(id=>portable(id)||loader(id)||(id.model===pkg.stockModel&&id.version===16));
     if(!dev)throw Error('No matching SMK replied. Connect only '+pkg.stockModel+' running official 016 firmware or its active loader. Close other MIDI apps, then use Install / resume.');
+    if(portable(dev.id)){
+      log('Found '+dev.id.text+' on '+dev.name+'. Using its existing SMK USB updater.');
+      return await installSmk(access,pkg,log,{device:dev});
+    }
     let ota;
     if(loader(dev.id)){
       ota=await acceptLoader(dev,pkg.stockModel,confirmGeneric,log);

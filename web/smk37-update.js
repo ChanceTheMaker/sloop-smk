@@ -18,7 +18,7 @@ export async function parsePackage(bytes,expectedSha){
   if(!expectedSha||sha!==expectedSha)throw Error('This package is not the reviewed candidate for this local installer.');
   return {bytes,product,version,sha,format};
 }
-const SMK_PORT=/smk|felucca|ota|composite|sinco|usb-midi/i;
+const SMK_PORT=/smk|felucca|sloop|melodee|ota|composite|sinco|usb-midi/i;
 const START=[0xf0,0x22,0x24,0x35,0x7f,0xf7];
 export async function installSmk(access,pkg,log=()=>{}){
   const up=new Updater(access,log,SMK_PORT);let link;
