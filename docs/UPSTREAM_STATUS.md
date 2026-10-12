@@ -1,3 +1,11 @@
+# October 12 dual-core work
+
+Sloop SMK 2.6.0-b8-dc1 adapts the Melodee dc7 CPU1 lifecycle to Sloop's integer
+FM6 engine. Musical upstream remains pinned at 4365a1d; SMK base 84abf0a.
+Host audio parity, fault fallback, linked SRAM audit, SMK regressions and both
+model packages pass. [Evidence and limits](SLOOP_DUAL_CORE.md). Hardware check
+is pending; public b7 is not replaced yet. No upstream PR; fork-only work.
+
 # Current Sloop SMK integration
 
 ## Current local candidate (2026-10-11)
@@ -449,7 +457,7 @@ Website follow-up: Install opens the initially collapsed Install Progress
 accordion, scrolls to its output, and confirmed
 success reveals an Edit in Studio link. Desktop/mobile, resumed success, failure,
 retry and translations are tested with a simulated updater. The owner authorized
-porting the UI round to the fork's main, separately from this RC1 stack. Website PRs #30–33 were merged into fork main `5874362` and published as
+porting the UI round to the fork's main, separately from this RC1 stack. Website PRs #30â€“33 were merged into fork main `5874362` and published as
 `gh-pages` deployment `f370b0c`, retaining Salt14. The earlier RC1 draft assets
 remain unchanged; this update has a distinct candidate package.
 The header logo also links home from both pages, with its typography preserved
@@ -475,7 +483,7 @@ respecting reduced-motion preferences. These UI features are separate fork PRs.
   [#26](https://github.com/ChanceTheMaker/Felucca/pull/26), regressions
   [#27](https://github.com/ChanceTheMaker/Felucca/pull/27), and final website/docs
   [#28](https://github.com/ChanceTheMaker/Felucca/pull/28). Keep these draft until
-  candidate hardware validation is complete. Website PRs #15 and #19–23 are
+  candidate hardware validation is complete. Website PRs #15 and #19â€“23 are
   already merged; the live installer still serves Salt14.
 
 ## Features and retained differences
@@ -486,7 +494,7 @@ respecting reduced-motion preferences. These UI features are separate fork PRs.
 | TRS receive ring | Retain content-driven reads with upstream overflow/timestamp handling; fork PR 17 | Potential focused contribution; check upstream before proposing |
 | Palettes, fonts and MIDI monitor | Retain 21 palettes, regular/bold font and Events/Notes monitor; fork PR 18 | Additional Salt behavior; split any proposed contribution by feature |
 | MIDI, palettes, favorites already credited in upstream README | Reuse current upstream behavior and test Salt extensions | Do not resubmit already adopted work |
-| Protocol | SONG 33, preferences/favorites 34–38; capability detection | Follow upstream allocation; experimental Salt command 33 retired |
+| Protocol | SONG 33, preferences/favorites 34â€“38; capability detection | Follow upstream allocation; experimental Salt command 33 retired |
 | Editor and installer | Current protocol, FM6/song/motion, sample trim/recording, backup-first recovery | Upstream functionality integrated into Salt interface |
 | Browser synth | Rebuild from 1.0.1 DSP; 13 selectable engines, 69 presets, imported FM6 sounds | Fork feature; a contribution needs an independent upstream proposal |
 | Website, themes, branding, analytics | Maintain independently in the fork | Not selected for upstream submission |
@@ -536,6 +544,6 @@ limitations and save-enablement prerequisites are in smk37/SOUND_CONTROLS.md.
 
 Test09 hardware follow-up: owner confirmed velocity response, pedal ADC23, runtime read probe, bidirectional editor, lit step editing/playback and pad bank2. Test10 SAVE is a private sustain/persistence candidate with separate save-only adapter recovery preparation. Tests pass; adapter hardware verification, new-image approval and physical save/load/reboot tests remain pending. No push, PR or publication.
 
-## Website family navigation — 2026-10-11
+## Website family navigation â€” 2026-10-11
 
 Added footer links among SMKLab, Felucca SMK, Sloop SMK and Melodee SMK on the homepage, Studio and simulator. Website-only change; published firmware and protocols remain unchanged. Local link/markup checks pass. No upstream contribution is intended for this branding/navigation change.

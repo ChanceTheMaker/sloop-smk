@@ -58,7 +58,7 @@ class SMKPackage extends Package {
 export async function buildSmkPublicPackage(stock,app,release){
   const profile=profiles[await sha256hex(stock)];
   if(!profile)throw Error('Choose the unmodified official SMK-37 Pro 016 or Elite 016 .fwsc file.');
-  if(!release||release.public!==true||!/^SMK-37_9\d\d$/.test(release.product)||typeof release.version!=='string'||!/^SLOOP SMK [0-9.]+-b[0-9]+$/i.test(release.version)||release.version.length>31||await sha256hex(app)!==release.sha256||app.length!==release.bytes||app.length%4||app.length<4||u32(app,0)!==0x00808104)throw Error('Public SMK application verification failed.');
+  if(!release||release.public!==true||!/^SMK-37_9\d\d$/.test(release.product)||typeof release.version!=='string'||!/^SLOOP SMK [0-9.]+-b[0-9]+(?:-dc[0-9]+)?$/i.test(release.version)||release.version.length>31||await sha256hex(app)!==release.sha256||app.length!==release.bytes||app.length%4||app.length<4||u32(app,0)!==0x00808104)throw Error('Public SMK application verification failed.');
   const pkg=new SMKPackage(stock);
   if(pkg.blocks!==profile.blocks||pkg.flashSize!==HI||pkg.appBase!==LO||pkg.appOff!==0x4120||pkg.app.size!==profile.appBytes||pkg.chipKey!==0x980f||crc32(pkg.flash.subarray(0,LO))!==0x3a04ad23)throw Error('Unsupported SMK flash layout.');
   const before=pkg.flash.slice();pkg.setApp(app);

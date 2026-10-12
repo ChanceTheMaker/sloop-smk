@@ -24,12 +24,13 @@ def main():
     parser.add_argument('--enable-storage',action='store_true',help='Enable guarded native project/preset persistence')
     parser.add_argument('--enable-samples',action='store_true',help='Candidate physical samples; explicit on-device initialization required')
     parser.add_argument('--enable-trs',action='store_true',help='Candidate SMK TRS MIDI output')
+    parser.add_argument('--dual-core', action='store_true', help='Candidate CPU1 FM6 voice renderer with serial fallback')
     parser.add_argument('--skip-generate',action='store_true')
     parser.add_argument('--usb-test-number',type=int,default=None,choices=range(30,100))
     args = parser.parse_args()
     if args.enable_samples and not args.enable_storage: parser.error('--enable-samples requires --enable-storage')
-    if args.usb_test_number is None: args.usb_test_number=36
-    version="SLOOP SMK 2.6.0-b7"
+    if args.usb_test_number is None: args.usb_test_number=37 if args.dual_core else 36
+    version="SLOOP SMK 2.6.0-b8-dc1" if args.dual_core else "SLOOP SMK 2.6.0-b7"
     args.public_release=True
     args.enable_saves=args.enable_presets=args.enable_storage
     args.enable_usb_audio=args.enable_usb_update=True
@@ -50,11 +51,11 @@ def main():
     for script,header in [('gen_tables.py','felucca_tables.h'),('gen_samples.py','felucca_samples.h'),('gen_fm6_patches.py','felucca_fm6.h'),('gen_drumkits.py','felucca_drumkits.h'),('gen_font.py','felucca_font.h'),('gen_icons.py','felucca_icons.h')]:
         if args.skip_generate and (build.GEN/header).exists(): continue
         subprocess.run([sys.executable,str(build.SRC/'sloop/tools'/script),str(build.GEN/header)],check=True,cwd=build.SRC/'sloop')
-    flags = [*build.CFLAGS, f"-DSMK37_ENABLE_SAMPLES={int(args.enable_samples)}", f"-DSMK37_ENABLE_USB_AUDIO={int(args.enable_usb_audio)}", "-Ifirmware/hal", "-Ifirmware/src", f"-I{build.GEN.relative_to(build.SRC)}", f"-DSMK37_ENABLE_PRESETS={int(args.enable_presets)}", f"-DSMK37_ENABLE_SAVES={int(args.enable_saves)}", f"-DSMK37_ENABLE_USB_UPDATE={int(args.enable_usb_update)}"]
+    flags = [*build.CFLAGS, f"-DSLOOP_DUAL_CORE={int(args.dual_core)}", f"-DSMK37_ENABLE_SAMPLES={int(args.enable_samples)}", f"-DSMK37_ENABLE_USB_AUDIO={int(args.enable_usb_audio)}", "-Ifirmware/hal", "-Ifirmware/src", f"-I{build.GEN.relative_to(build.SRC)}", f"-DSMK37_ENABLE_PRESETS={int(args.enable_presets)}", f"-DSMK37_ENABLE_SAVES={int(args.enable_saves)}", f"-DSMK37_ENABLE_USB_UPDATE={int(args.enable_usb_update)}"]
     flags += [f'-DSMK37_ENABLE_TRS={int(args.enable_trs)}']
     build.tc_all(
         ("cc", *flags, "-c", build.FW / "src" / "sloop_smk_app.c", "-o", out / "app.o"),
-        ("cc", f"-DSMK37_ENABLE_USB_AUDIO={int(args.enable_usb_audio)}", "-c", build.FW / "smk37_crt0.S", "-o", out / "crt0.o"),
+        ("cc", f"-DSLOOP_DUAL_CORE={int(args.dual_core)}", f"-DSMK37_ENABLE_USB_AUDIO={int(args.enable_usb_audio)}", "-c", build.FW / "smk37_crt0.S", "-o", out / "crt0.o"),
         ("cc", "-c", build.FW / "hal" / "fm1_vec.S", "-o", out / "vec.o"),
     )
     elf = out / "smk37-integration.elf"
@@ -70,9 +71,11 @@ def main():
     (out / "symbols.txt").write_text(symbols)
     def sym(name):
         return int(re.search(r"^([0-9a-f]+) .*\s" + name + r"$", symbols, re.M)[1], 16)
+    from smk_multicore_audit import audit_multicore
+    multicore=audit_multicore(symbols,disassembly,args.dual_core)
     image = bytearray()
     for section, address in ((".text", build.APP_XIP), (".ram_text", sym("_rt_load")),
-                             (".data", sym("_data_load"))):
+                             (".dsp_text", sym("_dsp_load")), (".data", sym("_data_load"))):
         blob = out / (section[1:] + ".bin")
         blob.unlink(missing_ok=True)
         build.tc("common/bin/objcopy", "-O", "binary", "-j", section, elf, blob)
@@ -98,6 +101,7 @@ def main():
     manifest = {
         "board": "SMK-37 Pro & Elite", "firmware": version, "installable": False,
         "public_build": args.public_release,
+        "dual_core": multicore,
         "purpose": "offline linked application integration",
         "storage_mode": "Native Sloop A/B objects; blank or Sloop-owned pairs only" if args.enable_storage else "RAM-only projects/presets; browser exports persist separately", "image": name, "bytes": len(image), "sha256": hashlib.sha256(image).hexdigest(),
         "entry": hex(sym("_start")), "bss_end": hex(sym("_bss_end")),

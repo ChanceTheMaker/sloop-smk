@@ -14,6 +14,14 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 - Browser sessions preserve virtual projects, user presets, four sample slots, synth drum kits, current FM6 voices and MIDI settings. Export a session file to keep an independent copy.
 - The hardware candidate includes the bounded SMK USB updater. Its image and a return-to-Felucca 0.9.22 package pass the host loader test.
 
+## Dual-core candidate
+
+**2.6.0-b8-dc1** adds paired FM6 voice rendering on CPU1 with automatic serial
+fallback. The existing sound engine, polyphony, storage and USB updater layout
+are preserved. Other engines and the browser runtime stay serial. See the
+[dual-core notes](docs/SLOOP_DUAL_CORE.md) for the build, tests and limits.
+Device acceptance is pending; the public installer remains on b7 until then.
+
 ## Firmware status
 
 **The public beta is 2.6.0-b7**, following the owner's b5/b6 hardware checks
