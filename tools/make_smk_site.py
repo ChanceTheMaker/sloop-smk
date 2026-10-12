@@ -20,8 +20,12 @@ def main():
     web = ROOT / 'web'
     for source in web.iterdir():
         if source.is_file() and (source.suffix in ('.js', '.css', '.ttf', '.txt', '.svg', '.png', '.ico') or
-                                source.name in ('index.html', 'editor.html', 'simulator.html')):
+                                source.name in ('index.html', 'editor.html', 'simulator.html', 'midi-diagnostics.html', 'elite-resume.html')):
             shutil.copy2(source, out / source.name)
+    for name in ('elite-test', 'elite-resume'):
+        (out / name).mkdir()
+        for source in (web / name).glob('*.js'):
+            shutil.copy2(source, out / name / source.name)
     for name in ('fonts', 'screenshots'):
         shutil.copytree(web / name, out / name)
     (out / 'audio').mkdir()
