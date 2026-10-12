@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {Updater} from './fm1ota.js?v=0.9.22-r4';
+import {Updater} from './fm1ota.js?v=elite-flow-r2';
 export const HEADER=1024, LO=0x4000, HI=0x9d000;
 export function crc32(data){let c=0xffffffff;for(const b of data){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((0-(c&1))&0xedb88320);}return (c^0xffffffff)>>>0;}
 export async function parsePackage(bytes,expectedSha){
@@ -49,60 +49,54 @@ export async function installSmk(access,pkg,log=()=>{}){
   } finally {link?.close();}
 }
 
-// Stock first-install uses only the official 016 loader from the owner's
-// hash-checked file. This is separate from the bounded Felucca RAM loader.
-// Resume helper: the loader may enumerate under a port name SMK_PORT does not
-// match, or a port may be busy. Log every MIDI port and probe all of them.
-async function findLoaderAnyPort(access,model,log,up){
-  const ins=[...(access?.inputs?.values?.()||[])];
-  log('MIDI inputs: '+(ins.map(i=>`"${i.name}" (${i.state}/${i.connection})`).join(', ')||'none'));
-  log('MIDI outputs: '+([...(access?.outputs?.values?.()||[])].map(o=>`"${o.name}" (${o.state}/${o.connection})`).join(', ')||'none'));
-  for(const i of ins){try{await i.open();}catch(e){log(`Cannot open input "${i.name}": ${e.message||e}. Another tab/app may still hold it.`);}}
-  const any=new Updater(access,log,/./);
-  const dev=await any.find(id=>{log('Identity reply: '+id.text);return id.model==='ota-'+model||id.model==='ota-FM-1';});
-  if(!dev){log('No port answered the SMK handshake.');return null;}
-  log(`Port "${dev.name}" answered as ${dev.id.text}.`);
+// Stock installation and an already-running official loader use the same flow.
+// A generic identity never proves the model; require an explicit decision.
+async function acceptLoader(dev,model,confirmGeneric,log){
   if(dev.id.model==='ota-'+model)return dev;
-  // A black-screen SMK may expose the generic flash-resident loader (ota-FM-1_xxx).
-  // Never assume: the user must confirm it is their SMK and the model is right.
-  if(dev.id.model==='ota-FM-1'&&model==='SMK-37 Elite'&&globalThis.document?.getElementById('elite-generic-resume')?.checked&&typeof confirm==='function'&&confirm(`Loader "${dev.id.text}" found on port "${dev.name}".\n\nContinue ONLY if this is your ${model} stuck in update mode (black screen) and no real FM-1 is connected.\nThe firmware to be written is for: ${model}.\n\nWrite Sloop SMK to it?`)){log(`User confirmed generic loader ${dev.id.text} as ${model}.`);return dev;}
-  dev.link.close();
-  if(dev.id.model==='ota-FM-1')throw Error('Generic loader '+dev.id.text+' detected. No programming started. Elite testers may explicitly enable the experimental generic-loader option after disconnecting every real FM-1, then retry.');
-  return null;
+  try{
+    if(dev.id.model!=='ota-FM-1'||model!=='SMK-37 Elite')throw Error('Loader identity does not match the selected SMK model. No programming started.');
+    log('The loader reports '+dev.id.text+'. Confirm the connected keyboard before continuing.');
+    if(!confirmGeneric||!await confirmGeneric({identity:dev.id.text,port:dev.name,model}))
+      throw Error('Installation paused. No application programming started. Keep the Elite powered and use Install / resume when ready.');
+    log('User confirmed the generic loader belongs to the connected '+model+'.');
+    return dev;
+  }catch(e){await dev.link.close();throw e;}
 }
-export async function installStockSmk(access,pkg,log=()=>{}){
+export async function installStockSmk(access,pkg,log=()=>{},{confirmGeneric}={}){
   if(!pkg?.image||!['SMK-37 Pro','SMK-37 Elite'].includes(pkg.stockModel)||pkg.format!==2)throw Error('A verified SMK stock-derived package is required.');
   const up=new Updater(access,log,SMK_PORT);let link;
+  const loader=id=>id.model==='ota-'+pkg.stockModel||id.model==='ota-FM-1';
   try{
-    // Resume: a previous attempt (or a frozen browser tab) may have left the
-    // SMK already in update mode (black screen) running the official loader.
-    let ota=await up.find(id=>id.model==='ota-'+pkg.stockModel);
-    if(!ota)ota=await findLoaderAnyPort(access,pkg.stockModel,log,up);
-    if(ota){
-      log('Loader already active ('+ota.id.text+'). Skipping loader preparation and resuming.');
+    log('Looking for '+pkg.stockModel+' or its active loader...');
+    let dev=await up.findAny(id=>loader(id)||(id.model===pkg.stockModel&&id.version===16));
+    if(!dev)throw Error('No matching SMK replied. Connect only '+pkg.stockModel+' running official 016 firmware or its active loader. Close other MIDI apps, then use Install / resume.');
+    let ota;
+    if(loader(dev.id)){
+      ota=await acceptLoader(dev,pkg.stockModel,confirmGeneric,log);
+      log('Official loader already active. Resuming without repeating loader preparation.');
     }else{
-      const dev=await up.find(id=>id.model===pkg.stockModel&&id.version===16);
-      if(!dev)throw Error(`No SMK found (see MIDI port list above). Connect ${pkg.stockModel} running official 016 firmware (or already in update mode). Close Studio and other MIDI apps.`);
       link=dev.link;
-      log(`Found ${dev.id.text}. Loading its official update loader. Keep USB and power connected.`);
+      log('Found '+dev.id.text+'. Preparing its official loader. Keep USB and power connected.');
       if(!link.send(START))throw Error('SMK disconnected before update mode.');
-      const first=await up.serve(link,pkg.image,0xe0000000,15000,n=>{if(n%64===0)log(`Preparing loader: ${n}`);});
-      if(!first.finished)throw Error('The stock firmware did not complete loader preparation. Stop and inspect the device before retrying.');
-      link.close();link=null;
-      ota=await up.waitFor(id=>id.model==='ota-'+pkg.stockModel,30000);
-      if(!ota)throw Error('The official SMK loader did not appear. Stop and inspect the device.');
+      const first=await up.serve(link,pkg.image,0xe0000000,15000,n=>{if(n%64===0)log('Preparing loader: '+n);});
+      if(!first.finished)throw Error('Loader preparation did not complete. Save the log and inspect the device before retrying.');
+      await link.close();link=null;
+      log('Loader prepared. Reconnecting automatically; the screen may stay black...');
+      ota=await up.waitForAny(loader,30000);
+      if(!ota)throw Error('The loader has not replied yet. Keep the SMK powered, close other MIDI apps, then click Install / resume on this page. Do not repeat loader preparation manually.');
+      ota=await acceptLoader(ota,pkg.stockModel,confirmGeneric,log);
     }
     link=ota.link;
-    log('Official loader connected. Installing Sloop SMK beta; keep power and USB connected.');
-    if(!link.send(START))throw Error('SMK loader disconnected.');
-    const result=await up.serve(link,pkg.image,0xf0000000,180000,n=>{if(n%64===0)log(`Installing: ${n} transfer requests`);});
-    if(!result.finished)throw Error('Installation did not finish. Keep the SMK powered on and save this log before attempting recovery.');
-    link.close();link=null;
-    const back=await up.waitFor(id=>id.model==='SMK-37',40000);
-    if(!back)throw Error('The loader completed, but Sloop SMK did not return. Inspect the device.');
+    log('Official loader connected. Installing '+pkg.version+'; keep power and USB connected.');
+    if(!link.send(START))throw Error('SMK loader disconnected before programming.');
+    const result=await up.serve(link,pkg.image,0xf0000000,180000,n=>{if(n%64===0)log('Installing: '+n+' transfer requests');});
+    if(!result.finished)throw Error('Installation did not finish. Keep the SMK powered and save the log. No automatic write retry was attempted.');
+    await link.close();link=null;
+    log('Loader transfer complete. Waiting for Sloop to restart...');
+    const back=await up.waitForAny(id=>id.model==='SMK-37',40000);
+    if(!back)throw Error('The loader completed, but Sloop SMK did not return. Save the log and inspect the device.');
     link=back.link;
-    if(back.id.text!==pkg.product)throw Error(`Expected ${pkg.product}; received ${back.id.text}.`);
-    log(`Installed ${pkg.version}. Device returned as ${back.id.text}.`);
-  }finally{link?.close();}
+    if(back.id.text!==pkg.product)throw Error('Expected '+pkg.product+'; received '+back.id.text+'.');
+    log('Installed '+pkg.version+'. Device returned as '+back.id.text+'.');
+  }finally{await link?.close();}
 }
-

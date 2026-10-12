@@ -6,7 +6,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=1">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<base href="./"><title data-i18n="ui.smkInstallerTitle">Sloop SMK — Installer</title>
+<title data-i18n="ui.smkInstallerTitle">Sloop SMK — Installer</title>
 <link rel="stylesheet" href="skin.css"><link rel="stylesheet" href="sloop.css?v=b2-thumbs"><link rel="stylesheet" href="interface.css"><link rel="stylesheet" href="fonts.css?v=smk2">
 <script src="locales.js"></script><script src="i18n.js"></script><script src="skin.js"></script>
 <script defer src="site-nav.js?v=smk-simulator"></script>
@@ -54,9 +54,12 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
     </div>
     <p id="status" role="status">Checking firmware availability...</p>
 
-    <div style="border:1px solid #e49a36;padding:14px;margin:14px 0"><strong>EXPERIMENTAL ELITE RESUME TEST · b7 firmware</strong><p>Connect only the SMK-37 Elite. Disconnect any real FM-1. This is an experimental installer, not a new firmware build.</p><label><input type="checkbox" id="elite-generic-resume" disabled> Allow experimental Elite generic-loader resume (ota-FM-1 identity)</label><p class="small">Normally leave this off. If the log detects ota-FM-1 on your black-screen Elite, enable it and retry. A second confirmation shows the exact identity before writing. The name alone cannot distinguish an Elite from a real FM-1.</p></div>
+    <div style="border:1px solid #e49a36;padding:14px;margin:14px 0"><strong>ELITE INSTALL / RESUME · b7 firmware</strong><p>Connect only your SMK. Click Install / resume once: this page prepares the loader, reconnects and installs. If the loader is already active, it continues from there.</p><p class="small">Disconnect any real FM-1. If the Elite loader uses a generic name, you will be asked to confirm the keyboard here before writing. No separate checkbox or page reload is needed.</p></div>
+    <dialog id="loader-confirm" aria-labelledby="loader-title" style="max-width:480px;background:var(--panel,#202226);color:var(--fg,#fff);border:1px solid #e49a36;border-radius:12px;padding:24px">
+      <form method="dialog"><h2 id="loader-title">Confirm your Elite</h2><p>The connected loader identifies itself as <strong id="loader-identity"></strong>. That name is also used by FM-1 devices.</p><p>Continue only if the connected device is your <strong id="loader-model"></strong> with a black screen and every real FM-1 is disconnected. This will write Sloop SMK firmware to that device.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><button value="cancel" autofocus>Cancel</button><button class="primary" value="continue">This is my Elite — continue</button></div></form>
+    </dialog>
 <label><input type="checkbox" id="ack"> I understand this is beta firmware and have backed up my sounds and settings.</label>
-    <button class="primary" id="install-button" disabled>Install SMK beta</button>
+    <button class="primary" id="install-button" disabled>Install / resume SMK beta</button>
     <p class="small">Keep USB and device power connected until installation completes. The update writes only the application area; project and preset storage, calibration, and the bootloader are outside that range. Do not disconnect or switch off the keyboard while programming.</p>
     <details><summary>Installation log</summary><pre id="log" aria-live="polite"></pre></details>
   </div>
@@ -85,4 +88,4 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 
 </div>
 <footer>Sloop SMK by Chance Roth (<a href="https://github.com/ChanceTheMaker" target="_blank" rel="noopener">@ChanceTheMaker</a>). Sloop firmware by isod89. Based on Felucca by Leo Kuroshita (@kurogedelic), H&uuml;gelton Instruments. GPL-3.0. M-VAVE, FM-1, and SMK-37 are trademarks of their respective owners.</footer>
-</main><script type="module" src="elite-resume/smk37-installer.js?v=elite-resume-r1"></script></body></html>
+</main><script type="module" src="elite-resume/smk37-installer.js?v=elite-flow-r2"></script></body></html>

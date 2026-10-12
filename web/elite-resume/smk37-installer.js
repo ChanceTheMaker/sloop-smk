@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=2.6.0-b7-r1';
-import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b7-r1';
-import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b7-r1';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=elite-flow-r2';
+import {buildSmkPublicPackage} from './smk37-package.js?v=elite-flow-r2';
+import {STOCK_SOURCES} from './smk37-stock.js?v=elite-flow-r2';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
-const generic=document.getElementById('elite-generic-resume');
+const dialog=document.getElementById('loader-confirm');
+async function confirmGeneric({identity,port,model}){
+  document.getElementById('loader-identity').textContent=identity+' on '+port;
+  document.getElementById('loader-model').textContent=model;
+  log('Confirm the connected Elite in the dialog to continue this installation.');
+  dialog.returnValue='cancel';
+  return new Promise(resolve=>{
+    dialog.addEventListener('close',()=>resolve(dialog.returnValue==='continue'),{once:true});
+    dialog.showModal();
+  });
+}
 const loopback=['localhost','127.0.0.1','[::1]'].includes(location.hostname);
 const privateRequested=false;
 const publicPreview=true;
 let release,pkg,busy=false,selection=0,usingPrivate=false;
-const sync=()=>{button.disabled=busy||!pkg||!ack.checked||!navigator.requestMIDIAccess;file.disabled=busy;path.disabled=busy;model.disabled=busy;ack.disabled=busy;if(generic)generic.disabled=busy||model.value!=='SMK-37 Elite'||path.value!=='stock';};
+const sync=()=>{button.disabled=busy||!pkg||!ack.checked||!navigator.requestMIDIAccess;file.disabled=busy;path.disabled=busy;model.disabled=busy;ack.disabled=busy;};
 const log=message=>{status.textContent=message;output.textContent+=message+'\n';};
 ack.addEventListener('change',sync);
 window.addEventListener('beforeunload',event=>{if(busy){event.preventDefault();event.returnValue='';}});
@@ -28,6 +38,14 @@ async function prepare(stockOverride){
   }catch(e){if(request===selection){log(e.message);document.getElementById('manual-file').open=true;}}
   finally{if(request===selection)sync();}
 }
+model.addEventListener('change',()=>{file.value='';prepare();});
+path.addEventListener('change',sync);
+file.addEventListener('change',async()=>{
+  if(!file.files?.length)return;
+  const selected=file.files[0];
+  if(selected.size>32*1024*1024){pkg=null;sync();log('Select an official SMK .fwsc file, not a ZIP archive or backup.');return;}
+  await prepare(new Uint8Array(await selected.arrayBuffer()));
+});
 try{
   if(loopback&&(!publicPreview||privateRequested)){
     try{
@@ -49,21 +67,13 @@ try{
     await prepare();
   }
 }catch(e){release=null;pkg=null;log(e.message);document.getElementById('release').textContent='Firmware download unavailable';}
-model.addEventListener('change',()=>{if(generic)generic.checked=false;file.value='';prepare();});
-path.addEventListener('change',()=>{if(generic)generic.checked=false;sync();});
-file.addEventListener('change',async()=>{
-  if(!file.files?.length)return;
-  const selected=file.files[0];
-  if(selected.size>32*1024*1024){pkg=null;sync();log('Select an official SMK .fwsc file, not a ZIP archive or backup.');return;}
-  await prepare(new Uint8Array(await selected.arrayBuffer()));
-});
 if(!navigator.requestMIDIAccess)log('Web MIDI is unavailable. Open this page in Chrome or Edge.');
 sync();
 button.addEventListener('click',async()=>{
-  if(button.disabled)return;busy=true;sync();
+  if(button.disabled)return;busy=true;sync();output.closest('details').open=true;
   try{
     const midi=await navigator.requestMIDIAccess({sysex:true});
     if(usingPrivate||path.value==='update')await installSmk(midi,pkg,log);
-    else await installStockSmk(midi,pkg,log);
+    else await installStockSmk(midi,pkg,log,{confirmGeneric});
   }catch(e){log(e.message);}finally{busy=false;sync();}
 });
