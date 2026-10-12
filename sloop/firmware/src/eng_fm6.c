@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only
- * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), Hügelton Instruments */
+ * Copyright (C) 2026 Leo Kuroshita (@kurogedelic), HÃ¼gelton Instruments */
 /* FM6: classic 6-operator FM (SLOOP 2.4, from Felucca 1.0.1). The synthesis is msfa (Dexed's core), ported to
  * integer C in fm6_core.c (Apache-2.0); this file is the engine around it.
  *
@@ -313,7 +313,7 @@ static int fm6_done(track_t *t, voice_t *v)
     return 1;
 }
 
-static void fm6_render(track_t *t, voice_t *v, int32_t *out, uint32_t len, const vmod_t *m)
+static void fm6_render_into(track_t *t, voice_t *v, int32_t *out, uint32_t len, const vmod_t *m, int32_t scratch[2][FM6_N])
 {
     fm6_note_t *n = fm6_note_of(t, v);
     uint32_t tr = (uint32_t)(t - trk), i;
@@ -327,7 +327,7 @@ static void fm6_render(track_t *t, voice_t *v, int32_t *out, uint32_t len, const
     lf = fm6_note_logfreq(m->pitch16 + (p[FP_TRNSP] - 24) * 16, m->fine);
     fb = clamp(fm6_eff[tr].fb + ((m->shape - (64 << 8)) >> 11), 0, 7);
     lvl = clamp(t->p[P_E2], -64, 63) * 24 + clamp(m->cutoff >> 8, -150, 150) * 16;   /* microsteps */
-    if (!fm6_note_compute(n, p, bus, fm6_lfo_v[tr], fm6_lfo_d[tr], lf, fm6_eff[tr].alg, fb, fm6_eff[tr].dt, lvl << 16))
+    if (!fm6_note_compute_into(n, p, bus, fm6_lfo_v[tr], fm6_lfo_d[tr], lf, fm6_eff[tr].alg, fb, fm6_eff[tr].dt, lvl << 16, scratch))
         return;                                         /* every carrier below the threshold */
     /* the voice's amplitude ramp x VOICE_FS (one carrier at full: VOICE_FS / 2), six voices in unison ~ one */
     k = t->p[P_VOICE] == V_UNISON ? VOICE_FS * 2 / 5 : VOICE_FS;
@@ -339,6 +339,52 @@ static void fm6_render(track_t *t, voice_t *v, int32_t *out, uint32_t len, const
         a += da;
         out[i] += (int32_t)(((int64_t)x * a) >> 26);
     }
+}
+
+/* SMK CPU1 owns only one FM6 voice and its private operator buses. Main-core
+ * envelopes/control and all other engines stay serial. Join before track fade,
+ * engine changes, FX or flash; preserve the original voice summation order. */
+#if SLOOP_DUAL_CORE
+static struct {
+    track_t *track; voice_t *voice; vmod_t mod; uint32_t len;
+    int32_t scratch[2][FM6_N], pcm[FM6_N];
+} fm6_job;
+static int fm6_pending;
+static int32_t *fm6_pending_out;
+static uint32_t fm6_pairs;
+static void fm6_worker_kernel(void *unused) {
+    (void)unused;
+    fm6_render_into(fm6_job.track, fm6_job.voice, fm6_job.pcm, fm6_job.len, &fm6_job.mod, fm6_job.scratch);
+}
+static void fm6_join(void) {
+    if (!fm6_pending) return;
+    fm6_pending = 0;
+    if (!audio_worker_join()) return; /* never rerun a partly advanced voice */
+    for (uint32_t i=0;i<fm6_job.len;i++) fm6_pending_out[i] += fm6_job.pcm[i];
+}
+#else
+static inline void fm6_join(void) {}
+#endif
+static void fm6_render(track_t *t, voice_t *v, int32_t *out, uint32_t len, const vmod_t *m) {
+#if SLOOP_DUAL_CORE
+    uint32_t next=(uint32_t)(v-t->v)+1u;
+    while (next<NVOICE && !t->v[next].active) next++;
+    if (!fm6_pending && audio_worker_online && len==FM6_N && next<NVOICE) {
+        fm6_job.track=t; fm6_job.voice=v; fm6_job.mod=*m; fm6_job.len=len;
+        memset(fm6_job.pcm,0,sizeof fm6_job.pcm);
+        if (audio_worker_submit(fm6_worker_kernel,0)) {
+            fm6_pending=1; fm6_pending_out=out; return;
+        }
+    }
+    if (fm6_pending) {
+        int32_t pcm[FM6_N]={0};
+        fm6_render_into(t,v,pcm,len,m,fm6_bus);
+        fm6_pairs++; fm6_join();
+        for (uint32_t i=0;i<len;i++) out[i]+=pcm[i];
+        return;
+    }
+#endif
+    fm6_render_into(t,v,out,len,m,fm6_bus);
 }
 
 /* --------------------------------------------------------- the engine --- */

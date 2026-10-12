@@ -45,3 +45,17 @@ smk37_isr_usb:
     csync
     rti
 #endif
+
+/* Same AC79 CPU1 reset entry as upstream crt0.S; separate private stacks. */
+#if SLOOP_DUAL_CORE
+    .section .text.core1,"ax",@progbits
+    .globl fm1_core1_start
+fm1_core1_start:
+    cli
+    icfg = 0
+    usp = _cpu1_ustack_top
+    sp = _cpu1_sstack_top
+    ssp = _cpu1_sstack_top
+    reti = fm1_core1_main
+    rti
+#endif

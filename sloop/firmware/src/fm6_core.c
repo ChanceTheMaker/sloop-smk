@@ -368,7 +368,7 @@ static __attribute__((noinline)) void fm6_op_fb(int32_t *out, int32_t phase, int
 /* msfa FmCore::render: the six operators of algorithm alg into out (Q24). Unlike msfa, out starts empty:
  * the first carrier sounding writes it, the next ones add. Returns 0 when none sounded (out untouched) */
 static int32_t fm6_bus[2][FM6_N];
-static int fm6_core_render(int32_t *out, fm6_op_t *op, uint32_t alg, int32_t *fb, int32_t fb_shift)
+static int fm6_core_render_into(int32_t *out, fm6_op_t *op, uint32_t alg, int32_t *fb, int32_t fb_shift, int32_t fm6_bus[2][FM6_N])
 {
     const uint8_t *a = FM6_ALG[alg & 31u];
     uint8_t has[3] = {0, 0, 0};
@@ -398,6 +398,9 @@ static int fm6_core_render(int32_t *out, fm6_op_t *op, uint32_t alg, int32_t *fb
     }
     return has[0];
 }
+
+static int fm6_core_render(int32_t *out, fm6_op_t *op, uint32_t alg, int32_t *fb, int32_t fb_shift)
+{ return fm6_core_render_into(out, op, alg, fb, fb_shift, fm6_bus); }
 
 /* ------------------------------------------------------------ the note --- */
 typedef struct {                 /* a sounding note (msfa's note): 244 bytes */
@@ -509,8 +512,8 @@ static int32_t fm6_note_logfreq(int32_t pitch16, int32_t fine)
  * algorithm and feedback (already through the macros), dt[k]: a pitch offset per operator (Q24),
  * modlvl: a level offset of the operators that are not carriers (Q24 log2). Writes out (Q24); 0 = silent
  * (out untouched) */
-static int fm6_note_compute(fm6_note_t *n, const uint8_t *p, int32_t *out, int32_t lfo_val, int32_t lfo_delay,
-                             int32_t logfreq, uint32_t alg, int32_t fb, const int32_t *dt, int32_t modlvl)
+static int fm6_note_compute_into(fm6_note_t *n, const uint8_t *p, int32_t *out, int32_t lfo_val, int32_t lfo_delay,
+                             int32_t logfreq, uint32_t alg, int32_t fb, const int32_t *dt, int32_t modlvl, int32_t scratch[2][FM6_N])
 {
     uint32_t pmd = (uint32_t)((p[FP_LPMD] % 100u) * 165u >> 6) * (uint32_t)lfo_delay;   /* Q32 */
     int32_t senslfo = FM6_PMS[p[FP_LPMS] & 7u] * (lfo_val - (1 << 23));
@@ -536,8 +539,12 @@ static int fm6_note_compute(fm6_note_t *n, const uint8_t *p, int32_t *out, int32
             level += modlvl;
         n->op[k].level_in = level < 0 ? 0 : level > (17 << 24) ? 17 << 24 : level;
     }
-    return fm6_core_render(out, n->op, alg, n->fb, fb ? 8 - fb : 16);
+    return fm6_core_render_into(out, n->op, alg, n->fb, fb ? 8 - fb : 16, scratch);
 }
+
+static int fm6_note_compute(fm6_note_t *n, const uint8_t *p, int32_t *out, int32_t lfo_val, int32_t lfo_delay,
+                             int32_t logfreq, uint32_t alg, int32_t fb, const int32_t *dt, int32_t modlvl)
+{ return fm6_note_compute_into(n,p,out,lfo_val,lfo_delay,logfreq,alg,fb,dt,modlvl,fm6_bus); }
 
 /* the note can be dropped: every carrier silent for good (released and done, or held at a silent
  * sustain whose release can only fall) */

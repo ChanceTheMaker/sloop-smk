@@ -14,6 +14,10 @@
 #include "fm1_sys.h"
 #include "fm1_irq.h"
 #include "fm1_timer.h"
+#if SLOOP_DUAL_CORE
+#include "fm1_multicore.h"
+#endif
+#include "sloop_smk_multicore.h"
 #include "smk37_audio.h"
 #include "smk37_lcd_hw.h"
 #include "smk37_lights_hw.h"
@@ -39,6 +43,7 @@ static void lcd_blit(uint32_t,uint32_t,uint32_t,uint32_t,const uint16_t*);
 static void lcd_fill(uint32_t,uint32_t,uint32_t,uint32_t,uint16_t);
 #include "sloop_smk_runtime.c"
 #include "sloop_smk_editor.c"
+#include "sloop_smk_core_diag.c"
 #if FELUCCA_FLASH
 #include "sloop_smk_storage_diag.c"
 #include "sloop_smk_storage_reset.c"
@@ -59,6 +64,7 @@ static void sloop_usb_service(void){
 #if FELUCCA_FLASH
     if(ota_frame_get(&p,&n) && (sloop_storage_reset(p,n)||sloop_storage_diag(p,n))){ota_frame_done();return;}
 #endif
+    if(ota_frame_get(&p,&n) && sloop_core_diag(p,n)){ota_frame_done();return;}
     ed_service();
     /* Unknown vendor frames must not wedge the one-frame receive queue. */
     if(ota_frame_get(&p,&n))ota_frame_done();
@@ -229,6 +235,7 @@ void smk37_audio_irq(void)
         uac_render_start();
 #endif
         for (b = 0; b < HALF_FRAMES; b += CTL) {
+            smk37_multicore_checkpoint();
             mix_block(out + b * 2u, CTL);
 #if FELUCCA_UAC
             uac_tap(out + b * 2u, CTL);
@@ -271,6 +278,7 @@ extern void smk37_isr_scanner(void);
 static void fm1_fault(const fm1_crash_t *record)
 {
     (void)record;
+    smk37_multicore_stop(1);
 #if FELUCCA_UAC
     smk37_usb_timer_stop();
 #endif
@@ -282,6 +290,8 @@ static void fm1_fault(const fm1_crash_t *record)
 }
 
 static void smk37_enter_usb_update(void){
+    fm1_irq_off();
+    smk37_multicore_stop(0);
     smk37_bootguard_update(&smk37_boot_state);
     fm1_irq_off();
 #if FELUCCA_UAC
@@ -300,6 +310,7 @@ static void smk37_enter_usb_update(void){
 extern uint32_t _bss_start[], _bss_end[], _pool_start[], _pool_end[];
 extern uint32_t _data_start[], _data_end[], _data_load[];
 extern uint32_t _rt_start[], _rt_end[], _rt_load[];
+extern uint32_t _dsp_start[], _dsp_end[], _dsp_load[];
 void smk37_cstart(const uint32_t *boot_parameters)
 {
     uint32_t last, remainder = 0, status_at = 0, lights_at = 0;
@@ -308,10 +319,12 @@ void smk37_cstart(const uint32_t *boot_parameters)
     uint8_t saved_p3_reset, saved_watchdog;
     /* Shared P33 reset flags: bit 0 is power-on. Snapshot before replacing BSS.
      * Retention and fallback entry are still hardware verification gates. */
+    fm1_core1_stop();
     fm1_p33_timeouts = 0; /* P33 helpers run before BSS initialization. */
     fm1_reset_reason();
     saved_reset = fm1_boot.rst_src;
     saved_p3_reset = fm1_boot.p3_rst;
+    smk37_multicore_prepare(saved_p3_reset & 1u);
     saved_watchdog = fm1_boot.wdt_con;
     fm1_wdt_arm(0x0d);
     if (smk37_bootguard_begin(&smk37_boot_state, fm1_boot.p3_rst & 1u))
@@ -323,6 +336,7 @@ void smk37_cstart(const uint32_t *boot_parameters)
     smk37_memory_zero(_pool_start, _pool_end);
     smk37_memory_copy(_data_start, _data_end, _data_load);
     smk37_memory_copy(_rt_start, _rt_end, _rt_load);
+    smk37_memory_copy(_dsp_start, _dsp_end, _dsp_load);
     __asm__ volatile("csync" ::: "memory");
     /* Reset diagnostics live in BSS; preserve the pre-watchdog snapshot. */
     fm1_boot.rst_src = saved_reset;
@@ -353,6 +367,7 @@ void smk37_cstart(const uint32_t *boot_parameters)
     smk37_scan_set_analog(smk37_analog_mask(&smk37_adc.scan));
     smk37_scan_init(fm1_irq_attach, smk37_isr_scanner);
     smk37_boot_state.stage = SMK37_BOOT_AUDIO;
+    smk37_multicore_start(smk37_boot_state.failures);
     (void)smk37_audio_init(smk37_dma, HALF_FRAMES * 2u,
                           smk37_isr_audio, 3, &smk37_audio_hooks);
     last = fm1_ticks();
@@ -403,6 +418,8 @@ void smk37_cstart(const uint32_t *boot_parameters)
         /* Host-requested return uses the mailbox/reset sequence also found
          * in Pro016. It is not a verified forced recovery route. */
         if (usb.uboot_req) {
+            fm1_irq_off();
+            smk37_multicore_stop(0);
             smk37_bootguard_update(&smk37_boot_state);
 #if FELUCCA_UAC
             smk37_usb_timer_stop();

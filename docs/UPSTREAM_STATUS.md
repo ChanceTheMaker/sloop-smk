@@ -7,7 +7,17 @@ the exact returned Sloop identity. Doom-FM-1 and old private updaters are exclud
 Package bounds and calibration protection are unchanged. Tests cover stock,
 portable, Doom, loader resume, rejected models and incomplete transfer. The
 owner installed b8-dc1 from the active Doom 008 loader on the Pro; USB reports
-SLOOP SMK 2.6.0-b8-dc1 and CPU1 online. FM6 load and cold restart remain pending.
+SLOOP SMK 2.6.0-b8-dc1 and CPU1 online. The owner subsequently confirmed clean FM6 chords and cold restart; read-only
+CPU1 telemetry recorded 16,016 jobs and zero timeouts, rejected reads or faults.
+
+# October 12 dual-core work
+
+Sloop SMK 2.6.0-b8-dc1 adapts the Melodee dc7 CPU1 lifecycle to Sloop's integer
+FM6 engine. Musical upstream remains pinned at 4365a1d; SMK base 84abf0a.
+Host audio parity, fault fallback, linked SRAM audit, SMK regressions and both
+model packages pass. [Evidence and limits](SLOOP_DUAL_CORE.md). Pro hardware checks passed: clean FM6 chords/controls, 16,016 CPU1 jobs with
+zero reported faults/timeouts, and cold restart with CPU1 online. The exact
+580,740-byte candidate is selected for public b8-dc1 release. No upstream PR; fork-only work.
 
 # Current Sloop SMK integration
 

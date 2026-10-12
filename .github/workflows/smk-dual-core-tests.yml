@@ -1,0 +1,20 @@
+name: Sloop SMK dual-core checks
+on:
+  pull_request:
+    branches: [integrate/sloop-2.6-smk]
+  push:
+    branches: [feature/smk-dual-core]
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install Pillow==11.0.0
+      - run: sh tools/test_sloop_dual_core.sh
+      - run: sh tools/test_sloop_smk_candidate.sh
+      - run: sh tools/test_smk37_public.sh

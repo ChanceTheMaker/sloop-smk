@@ -1,10 +1,10 @@
 {
   "public": true,
-  "version": "Sloop SMK 2.6.0-b7",
-  "product": "SMK-37_936",
-  "app": "sloop-smk-2.6.0-b7-app.bin",
-  "bytes": 579504,
-  "sha256": "aafc79a98733a923e77afc51afa2178671b636914f70292b857d19f011678c19",
+  "version": "Sloop SMK 2.6.0-b8-dc1",
+  "product": "SMK-37_937",
+  "app": "sloop-smk-2.6.0-b8-dc1-app.bin",
+  "bytes": 580740,
+  "sha256": "d5cba861417afb570bb3eca5dc910a7fd003bcb5a5c403b78a1770565a726798",
   "supported_models": [
     "SMK-37 Pro",
     "SMK-37 Elite"
@@ -12,8 +12,8 @@
   "stock_version": "016",
   "upstream_version": "2.6",
   "upstream_revision": "4365a1d0075b9194de1c44826325abbd39751bc1",
-  "hardware_validation": "Owner confirmed b7 screen improvement; b5/b6 project/preset persistence and TRS tests passed. Prior b2 USB audio captures retained. Physical samples deferred; Elite first-install pending.",
-  "source": "https://github.com/ChanceTheMaker/sloop-smk/tree/sloop-smk-2.6.0-b7",
+  "hardware_validation": "Pro: owner installed b8-dc1 from Doom 008, confirmed clean FM6 chords and controls, and cold restart. CPU1 completed 16016 jobs with zero timeouts/rejected reads/faults; returned online after restart. Earlier b5/b6 storage/TRS and b7 display evidence retained; physical samples and Elite first-install remain pending.",
+  "source": "https://github.com/ChanceTheMaker/sloop-smk/tree/sloop-smk-2.6.0-b8-dc1",
   "license": "GPL-3.0-only",
-  "source_archive": "https://github.com/ChanceTheMaker/sloop-smk/archive/refs/tags/sloop-smk-2.6.0-b7.zip"
+  "source_archive": "https://github.com/ChanceTheMaker/sloop-smk/archive/refs/tags/sloop-smk-2.6.0-b8-dc1.zip"
 }
