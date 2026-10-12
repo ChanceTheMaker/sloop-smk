@@ -1,3 +1,9 @@
+## Original firmware restore - 2026-10-12
+
+Website-only stock-return flow added; current custom firmware release and pinned
+upstream revision are unchanged. [Restore behavior and evidence](STOCK_RESTORE.md).
+This is a fork website change, not an upstream contribution.
+
 ## Doom SMK installer compatibility - 2026-10-12
 
 Main installation now shares the automatic stock/portable/resume flow with the
