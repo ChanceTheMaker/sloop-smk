@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {buildSmkPublicPackage,smkLogicalImage} from './smk37-package.js';
-import {parsePackage,installStockSmk,installSmk,LO,HI} from './smk37-update.js';
-import {Updater} from './elite-resume/fm1ota.js?v=elite-flow-r2';
+import {parsePackage,installStockSmk,installSmk,LO,HI} from './smk37-update.js?v=progress1';
+import {Updater} from './elite-resume/fm1ota.js?v=progress1';
 import {sha256hex} from './fm1pkg.js';
 
 // No MIDI hardware is opened. Exercise transport decisions with simulated links.
