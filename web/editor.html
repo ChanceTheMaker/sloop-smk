@@ -7742,7 +7742,7 @@ function audioControls(enabled) {
 }
 let firmwareView, externalMIDI, nativeListener;
 async function ensureFirmwareView() {
-  if(!firmwareView){const {createSMKSimulator}=await import('./smk-simulator.js?keys=3');firmwareView=createSMKSimulator($('firmware-view'),browserSynth);}
+  if(!firmwareView){const {createSMKSimulator}=await import('./smk-simulator.js?pads=1');firmwareView=createSMKSimulator($('firmware-view'),browserSynth);}
 }
 async function setEditorView(on) {
   externalMIDI?.release();
