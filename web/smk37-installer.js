@@ -1,8 +1,10 @@
+import {createProgress} from './update-progress.js?v=progress1';
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=sloop-dc1-r1';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=progress1';
 import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b8-dc1-r2';
 import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b8-dc1-r2';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
+const progress=createProgress(status);
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
 const dialog=document.getElementById('loader-confirm');
 async function confirmGeneric({identity,port,model}){
@@ -25,16 +27,16 @@ window.addEventListener('beforeunload',event=>{if(busy){event.preventDefault();e
 async function fetchBytes(url){const r=await fetch(new URL(url,import.meta.url),{cache:'no-store',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('Firmware download is unavailable. Reload this page or use the optional official-file selector.');return new Uint8Array(await r.arrayBuffer());}
 async function prepare(stockOverride){
   const request=++selection;pkg=null;ack.checked=false;sync();
-  if(!release)return;
+  if(!release)return;progress.start('prepare');
   try{
     log(`Preparing ${release.version} for ${model.value} automatically...`);
     const [stock,app]=await Promise.all([stockOverride?Promise.resolve(stockOverride):fetchBytes(STOCK_SOURCES[model.value]),fetchBytes('./firmware/'+release.app)]);
     const prepared=await buildSmkPublicPackage(stock,app,release);
     await parsePackage(prepared.bytes,prepared.sha);
     if(request!==selection)return;
-    pkg=prepared;model.value=prepared.stockModel;
+    pkg=prepared;model.value=prepared.stockModel;progress.ready();
     log(`${prepared.stockModel}: ${prepared.version} ready. Confirm the beta notice, then Install.`);
-  }catch(e){if(request===selection){log(e.message);document.getElementById('manual-file').open=true;}}
+  }catch(e){if(request===selection){progress.fail();log(e.message);document.getElementById('manual-file').open=true;}}
   finally{if(request===selection)sync();}
 }
 try{
@@ -48,7 +50,7 @@ try{
   if(usingPrivate){
     pkg=await parsePackage(await fetchBytes('./firmware/smk37-candidate.smkupdate'),release.sha256);
     if(pkg.product!==release.product)throw Error('Local migration identity mismatch.');
-    document.getElementById('public-package-controls').hidden=true;
+    document.getElementById('public-package-controls').hidden=true;progress.ready();
     log(release.migration?`${release.version} is ready for your Test21 device. Confirm the beta notice, then Install.`:`${release.version}: local device-specific preview ready.`);
     document.getElementById('release').textContent=release.migration?`${release.version} - local migration`:release.version;
   }else{
@@ -57,7 +59,7 @@ try{
     document.getElementById('release').textContent=release.version;
     await prepare();
   }
-}catch(e){release=null;pkg=null;log(e.message);document.getElementById('release').textContent='Firmware download unavailable';}
+}catch(e){progress.fail();release=null;pkg=null;log(e.message);document.getElementById('release').textContent='Firmware download unavailable';}
 model.addEventListener('change',()=>{file.value='';prepare();});
 file.addEventListener('change',async()=>{
   if(!file.files?.length)return;
@@ -68,10 +70,11 @@ file.addEventListener('change',async()=>{
 if(!navigator.requestMIDIAccess)log('Web MIDI is unavailable. Open this page in Chrome or Edge.');
 sync();
 button.addEventListener('click',async()=>{
-  if(button.disabled)return;busy=true;sync();
+  if(button.disabled)return;busy=true;sync();progress.start();
   try{
     const midi=await navigator.requestMIDIAccess({sysex:true});
     if(usingPrivate||path.value==='update')await installSmk(midi,pkg,log);
     else await installStockSmk(midi,pkg,log,{confirmGeneric});
-  }catch(e){log(e.message);}finally{busy=false;sync();}
+    progress.done();
+  }catch(e){progress.fail();log(e.message);}finally{busy=false;sync();}
 });
