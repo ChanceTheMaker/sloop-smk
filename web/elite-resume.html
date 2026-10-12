@@ -39,9 +39,13 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 </section>
 <section class="section" id="install">
   <h2>To install:</h2>
-  <p>Connect your SMK directly to the computer by USB and power it on. Open this page in <strong>Chrome or Edge</strong>.</p>
-  <p>Close Studio and other MIDI apps, confirm the version, then use the installer below. <strong>Do not unplug USB or switch off while writing.</strong></p>
-  <p class="small">Select your model and installation type. Official 016 firmware is downloaded automatically to prepare the model-specific package in your browser. Browser Studio and Simulator need no firmware installation. This test retains b7 firmware and changes only the first-install loader resume behavior. Existing incompatible Felucca saves remain protected.</p>
+  <ol>
+    <li>Select your model and installation type below.</li>
+    <li>Connect your SMK by USB, power it on, and close Studio and other MIDI apps.</li>
+    <li>Read and accept the beta notice.</li>
+    <li>Click <strong>Install / resume</strong> and follow any prompts.</li>
+  </ol>
+  <p class="small">Use Chrome or Edge. Keep USB and power connected until installation completes.</p>
   <details class="smk-install-help"><summary>First installation or coming from stock firmware?</summary><div class="install-paths">
     <article><h3>Already running the SMK USB updater?</h3><p>Felucca SMK 0.9.22 and Sloop SMK can receive this portable update directly over a normal USB cable. Connect the SMK directly to the computer, power it on, and use Chrome or Edge.</p></article>
     <article><h3>Still on stock firmware or Test10?</h3><p>For stock firmware, first use the official updater to install Pro 016 or Elite 016. Then choose First installation below. Test10 and older private builds need a separate migration.</p></article>
@@ -54,14 +58,13 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
     </div>
     <p id="status" role="status">Checking firmware availability...</p>
 
-    <div style="border:1px solid #e49a36;padding:14px;margin:14px 0"><strong>ELITE INSTALL / RESUME · b7 firmware</strong><p>Connect only your SMK. Click Install / resume once: this page prepares the loader, reconnects and installs. If the loader is already active, it continues from there.</p><p class="small">Disconnect any real FM-1. If the Elite loader uses a generic name, you will be asked to confirm the keyboard here before writing. No separate checkbox or page reload is needed.</p></div>
     <dialog id="loader-confirm" aria-labelledby="loader-title" style="max-width:480px;background:var(--panel,#202226);color:var(--fg,#fff);border:1px solid #e49a36;border-radius:12px;padding:24px">
       <form method="dialog"><h2 id="loader-title">Confirm your Elite</h2><p>The connected loader identifies itself as <strong id="loader-identity"></strong>. That name is also used by FM-1 devices.</p><p>Continue only if the connected device is your <strong id="loader-model"></strong> with a black screen and every real FM-1 is disconnected. This will write Sloop SMK firmware to that device.</p><div style="display:flex;gap:12px;flex-wrap:wrap"><button value="cancel" autofocus>Cancel</button><button class="primary" value="continue">This is my Elite — continue</button></div></form>
     </dialog>
 <label><input type="checkbox" id="ack"> I understand this is beta firmware and have backed up my sounds and settings.</label>
     <button class="primary" id="install-button" disabled>Install / resume SMK beta</button>
-    <p class="small">Keep USB and device power connected until installation completes. The update writes only the application area; project and preset storage, calibration, and the bootloader are outside that range. Do not disconnect or switch off the keyboard while programming.</p>
-    <details><summary>Installation log</summary><pre id="log" aria-live="polite"></pre></details>
+    <p class="small">Do not unplug USB or switch off the keyboard while installing.</p>
+    <details><summary>Installation log</summary><p class="small">The model-specific package is prepared automatically. Installation detects an active loader and resumes without repeating preparation. This page installs Sloop SMK 2.6.0-b7. The update writes the application area; project and preset storage, calibration, and the bootloader remain outside that range.</p><pre id="log" aria-live="polite"></pre></details>
   </div>
   <details class="beta-notes"><summary>Beta status and current limits</summary>
     <p>The Sloop SMK 2.6.0-b7 firmware builds and its browser engine passes audio, controls, session, sample upload and USB MIDI tests. Public Pro and Elite packages are checked offline for model/layout, integrity and protected-area preservation.</p>
