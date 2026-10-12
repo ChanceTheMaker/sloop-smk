@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=elite-flow-r3';
+import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=sloop-doom-r1';
 import {buildSmkPublicPackage} from './smk37-package.js?v=elite-flow-r3';
 import {STOCK_SOURCES} from './smk37-stock.js?v=elite-flow-r3';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
