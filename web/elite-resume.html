@@ -11,7 +11,7 @@
 <script src="locales.js"></script><script src="i18n.js"></script><script src="skin.js"></script>
 <script defer src="site-nav.js?v=smk-simulator"></script>
 <script defer src="analytics.js"></script>
-<script type="module" src="smk-version.js?v=2.6.0-b7"></script>
+<script type="module" src="smk-version.js?v=2.6.0-b8-dc1"></script>
 <link rel="stylesheet" href="smk37-landing.css?v=sloop2">
 <script defer src="studio-preview.js"></script><script defer src="smk37-landing.js"></script><script defer src="panel-guide.js"></script>
 <style>
@@ -64,12 +64,12 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 <label><input type="checkbox" id="ack"> I understand this is beta firmware and have backed up my sounds and settings.</label>
     <button class="primary" id="install-button" disabled>Install / resume SMK beta</button>
     <p class="small">Do not unplug USB or switch off the keyboard while installing.</p>
-    <details><summary>Installation log</summary><p class="small">The model-specific package is prepared automatically. Installation detects an active loader and resumes without repeating preparation. This page installs Sloop SMK 2.6.0-b7. The update writes the application area; project and preset storage, calibration, and the bootloader remain outside that range.</p><pre id="log" aria-live="polite"></pre></details>
+    <details><summary>Installation log</summary><p class="small">The model-specific package is prepared automatically. Installation detects an active loader and resumes without repeating preparation. This page installs Sloop SMK 2.6.0-b8-dc1. The update writes the application area; project and preset storage, calibration, and the bootloader remain outside that range.</p><pre id="log" aria-live="polite"></pre></details>
   </div>
   <details class="beta-notes"><summary>Beta status and current limits</summary>
-    <p>The Sloop SMK 2.6.0-b7 firmware builds and its browser engine passes audio, controls, session, sample upload and USB MIDI tests. Public Pro and Elite packages are checked offline for model/layout, integrity and protected-area preservation.</p>
+    <p>The Sloop SMK 2.6.0-b8-dc1 firmware builds and its browser engine passes audio, controls, session, sample upload and USB MIDI tests. Public Pro and Elite packages are checked offline for model/layout, integrity and protected-area preservation.</p>
     <p>Device checks cover project and user-preset saves across power cycles, TRS notes/chords, sustain, pitch, saved routing preference and note release when TRS is turned off. B7 improves oscilloscope refresh and removes black-frame redraws; the owner confirmed the screen improvement. Physical sample upload/restart testing is deferred, and Elite first-install confirmation remains pending. Bluetooth is not included. Existing incompatible saves stay protected. Browser exports preserve virtual sessions independently.</p>
-  <p><a href="https://github.com/ChanceTheMaker/sloop-smk/releases/tag/sloop-smk-2.6.0-b7">Release notes and source</a></p>
+  <p><a href="https://github.com/ChanceTheMaker/sloop-smk/releases/tag/sloop-smk-2.6.0-b8-dc1">Release notes and source</a></p>
   </details>
 </section>
 <section class="panel-guide" id="guide" data-panel-guide data-section="knobs" aria-labelledby="smk-guide-heading">
@@ -91,4 +91,4 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 
 </div>
 <footer>Sloop SMK by Chance Roth (<a href="https://github.com/ChanceTheMaker" target="_blank" rel="noopener">@ChanceTheMaker</a>). Sloop firmware by isod89. Based on Felucca by Leo Kuroshita (@kurogedelic), H&uuml;gelton Instruments. GPL-3.0. M-VAVE, FM-1, and SMK-37 are trademarks of their respective owners.</footer>
-</main><script type="module" src="elite-resume/smk37-installer.js?v=sloop-doom-r1"></script></body></html>
+</main><script type="module" src="elite-resume/smk37-installer.js?v=sloop-dc1-r1"></script></body></html>

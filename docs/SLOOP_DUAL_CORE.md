@@ -1,8 +1,8 @@
-# Sloop SMK dual-core candidate
+# Sloop SMK dual-core beta
 
 Sloop SMK **2.6.0-b8-dc1**, based on musical upstream Sloop 2.6
 `4365a1d0075b9194de1c44826325abbd39751bc1` and the SMK b7 release.
-Prepared 2026-10-12. Local hardware acceptance pending; public b7 is retained.
+Release 2026-10-12, following the Pro checks below.
 
 ## What changes
 
@@ -59,8 +59,18 @@ USB endpoint format or updater write boundary changes are included.
   corrupt-image rejection and protected bytes unchanged. No hardware flashed
   by these offline tests.
 
-Pending acceptance: install/boot, FM6 chords and live controls while reading
-CPU1 counters, cold restart and normal USB updater return. Previous b5/b6
+Pro hardware evidence on 2026-10-12: the owner installed from Doom 008 through
+the normal USB updater and booted Sloop b8-dc1. Read-only telemetry reported
+CPU1 online and, after FM6 chord playing, 16,016 jobs / 16,014 pairs, zero
+timeouts, rejected reads or faults, and no warm-reset bar. Maximum callback
+was 1,523 timer ticks (63.5 microseconds); maximum join wait was 551 ticks
+(23.0 microseconds). These maxima describe this short test, not all patches or
+a worst-case performance guarantee. One earlier idle telemetry session timed
+out after its first reply; the subsequent 30-second capture completed.
+The owner confirmed clean sound and responsive controls, then cold-restarted
+the device. USB again reported b8-dc1, CPU1 online, zero fault counters and no
+warm-reset bar. This is a focused Pro acceptance check, not exhaustive Elite
+or long-duration USB-audio validation. Previous b5/b6
 storage/TRS and b7 display evidence remains attributed to those builds.
 Physical sample upload and Elite first-install remain separate follow-ups.
 

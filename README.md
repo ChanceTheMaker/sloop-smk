@@ -14,18 +14,19 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 - Browser sessions preserve virtual projects, user presets, four sample slots, synth drum kits, current FM6 voices and MIDI settings. Export a session file to keep an independent copy.
 - The hardware candidate includes the bounded SMK USB updater. Its image and a return-to-Felucca 0.9.22 package pass the host loader test.
 
-## Dual-core candidate
+## Dual-core FM6
 
 **2.6.0-b8-dc1** adds paired FM6 voice rendering on CPU1 with automatic serial
 fallback. The existing sound engine, polyphony, storage and USB updater layout
 are preserved. Other engines and the browser runtime stay serial. See the
 [dual-core notes](docs/SLOOP_DUAL_CORE.md) for the build, tests and limits.
-Device acceptance is pending; the public installer remains on b7 until then.
+The owner confirmed clean FM6 chords, responsive controls and a cold restart on
+the Pro. CPU1 completed 16,016 jobs with zero reported timeouts or faults.
 
 ## Firmware status
 
-**The public beta is 2.6.0-b7**, following the owner's b5/b6 hardware checks
-and b7 screen confirmation. The beta suffix
+**The public beta is 2.6.0-b8-dc1**, following the Pro FM6/CPU1 and
+cold-restart checks, with earlier b5/b6 storage/TRS and b7 display evidence retained. The beta suffix
 identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
 
 | Area | Current beta status |
@@ -33,12 +34,14 @@ identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
 | Project storage | Verified flash commits before reporting Saved; protected slots show LOCKED. Owner confirmed A-D persistence during b5 testing. |
 | User presets | 32 slots; U01 save, restart, full readback and load checked on b6. |
 | TRS MIDI OUT | Notes/chords, sustain, pitch, saved ON preference and held-note shutdown checked on b5/b6. Receiver expression check used FM-1 Sloop 2.6. |
-| USB audio | b2 stereo captures at requested 44.1/48 kHz passed; Windows may resample. These are not fresh b7 timing measurements. |
+| Dual-core FM6 | CPU1 online before and after cold restart; 16,016 jobs, zero timeouts/rejected reads/faults during the focused Pro check. Other engines remain serial. |
+| USB audio | b2 stereo captures at requested 44.1/48 kHz passed; Windows may resample. These are not fresh b8-dc1 USB-audio timing measurements. |
 | Pads and lights | Same-pad blue feedback and individual color diagnostic; rare green flash remains on the watch list. |
 | Physical samples | Three 80 KiB slots, guarded preparation and uploads implemented; physical upload/restart testing deferred. Browser retains four virtual slots. |
 | Oscilloscope | b7 removes pre-redraw black clears and refreshes the scope every UI tick. Builds and host regression pass; owner confirmed the screen improvement. |
 
-B7 publication was explicitly authorized after the device checks. See
+B8-dc1 publication follows the focused device checks. See the
+[dual-core release notes](docs/SLOOP_DUAL_CORE.md), earlier
 [candidate release notes](docs/SLOOP_SMK_CANDIDATE.md) and the detailed
 [port status](docs/SLOOP_SMK_PORT.md) for version-specific evidence and limits.
 Bluetooth remains outside this round; physical TRS is output only.
@@ -62,13 +65,13 @@ Physical sample preparation is also explicit and never runs automatically at boo
 Open the [Sloop SMK installer](https://chancethemaker.github.io/sloop-smk/) in Chrome or Edge. The [Studio](https://chancethemaker.github.io/sloop-smk/editor.html) and [Simulator](https://chancethemaker.github.io/sloop-smk/simulator.html) also work without installing firmware.
 
 1. Select **SMK-37 Pro** or **SMK-37 Elite**.
-2. Choose **First installation** for official 016 firmware, or **Update** for Felucca SMK 0.9.22 / Sloop SMK. Older private builds need a separate migration.
-3. The page downloads the checksum-verified official model-specific firmware and prepares b7 in the browser. An optional file selector is available if the automatic download fails.
+2. Choose **Automatic install / resume** for official 016 or an existing compatible Felucca, Sloop, Melodee or Doom SMK updater. Doom updater 007 or later is required. Older private builds need a separate migration.
+3. The page downloads the checksum-verified official model-specific firmware and prepares b8-dc1 in the browser. An optional file selector is available if the automatic download fails.
 4. Close Studio and other MIDI apps, connect the SMK directly by USB, confirm the beta notice, and click **Install SMK beta**. Keep USB and power connected until completion.
 
-The public download contains the GPL application only. Official firmware is fetched from a pinned external mirror and processed locally; private device backups and calibration are not published. The portable updater retains model/layout validation and each instrument's calibration. It writes the application area; b7 runtime storage follows the separate ownership rules above.
+The public download contains the GPL application only. Official firmware is fetched from a pinned external mirror and processed locally; private device backups and calibration are not published. The portable updater retains model/layout validation and each instrument's calibration. It writes the application area; b8-dc1 runtime storage follows the separate ownership rules above.
 
-The owner confirmed project/preset persistence on b5/b6 and the b7 display improvement before approving b7 publication. The public stock-install path is host-tested, not yet confirmed on hardware. Browser session exports are not device backups.
+The owner confirmed b8-dc1 FM6 sound and controls, normal USB installation and cold restart on the Pro. Earlier b5/b6 persistence and b7 display checks remain attributed to those builds. The public stock-install path is host-tested, not yet confirmed on hardware. Browser session exports are not device backups.
 
 Cloning this repository includes the public app, Studio and Simulator. Running the preview server without a private candidate uses the public installer. A staged private candidate remains available only on localhost; add `?public` to preview the public path locally.
 
@@ -113,8 +116,8 @@ sample preparation. Sample preparation is deferred for this test round.
 The hardware build uses the existing Jieli toolchain with `JIELI_TOOLCHAIN` set to its root, Python dependencies and Pillow with libraqm:
 
 ```sh
-# Local b7 candidate with guarded storage, samples and TRS output
-python3 tools/build_sloop_smk.py --enable-storage --enable-samples --enable-trs
+# Current dual-core beta with guarded storage, samples and TRS output
+python3 tools/build_sloop_smk.py --enable-storage --enable-samples --enable-trs --dual-core
 
 # Browser engine
 python3 tools/build_sloop_smk_browser.py --zig /path/to/zig
@@ -133,7 +136,7 @@ node web/test_project_save.mjs
 node web/test_sample_capability.mjs
 ```
 
-Zig 0.13.0 builds the WebAssembly runtime. Current hardware outputs are isolated in `build/sloop-smk-2.6.0-b7/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
+Zig 0.13.0 builds the WebAssembly runtime. Current hardware outputs are isolated in `build/sloop-smk-2.6.0-b8-dc1/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
 
 See [port status and validation](docs/SLOOP_SMK_PORT.md) for the pinned upstream revision, artifact hashes, remaining work and test evidence. See [workflow rules](docs/UPSTREAM_WORKFLOW.md) before importing updates or publishing firmware.
 
@@ -150,7 +153,7 @@ promote a candidate to the installer.
 
 ## Source and project layout
 
-Current development is on `feat/sloop-smk-b3-hardware-ui`, following `integrate/sloop-2.6-smk`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.6 commit `4365a1d0075b9194de1c44826325abbd39751bc1`.
+Published source follows `integrate/sloop-2.6-smk`; the dual-core work is tracked in PR #6 and release tag `sloop-smk-2.6.0-b8-dc1`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.6 commit `4365a1d0075b9194de1c44826325abbd39751bc1`.
 
 | Directory | Contents |
 | --- | --- |
