@@ -41,7 +41,7 @@ def main():
     # Explicit public allowlist: app code only, no private or vendor packages.
     release_path=web/'firmware/public-release.json'
     release=json.loads(release_path.read_text())
-    if release.get('public') is not True or release.get('app')!='sloop-smk-2.6.0-b8-dc1-app.bin' or release.get('product')!='SMK-37_937':
+    if release.get('public') is not True or release.get('app')!='sloop-smk-2.6.0-b9-dc2-app.bin' or release.get('product')!='SMK-37_938':
         raise ValueError('Unsupported public release manifest')
     app=web/'firmware'/release['app'];data=app.read_bytes()
     if len(data)!=release['bytes'] or hashlib.sha256(data).hexdigest()!=release['sha256']:

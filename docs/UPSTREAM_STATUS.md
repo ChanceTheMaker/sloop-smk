@@ -6,13 +6,13 @@ This is a fork website change, not an upstream contribution.
 
 ## Sloop USB updater recovery - 2026-10-12
 
-Local b9-dc2 repair (`SMK-37_938`) fixes rejection of wholly erased calibration
+Selected b9-dc2 release (`SMK-37_938`) fixes rejection of wholly erased calibration
 sectors while preserving the complete sector and rejecting partial corruption.
 Based on Sloop SMK `203c304`, with the focused updater fix ported from Doom
 `da621ca`; musical upstream remains `4365a1d0075b9194de1c44826325abbd39751bc1`.
 Pro adapter repair and subsequent normal-USB same-version reinstall passed;
-owner confirmed keys, knobs and sound afterward. Public firmware remains b8-dc1;
-no publication or upstream submission was performed. See [USB updater repair
+owner confirmed keys, knobs and sound afterward, plus an outgoing Doom update.
+The owner authorized b9-dc2 publication. No upstream submission was made. See [USB updater repair
 evidence](SMK_USB_RECOVERY_B9.md) for checks, limitations and artifact identity.
 
 ## Doom SMK installer compatibility - 2026-10-12

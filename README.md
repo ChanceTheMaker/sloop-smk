@@ -1,5 +1,7 @@
 # Sloop SMK
 
+Current release: **2.6.0-b9-dc2**, with repaired USB updating. Pro recovery, normal-USB reinstall, keys/knobs/sound and onward Doom installation passed. Elite checks remain pending. [Repair evidence](docs/SMK_USB_RECOVERY_B9.md).
+
 Sloop 2.6 adapted for **M-VAVE SMK-37 Pro & Elite**, with a themed browser Studio and a playable SMK simulator.
 
 This repository carries the Felucca SMK hardware foundation and the Sloop musical/UI core. It is separate from [Felucca SMK](https://github.com/ChanceTheMaker/felucca-smk).

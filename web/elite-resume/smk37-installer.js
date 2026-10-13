@@ -64,7 +64,7 @@ try{
     document.getElementById('release').textContent=release.migration?`${release.version} - local migration`:release.version;
   }else{
     release=JSON.parse(new TextDecoder().decode(await fetchBytes('../firmware/public-release.json')));
-    if(release.public!==true||release.product!=='SMK-37_937'||release.app!=='sloop-smk-2.6.0-b8-dc1-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
+    if(release.public!==true||release.product!=='SMK-37_938'||release.app!=='sloop-smk-2.6.0-b9-dc2-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
     document.getElementById('release').textContent=release.version;
     await prepare();
   }

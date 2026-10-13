@@ -1,7 +1,7 @@
 # Sloop SMK USB updater repair
 
-Local candidate 2.6.0-b9-dc2, runtime `SMK-37_938`, prepared and tested on the
-owner's SMK-37 Pro on October 12, 2026 (October 13 UTC). Not publicly deployed.
+Selected public release 2.6.0-b9-dc2, runtime `SMK-37_938`, prepared and tested on the
+owner's SMK-37 Pro on October 12, 2026 (October 13 UTC). Publication authorized after the Pro checks.
 Elite and the serial comparison build are not hardware validated.
 
 ## Failure and evidence
@@ -27,7 +27,7 @@ dual-core renderer, storage layout, controls and transport commands of b8-dc1.
 
 Base: Sloop SMK `203c304`. Musical upstream remains
 `4365a1d0075b9194de1c44826325abbd39751bc1` (2.6). Existing credits and licenses
-are retained; no upstream submission or release promotion was performed.
+are retained; no upstream submission was made. The b9-dc2 app is selected for publication.
 
 Application: 580,804 bytes (760 bytes below the conservative limit).
 SHA-256: `aa9ae1651fc6ae206ecfe0c0a860085663d7b11f25a712b147b8a40c674a31f7`.
