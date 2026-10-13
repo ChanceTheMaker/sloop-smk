@@ -56,6 +56,14 @@ RAM loader: 8,228 bytes. Existing 8 KiB CPU1 stack retained.
   requests or warm-reset bar. Those idle samples contained zero worker jobs and
   are not an audio workload measurement. Owner then confirmed working keys,
   knobs and sound after the normal-USB reinstall.
+- The owner subsequently reported "Sloop to Doom worked SMK Pro". A read-only
+  follow-up query returned `ota-Doom-SMK-37_015`; Doom's Release 15 updater was
+  active at that time. No update or reset command was sent in that check. This
+  adds owner-reported cross-firmware success, separate from the controlled
+  same-version reinstall above. The owner then reported "Doom to Felucca SMK Pro
+  worked", explaining the active updater and confirming an onward USB transition.
+  Felucca's returned version and its own outgoing update behavior were not tested
+  in this follow-up.
 
 Private backups, generated local package and write journal stay in ignored
 `build/private-recovery/20261013T014052Z`. No old full-device image was used.
