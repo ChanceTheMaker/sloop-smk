@@ -60,6 +60,7 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
     </dialog>
   <p class="stock-restore-link"><a href="restore-stock/">Restore original M-VAVE firmware</a></p>
 <label><input type="checkbox" id="ack"> I understand this is beta firmware and have backed up my sounds and settings.</label>
+    <p class="small" id="native-usb-help" hidden>Windows SMK-37 Pro installs use the <a href="https://github.com/ChanceTheMaker/sloop-smk/tree/fix/windows-native-usb#windows-usb-installation">Sloop USB helper</a>. Start it once, then install here. Allow local-network access if Chrome asks.</p>
     <button class="primary" id="install-button" disabled>Install SMK beta</button>
     <p class="small">Keep USB and device power connected until installation completes. The update writes only the application area; project and preset storage, calibration, and the bootloader are outside that range. Do not disconnect or switch off the keyboard while programming.</p>
     <details><summary>Installation log</summary><pre id="log" aria-live="polite"></pre></details>
@@ -91,4 +92,4 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 <footer>
 <nav class="smk-family" aria-label="SMK family"><span>Explore the SMK family</span><a href="https://chancethemaker.github.io/smklab/">SMKLab ↗</a><a href="https://chancethemaker.github.io/felucca-smk/">Felucca SMK ↗</a><a href="https://chancethemaker.github.io/sloop-smk/">Sloop SMK ↗</a><a href="https://chancethemaker.github.io/melodee-smk/">Melodee SMK ↗</a></nav>
 Sloop SMK by Chance Roth (<a href="https://github.com/ChanceTheMaker" target="_blank" rel="noopener">@ChanceTheMaker</a>). Sloop firmware by isod89. Based on Felucca by Leo Kuroshita (@kurogedelic), H&uuml;gelton Instruments. GPL-3.0. M-VAVE, FM-1, and SMK-37 are trademarks of their respective owners.</footer>
-</main><script type="module" src="smk37-installer.js?v=usb-repair-b9"></script></body></html>
+</main><script type="module" src="smk37-installer.js?v=native1"></script></body></html>

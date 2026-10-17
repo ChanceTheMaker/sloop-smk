@@ -1,3 +1,19 @@
+## Windows USB browser isolation - 2026-10-16
+
+Website/helper fix based on Sloop `c9934bc`; musical upstream remains
+`4365a1d0075b9194de1c44826325abbd39751bc1`. Retains public b9-dc2
+(`SMK-37_938`), its exact app hash and all firmware/protocol/storage behavior.
+Ports GameDude `580c74a` native Windows Pro helper and disposable MIDI sessions.
+USB stages use short-lived processes and the shared cross-app device lock.
+Install and stock restore fail closed when the matching helper is unavailable.
+Helper builds packages through Sloop's own verified builders; no private images
+are published. Elite retains its existing path and is not claimed validated.
+This is a fork-only fix; no upstream contribution was submitted.
+
+Validation: native mocked transport, helper HTTP origin/token validation,
+cross-process exclusion, package construction, browser installer routing and
+MIDI session teardown. Physical round trip for this Sloop helper is pending.
+
 ## Original firmware restore - 2026-10-12
 
 Website-only stock-return flow added; current custom firmware release and pinned

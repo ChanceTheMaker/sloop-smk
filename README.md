@@ -171,3 +171,25 @@ Published source follows `integrate/sloop-2.6-smk`; the dual-core work is tracke
 Sloop firmware by **isod89**, based on Felucca by **Leo Kuroshita (@kurogedelic), Hugelton Instruments**. SMK adaptation, Studio and simulator by **Chance Roth (@ChanceTheMaker)**.
 
 GPL-3.0; retain upstream copyright notices, [LICENSE](LICENSE), [LICENSING.md](LICENSING.md) and [LICENSES](LICENSES). Vendored Sloop source lives under `sloop/`. Vendor firmware, calibration records and private device backups are not distributed here. M-VAVE, FM-1 and SMK-37 are trademarks of their respective owners.
+
+## Windows USB installation
+
+SMK-37 Pro installation and original-firmware restore use a local USB helper
+on Windows, so Chrome does not own MIDI during the device restart. The same
+Install and Restore buttons remain on the website. Other platforms and Elite
+retain their existing browser installer; the native path is Pro-only.
+
+With Python 3 and Node.js 22+ installed, run from this checkout:
+
+```powershell
+python tools/setup_native_smk.py
+python tools/serve_native_smk.py --allow-hosted
+```
+
+Then use the Sloop website, or `http://localhost:8892/`. Allow local-network
+access when prompted. The setup command verifies the official Pro 016 package
+and the published Sloop b9 app; it never accesses MIDI or installs firmware.
+Close connected Studio/Simulator tabs and other MIDI apps before installing.
+If Chrome is already frozen, restart it first to release its previous session.
+Keep the helper running until the installer confirms the returned identity.
+No browser flags or alternative browser profile are required.
