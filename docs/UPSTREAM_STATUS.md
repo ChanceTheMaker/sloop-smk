@@ -12,7 +12,9 @@ This is a fork-only fix; no upstream contribution was submitted.
 
 Validation: native mocked transport, helper HTTP origin/token validation,
 cross-process exclusion, package construction, browser installer routing and
-MIDI session teardown. Physical round trip for this Sloop helper is pending.
+MIDI session teardown. Physical SMK-37 Pro validation passed: active original loader to Sloop 938,
+Sloop to original Pro 016, and original 016 back to Sloop 938. Every restart
+identity was verified. The owner confirmed normal Chrome remained responsive.
 
 ## Original firmware restore - 2026-10-12
 
