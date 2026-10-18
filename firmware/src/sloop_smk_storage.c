@@ -8,6 +8,7 @@ static uint32_t sloop_samples_unit;
 #define FL_RANGE_OK(a,n) (SMK37_ENABLE_SAVES && (SLOOP_STORE_RANGE(a,n) ||     (SMK37_ENABLE_SAMPLES && (sloop_samples_owned || sloop_samples_formatting) &&      (SMK37_SAMPLE_RANGE(a,n) || (sloop_samples_formatting && SMK37_SAMPLE_JOURNAL_RANGE(a,n))))))
 #define fm1_xip_ptr smk37_flash_xip_ptr
 #include "fm1_flash.h"
+#include "smk37_flash_profile.h"
 #undef fm1_xip_ptr
 static uint8_t flash_ok;
 static void sloop_storage_silence(void);
@@ -31,7 +32,7 @@ static int st_prog(uint32_t off,const void *src,uint32_t n){
 }
 static int sloop_storage_probe(void){
     uint8_t trim[556],block[256];uint32_t f=irq_save(),id=FL_FAR(fl_jedec_ram)();irq_restore(f);
-    if(id!=0x856014u||sloop_storage_read_raw(0xc1000u,trim,sizeof trim)||!smk37_trim_keys_valid(trim,sizeof trim))return 0;
+    if(!smk37_flash_supported_id(id)||sloop_storage_read_raw(0xc1000u,trim,sizeof trim)||!smk37_trim_keys_valid(trim,sizeof trim))return 0;
     uint32_t crc=~0u;
     for(unsigned a=0;a<0x4000;a+=256){if(sloop_storage_read_raw(a,block,256))return 0;crc=smk37_profile_crc(block,256,crc);}
     if(~crc!=SMK37_PUBLIC_HEAD_CRC)return 0;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Product version; private updater package identities remain separate.
-export const SMK_VERSION='2.6.0-b9-dc2';
+export const SMK_VERSION='2.6.0-b10-dc2';
 function showVersion(){
   const tagline=document.querySelector('.masthead .tagline');
   if(tagline&&!tagline.querySelector('.smk-version')){
