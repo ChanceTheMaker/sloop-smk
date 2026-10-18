@@ -29,8 +29,8 @@ def main():
     parser.add_argument('--usb-test-number',type=int,default=None,choices=range(30,100))
     args = parser.parse_args()
     if args.enable_samples and not args.enable_storage: parser.error('--enable-samples requires --enable-storage')
-    if args.usb_test_number is None: args.usb_test_number=38 if args.dual_core else 39
-    version="SLOOP SMK 2.6.0-b9-dc2" if args.dual_core else "SLOOP SMK 2.6.0-b9"
+    if args.usb_test_number is None: args.usb_test_number=49 if args.dual_core else 39
+    version="SLOOP SMK 2.6.0-b10-dc2" if args.dual_core else "SLOOP SMK 2.6.0-b9"
     args.public_release=True
     args.enable_saves=args.enable_presets=args.enable_storage
     args.enable_usb_audio=args.enable_usb_update=True

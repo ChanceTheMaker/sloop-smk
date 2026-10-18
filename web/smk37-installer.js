@@ -3,8 +3,8 @@ import {requestMidiSession,releaseMidiSession} from './midi-session.js?v=session
 import {createProgress} from './update-progress.js?v=progress1';
 // SPDX-License-Identifier: GPL-3.0-only
 import {parsePackage,installSmk,installStockSmk} from './smk37-update.js?v=progress1';
-import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b9-dc2-r2';
-import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b9-dc2-r2';
+import {buildSmkPublicPackage} from './smk37-package.js?v=2.6.0-b10-dc2-r2';
+import {STOCK_SOURCES} from './smk37-stock.js?v=2.6.0-b10-dc2-r2';
 const status=document.getElementById('status'),button=document.getElementById('install-button'),ack=document.getElementById('ack'),output=document.getElementById('log');
 const progress=createProgress(status);
 const file=document.getElementById('stock-file'),path=document.getElementById('install-path'),model=document.getElementById('smk-model');
@@ -57,7 +57,7 @@ try{
     document.getElementById('release').textContent=release.migration?`${release.version} - local migration`:release.version;
   }else{
     release=JSON.parse(new TextDecoder().decode(await fetchBytes('./firmware/public-release.json')));
-    if(release.public!==true||release.product!=='SMK-37_938'||release.app!=='sloop-smk-2.6.0-b9-dc2-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
+    if(release.public!==true||release.product!=='SMK-37_949'||release.app!=='sloop-smk-2.6.0-b10-dc2-app.bin'||!/^[a-f0-9]{64}$/.test(release.sha256))throw Error('Invalid public release metadata.');
     document.getElementById('release').textContent=release.version;
     await prepare();
   }

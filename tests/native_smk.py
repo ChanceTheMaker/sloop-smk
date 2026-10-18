@@ -8,7 +8,7 @@ class NativeSmkTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.directory=Path(self.tmp.name)
         self.image=b'I'*64;self.packet=b'P'*64
-        manifest={'model':'SMK-37 Pro','expected':'SMK-37_938'}
+        manifest={'model':'SMK-37 Pro','expected':'SMK-37_949'}
         for kind,data in [('image',self.image),('packet',self.packet)]:
             (self.directory/(kind+'.bin')).write_bytes(data);manifest[kind]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
         (self.directory/'verified.json').write_text(json.dumps(manifest))
@@ -46,26 +46,34 @@ class NativeSmkTests(unittest.TestCase):
         rows=self.run_stage('begin');self.assertEqual(rows[-1]['loader'],'ota-SMK-37 Pro_016')
         self.assertEqual(self.sent[1],(0,b'I'*16,0));self.assertEqual(self.closed,0)
     def test_custom_handoff_and_old_version(self):
-        self.identity('SMK-37_938');self.assertTrue(self.run_stage('begin')[-1]['handoff']);self.assertEqual(self.sent,['START'])
+        self.identity('SMK-37_949');self.assertTrue(self.run_stage('begin')[-1]['handoff']);self.assertEqual(self.sent,['START'])
         self.sent=[];self.identity('SMK-37_921')
         with self.assertRaisesRegex(RuntimeError,'migration'):self.run_stage('begin')
         self.assertEqual(self.sent,[])
     def test_loader_resume_and_exact_selection(self):
         self.identity('ota-SMK-37 Pro_016');self.assertFalse(self.run_stage('begin')[-1]['handoff']);self.assertEqual(self.sent,[])
-        with self.assertRaisesRegex(RuntimeError,'expected SMK loader'):self.run_stage('write','ota-SMK-37_938')
+        with self.assertRaisesRegex(RuntimeError,'expected SMK loader'):self.run_stage('write','ota-SMK-37_949')
         self.assertEqual(self.sent,[])
     def test_both_transfer_formats(self):
-        for identity,byte in [('ota-SMK-37 Pro_016',b'I'),('ota-SMK-37_938',b'P')]:
+        for identity,byte in [('ota-SMK-37 Pro_016',b'I'),('ota-SMK-37_949',b'P')]:
             self.identity(identity);self.sent=[];self.requests=[(0,0,16),(0,0xf0000000,8)]
             self.assertTrue(self.run_stage('write',identity)[-1]['ok']);self.assertEqual(self.sent[1],(0,byte*16,0))
     def test_bounds_and_missing_data_stop(self):
-        self.identity('ota-SMK-37_938');self.requests=[(0,60,16)]
+        self.identity('ota-SMK-37_949');self.requests=[(0,60,16)]
         with self.assertRaisesRegex(RuntimeError,'outside'):self.run_stage('write',self.id.text)
         self.assertEqual(self.sent,['START'])
         self.sent=[]
         with self.assertRaisesRegex(RuntimeError,'interrupted'):self.run_stage('write',self.id.text)
         self.assertEqual(self.sent,['START'])
+    def test_loader_diagnostic_stops_transfer(self):
+        spec=importlib.util.spec_from_file_location('diagnostic_fixture',ROOT/'tests/smk_diagnostics.py')
+        fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)
+        packet=fixture.packet
+        self.identity('ota-SMK-37_949');self.requests=[packet()]
+        with self.assertRaisesRegex(RuntimeError,'SMK loader error 14.*EB6014'):
+            self.run_stage('write',self.id.text)
+        self.assertEqual(self.sent,['START'])
     def test_exact_restart(self):
-        self.identity('SMK-37_938');self.assertEqual(self.run_stage('verify','SMK-37_938')[-1]['identity'],self.id.text)
+        self.identity('SMK-37_949');self.assertEqual(self.run_stage('verify','SMK-37_949')[-1]['identity'],self.id.text)
         with self.assertRaisesRegex(RuntimeError,'Unexpected restart'):self.run_stage('verify','SMK-37 Pro_016')
 if __name__=='__main__':unittest.main()

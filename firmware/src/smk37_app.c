@@ -76,6 +76,7 @@ static uint8_t smk37_samples_formatting;
 #define SMK37_SAMPLE_WRITE_OK(off,n) 0
 #endif
 #include "fm1_flash.h"
+#include "smk37_flash_profile.h"
 #if SMK37_ENABLE_TRS
 #if !FELUCCA_UAC
 #error "SMK TRS service requires the existing 2 kHz USB timer"
@@ -340,7 +341,7 @@ static int smk37_storage_probe(void)
 {
     static uint8_t trim[556];
     fm1_irq_off();uint32_t id=FL_FAR(fl_jedec_ram)();fm1_irq_on();
-    if(id!=0x856014u || smk37_flash_read_raw(0xc1000u,trim,sizeof trim))return -1;
+    if(!smk37_flash_supported_id(id) || smk37_flash_read_raw(0xc1000u,trim,sizeof trim))return -1;
 #if SMK37_PUBLIC_BUILD
     if(!smk37_trim_keys_valid(trim,sizeof trim))return -1;
     uint8_t block[256];uint32_t head_crc=~0u;

@@ -193,3 +193,11 @@ Close connected Studio/Simulator tabs and other MIDI apps before installing.
 If Chrome is already frozen, restart it first to release its previous session.
 Keep the helper running until the installer confirms the returned identity.
 No browser flags or alternative browser profile are required.
+
+
+## SMK flash compatibility release
+
+The SMK update and stock-restore path now accepts the reported EB6014 flash
+chip alongside 856014 and displays detailed loader failures. Update older
+Windows USB-helper checkouts before installing this release.
+See [release scope, evidence and recovery limits](docs/SMK_FLASH_COMPATIBILITY.md).

@@ -1,3 +1,8 @@
+## SMK flash compatibility ? sloop-smk-2.6.0-b10-dc2
+
+Focused exact-ID and diagnostic port from Felucca 0.9.28; upstream revision unchanged.
+[Scope, attribution and validation](SMK_FLASH_COMPATIBILITY.md).
+
 ## Windows USB browser isolation - 2026-10-16
 
 Website/helper fix based on Sloop `c9934bc`; musical upstream remains
