@@ -1,4 +1,4 @@
-import {hasNativeSmk,runNativeSmk,nativeModel} from '../native-smk.js?v=native1';
+import {hasNativeSmk,runNativeSmk,nativeModel} from '../native-smk.js?v=2.8.0-b3';
 import {requestMidiSession,releaseMidiSession} from '../midi-session.js?v=session1';
 import {createProgress} from '../update-progress.js?v=progress1';
 // SPDX-License-Identifier: GPL-3.0-only

@@ -24,7 +24,7 @@ for hosted in [False,True]:
   assert request('OPTIONS',headers={'Origin':origin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,x-sloop-token'}).status==204
   for headers in [{'Origin':origin},{'Origin':origin,'X-Sloop-Token':'wrong'},{'Origin':'null','X-Sloop-Token':cap['token']}]:
    assert request('POST','/api/smk/jobs',headers,b'{}').status==403
-  assert cap['app']=='sloop-smk' and cap['firmware']=='SMK-37_949'
+  assert cap['app']=='sloop-smk' and cap['firmware']=='SMK-37_954'
   h={'Origin':origin,'X-Sloop-Token':cap['token'],'Content-Type':'application/json'}
   assert request('POST','/api/smk/jobs',h,b'{"action":"shell","model":"smk-pro","app":"sloop-smk"}').status==400
   assert request('POST','/api/smk/jobs',h,b'{"action":"install","model":"fm1","app":"sloop-smk"}').status==400

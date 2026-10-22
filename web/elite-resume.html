@@ -11,7 +11,7 @@
 <script src="locales.js"></script><script src="i18n.js"></script><script src="skin.js"></script>
 <script defer src="site-nav.js?v=smk-simulator"></script>
 <script defer src="analytics.js"></script>
-<script type="module" src="smk-version.js?v=2.6.0-b10-dc2"></script>
+<script type="module" src="smk-version.js?v=2.8.0-b3"></script>
 <link rel="stylesheet" href="smk37-landing.css?v=sloop2">
 <script defer src="studio-preview.js"></script><script defer src="smk37-landing.js"></script><script defer src="panel-guide.js"></script>
 <style>
@@ -27,7 +27,7 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 <div class="install-console">
 <section class="smk-hero installer-hero">
 <div><div class="smk-launch-label">CUSTOM FIRMWARE</div><h2>A little synth.<br>A bigger playground.</h2>
-<p class="smk-launch-copy"><strong>Sloop 2.6, adapted for SMK-37 Pro &amp; Elite.</strong> A revolutionary new way to play, shape, and sequence.</p><p class="smk-launch-detail">Play right in your browser or connect your keyboard. Expressive sounds, four tracks, and a hands-on Studio that feels like hardware.</p>
+<p class="smk-launch-copy"><strong>Sloop 2.8, adapted for SMK-37 Pro &amp; Elite.</strong> A revolutionary new way to play, shape, and sequence.</p><p class="smk-launch-detail">Play right in your browser or connect your keyboard. Expressive sounds, four tracks, and a hands-on Studio that feels like hardware.</p>
 <div class="hero-actions"><div class="install-action"><a id="go" href="#install">Install Sloop SMK Beta</a><p id="release" class="small">Local beta · loading version…</p></div><a class="hero-link" data-studio-preview href="editor.html">Open Studio ↗</a><a class="hero-link" href="simulator.html">Open Simulator ↗</a></div>
 <p class="smk-beta small">This firmware is a beta.<br>Provided without warranty. Keep a backup of your sounds and settings.</p></div>
 <figure class="smk-instrument" data-current-finish="red"><svg viewBox="0 0 960 430" role="img" aria-labelledby="smk-hero-title smk-hero-desc" xmlns="http://www.w3.org/2000/svg">
@@ -65,12 +65,12 @@ main{max-width:1180px;margin:auto;padding:24px}a{color:inherit}:root[data-skin] 
 <label><input type="checkbox" id="ack"> I understand this is beta firmware and have backed up my sounds and settings.</label>
     <button class="primary" id="install-button" disabled>Install / resume SMK beta</button>
     <p class="small">Do not unplug USB or switch off the keyboard while installing.</p>
-    <details><summary>Installation log</summary><p class="small">The model-specific package is prepared automatically. Installation detects an active loader and resumes without repeating preparation. This page installs Sloop SMK 2.6.0-b10-dc2. The update writes the application area; project and preset storage, calibration, and the bootloader remain outside that range.</p><pre id="log" aria-live="polite"></pre></details>
+    <details><summary>Installation log</summary><p class="small">The model-specific package is prepared automatically. Installation detects an active loader and resumes without repeating preparation. This page installs Sloop SMK 2.8.0-b3. The update writes the application area; project and preset storage, calibration, and the bootloader remain outside that range.</p><pre id="log" aria-live="polite"></pre></details>
   </div>
   <details class="beta-notes"><summary>Beta status and current limits</summary>
-    <p>The Sloop SMK 2.6.0-b10-dc2 firmware builds and its browser engine passes audio, controls, session, sample upload and USB MIDI tests. Public Pro and Elite packages are checked offline for model/layout, integrity and protected-area preservation.</p>
-    <p>Device checks cover project and user-preset saves across power cycles, TRS notes/chords, sustain, pitch, saved routing preference and note release when TRS is turned off. B7 improves oscilloscope refresh and removes black-frame redraws; the owner confirmed the screen improvement. Physical sample upload/restart testing is deferred, and Elite first-install confirmation remains pending. Bluetooth is not included. Existing incompatible saves stay protected. Browser exports preserve virtual sessions independently.</p>
-  <p><a href="https://github.com/ChanceTheMaker/sloop-smk/blob/sloop-smk-2.6.0-b10-dc2/docs/SMK_FLASH_COMPATIBILITY.md">Release notes and source</a></p>
+    <p>The Sloop SMK 2.8.0-b3 firmware builds and its browser engine passes audio, controls, session, sample upload and USB MIDI tests. Public Pro and Elite packages are checked offline for model/layout, integrity and protected-area preservation.</p>
+    <p>Pro checks cover installation and restart, sequencer playback, stereo USB audio, CPU1 operation and isolated pad feedback. A saved-settings write error remains unresolved. Full 2.8 save/reload and return-to-stock hardware testing, physical sample uploads, long-run audio and Elite hardware confirmation remain pending. Original-firmware restore remains available with model-specific package and transport tests. Bluetooth is not included.</p>
+  <p><a href="https://github.com/ChanceTheMaker/sloop-smk/blob/sloop-smk-2.8.0-b3/docs/SLOOP_28_INTEGRATION.md">Release notes and source</a></p>
   </details>
 </section>
 <section class="panel-guide" id="guide" data-panel-guide data-section="knobs" aria-labelledby="smk-guide-heading">

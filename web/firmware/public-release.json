@@ -1,19 +1,19 @@
 {
   "public": true,
-  "version": "Sloop SMK 2.6.0-b10-dc2",
-  "product": "SMK-37_949",
-  "app": "sloop-smk-2.6.0-b10-dc2-app.bin",
-  "bytes": 580996,
-  "sha256": "d091c3b34fd30d847997bdb1c41670ba43236639a9d1a0a66f69818bf8a1074f",
+  "version": "SLOOP SMK 2.8.0-b3",
+  "product": "SMK-37_954",
+  "app": "sloop-smk-2.8.0-b3-app.bin",
+  "bytes": 576656,
+  "sha256": "93bff5f4ac5f8f91e8ada1cdc8ba7b79b67790e21ecca53ff738095d98b0f7ff",
   "supported_models": [
     "SMK-37 Pro",
     "SMK-37 Elite"
   ],
   "stock_version": "016",
-  "upstream_version": "2.6",
-  "upstream_revision": "4365a1d0075b9194de1c44826325abbd39751bc1",
-  "hardware_validation": "SMK Pro: installed and restarted as SMK-37_949, then restored original Pro 016 with successful transfer/readback completion and exact restart identity. EB6014 and Elite hardware confirmation remain pending; UI, sound and long-run validation are not claimed.",
-  "source": "https://github.com/ChanceTheMaker/sloop-smk/tree/sloop-smk-2.6.0-b10-dc2",
+  "upstream_version": "2.8",
+  "upstream_revision": "b77bf55e3bf804665b8f5dffb5955bd8443311f0",
+  "hardware_validation": "SMK Pro: b3 install and restart as SMK-37_954, Low brightness readback and active CPU1 without reported faults verified. b1 USB audio and sequencer checks passed; owner confirmed b2 isolated white pad hits. b3 physical palette confirmation, 2.8 hardware return-to-stock, Elite hardware and long-run validation remain pending. A saved-settings write error remains unresolved.",
+  "source": "https://github.com/ChanceTheMaker/sloop-smk/tree/sloop-smk-2.8.0-b3",
   "license": "GPL-3.0-only",
-  "source_archive": "https://github.com/ChanceTheMaker/sloop-smk/archive/refs/tags/sloop-smk-2.6.0-b10-dc2.zip"
+  "source_archive": "https://github.com/ChanceTheMaker/sloop-smk/archive/refs/tags/sloop-smk-2.8.0-b3.zip"
 }

@@ -44,9 +44,10 @@ for(const [model,stock] of fixtures){
   }
   const wrong=model.endsWith('Pro')?'SMK-37 Elite':'SMK-37 Pro';await assert.rejects(prepareStock(stock,wrong),/does not match/);
   const corrupt=stock.slice();corrupt[corrupt.length-1]^=1;await assert.rejects(prepareStock(corrupt,model),/does not match/);
-  for(const version of [922,936,941])await flow(pkg,'custom '+version,{source:id('SMK-37',version)},[0xf0000000]);
+  for(const version of [922,936,941,954])await flow(pkg,'custom '+version,{source:id('SMK-37',version)},[0xf0000000]);
   await flow(pkg,'Doom handoff',{source:id('Doom-SMK-37',8)},[0xf0000000]);
   await flow(pkg,'Doom active loader',{source:id('ota-Doom-SMK-37',8)},[0xf0000000]);
+  await flow(pkg,'b3 active loader',{source:id('ota-SMK-37',954)},[0xf0000000]);
   await flow(pkg,'SMK active loader',{source:id('ota-SMK-37',937)},[0xf0000000]);
   await flow(pkg,'old source refused',{source:id('SMK-37',911)},[],/cannot receive/);
   await flow(pkg,'old Doom refused',{source:id('Doom-SMK-37',6)},[],/cannot receive/);

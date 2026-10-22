@@ -16,7 +16,7 @@ if(action==='restore'){
   image=smkLogicalImage(stock).raw;packet=original.bytes;expected=original.product;
 }else{
   const release=JSON.parse(await fs.readFile(path.join(root,'web/firmware/public-release.json'),'utf8'));
-  if(release.product!=='SMK-37_949'||release.app!=='sloop-smk-2.6.0-b10-dc2-app.bin'||release.sha256!=='d091c3b34fd30d847997bdb1c41670ba43236639a9d1a0a66f69818bf8a1074f')throw Error('Unrecognized Sloop public release');
+  if(release.product!=='SMK-37_954'||release.app!=='sloop-smk-2.8.0-b3-app.bin'||release.sha256!=='93bff5f4ac5f8f91e8ada1cdc8ba7b79b67790e21ecca53ff738095d98b0f7ff')throw Error('Unrecognized Sloop public release');
   const app=new Uint8Array(await fs.readFile(path.join(root,'web/firmware',release.app)));
   const built=await buildSmkPublicPackage(stock,app,release);
   if(built.stockModel!=='SMK-37 Pro')throw Error('Incorrect physical model');

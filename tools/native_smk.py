@@ -101,7 +101,7 @@ def worker(stage,directory,expected,candidate=False):
     if candidate:
         from sloop_candidate import validate_candidate
         validate_candidate(directory,manifest)
-    elif manifest['model']!='SMK-37 Pro' or manifest['expected'] not in ('SMK-37_949','SMK-37 Pro_016'):raise RuntimeError('Invalid verified package')
+    elif manifest['model']!='SMK-37 Pro' or manifest['expected'] not in ('SMK-37_954','SMK-37 Pro_016'):raise RuntimeError('Invalid verified package')
     def payload(kind):
         data=(directory/(kind+'.bin')).read_bytes();meta=manifest[kind]
         if len(data)!=meta['bytes'] or hashlib.sha256(data).hexdigest()!=meta['sha256']:raise RuntimeError('Firmware changed after verification')

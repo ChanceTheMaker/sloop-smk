@@ -1,3 +1,7 @@
+## Public Sloop 2.8.0-b3 selection ? 2026-10-21
+
+Owner authorized publication of b3 and matching Studio/simulator. The public application and helper now select `SMK-37_954`, with source tag `sloop-smk-2.8.0-b3`. See [release evidence and limitations](SLOOP_28_INTEGRATION.md). Original-firmware restore and model-specific protection remain enabled. Earlier entries below describe their state at the time, not the current public selection.
+
 ## Sloop 2.8 paired pads and startup brightness ? 2026-10-21
 
 b3 (`SMK-37_954`) is installed on the owner's Pro after explicit approval.

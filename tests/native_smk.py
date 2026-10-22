@@ -8,7 +8,7 @@ class NativeSmkTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.directory=Path(self.tmp.name)
         self.image=b'I'*64;self.packet=b'P'*64
-        manifest={'model':'SMK-37 Pro','expected':'SMK-37_949'}
+        manifest={'model':'SMK-37 Pro','expected':'SMK-37_954'}
         for kind,data in [('image',self.image),('packet',self.packet)]:
             (self.directory/(kind+'.bin')).write_bytes(data);manifest[kind]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
         (self.directory/'verified.json').write_text(json.dumps(manifest))
@@ -78,7 +78,7 @@ class NativeSmkTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'Unexpected restart'):self.run_stage('verify','SMK-37 Pro_016')
     def test_candidate_requires_explicit_private_stage(self):
         manifest=json.loads((self.directory/'verified.json').read_text())
-        manifest['expected']='SMK-37_954'
+        manifest['expected']='SMK-37_955'
         (self.directory/'verified.json').write_text(json.dumps(manifest))
         with self.assertRaisesRegex(RuntimeError,'Invalid verified package'):self.run_stage('begin')
         with self.assertRaisesRegex(RuntimeError,'Not the reviewed'):

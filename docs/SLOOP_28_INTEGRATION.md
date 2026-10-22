@@ -1,10 +1,16 @@
-# Sloop SMK 2.8 integration candidate
+# Sloop SMK 2.8.0-b3 release
 
 Branch: `integrate/sloop-2.8-smk`. Base: `10eaeeb9286ec92ee644593ddf128f8c4493439b`.
 Upstream v2.8: `b77bf55e3bf804665b8f5dffb5955bd8443311f0`.
 Previous musical base: `4365a1d0075b9194de1c44826325abbd39751bc1` (2.6).
 This is an attributed source import, not a merge of upstream history.
 Original notices and licenses are retained. No upstream PR or message.
+
+## Public release
+
+The owner authorized publishing b3 on 2026-10-21. The public installer, native helper, browser engine and source tag `sloop-smk-2.8.0-b3` select the same release. Only the application image is distributed; official vendor packages and device backups remain private. The model-specific original-firmware restore flow and Windows USB isolation are retained.
+
+This remains a beta: the saved-settings write failure is unresolved. The 2.8 full hardware save/reload and return-to-stock round trip, Elite hardware and long-run audio remain unverified. Earlier candidate records below are historical. b3 installation/restart, Low readback and CPU1 checks are recorded below; they do not establish every screen or physical control was manually tested.
 
 ## Included changes
 
@@ -178,4 +184,31 @@ A read-only settings snapshot immediately after boot reported lights word 1
 (brightness LOW), with no settings write needed. CPU1 jobs advanced from 30,808
 to 38,104; timeouts, rejected reads, faults and barred worker were all zero.
 Paired colors were checked in the browser; physical appearance awaits owner
-observation. Public installer remains unchanged.
+observation. At that initial check the public installer remained unchanged.
+
+
+## Publication checks ? 2026-10-21
+
+The public Pro package image and transfer packet exactly match the installed
+b3 candidate, including SHA-256 checks. Public Pro and Elite package construction
+passes CRC, wrong-model/corruption rejection and protected-area preservation.
+Original-firmware restore tests cover both models from running 954 and its
+active loader, official 016 payload integrity, interrupted writes and exact
+returned identity. These are host/simulated transport checks, not a new hardware
+round trip. The previously tested updater/flash-profile implementation is retained.
+
+All deployment workflow checks passed locally using Windows Node/Python and
+Linux for C tests. Headless Chrome confirmed Windows Pro Install and Restore
+use only the native helper, including missing/wrong helper refusal; no physical
+MIDI ports were opened. The public helper requires the b3 release checkout.
+Desktop/mobile review confirmed the new lit-pad simulator hero, visible original
+firmware restore link, b3 selection and no page errors or horizontal overflow.
+The optional mock-preview WASM is explicitly included in the site allowlist.
+
+The release keeps application-only public artifacts, original licenses and the
+matching source tag/archive. No vendor firmware or private device data is added.
+
+The legacy eight-language `web/test_locales.mjs` fails catalog parity: the 2.8
+import exposes English/Japanese while older extra-language catalogs remain
+unreconciled. This optional legacy check is not part of the deployment suite;
+full eight-language parity is not claimed for this beta.

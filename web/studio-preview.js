@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Theme-matched hover and keyboard previews for Studio links on the installer.
 (() => {
-  const I18N = window.FeluccaI18n;
+  const I18N = window.SloopI18n;
   // Gallery cards enlarge in place; keep the floating preview for other Studio links.
   for (const caption of document.querySelectorAll('.screenshot-gallery figcaption')) {
     const description = document.createElement('span');

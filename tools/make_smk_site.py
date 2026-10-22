@@ -20,7 +20,7 @@ def main():
     web = ROOT / 'web'
     for source in web.iterdir():
         if source.is_file() and (source.suffix in ('.js', '.css', '.ttf', '.txt', '.svg', '.png', '.ico') or
-                                source.name in ('index.html', 'editor.html', 'simulator.html', 'midi-diagnostics.html', 'elite-resume.html')):
+                                source.name in ('sloop-preview.wasm', 'index.html', 'editor.html', 'simulator.html', 'midi-diagnostics.html', 'elite-resume.html')):
             shutil.copy2(source, out / source.name)
     for name in ('elite-test', 'elite-resume'):
         (out / name).mkdir()
@@ -41,7 +41,7 @@ def main():
     # Explicit public allowlist: app code only, no private or vendor packages.
     release_path=web/'firmware/public-release.json'
     release=json.loads(release_path.read_text())
-    if release.get('public') is not True or release.get('app')!='sloop-smk-2.6.0-b10-dc2-app.bin' or release.get('product')!='SMK-37_949':
+    if release.get('public') is not True or release.get('app')!='sloop-smk-2.8.0-b3-app.bin' or release.get('product')!='SMK-37_954':
         raise ValueError('Unsupported public release manifest')
     app=web/'firmware'/release['app'];data=app.read_bytes()
     if len(data)!=release['bytes'] or hashlib.sha256(data).hexdigest()!=release['sha256']:

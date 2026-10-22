@@ -13,7 +13,7 @@ export async function hasNativeSmk(model,fetcher=fetch){
   const response=await fetcher(apiBase+'/api/smk/capabilities',{cache:'no-store',signal:AbortSignal.timeout(20000)});
   if(!response.ok){if(required)throw Error();return false;}
   const result=await response.json();
-  if(required&&(result.app!=='sloop-smk'||result.firmware!=='SMK-37_949'||result.protocol!==1||typeof result.token!=='string'||result.token.length<32))throw Error();
+  if(required&&(result.app!=='sloop-smk'||result.firmware!=='SMK-37_954'||result.protocol!==1||typeof result.token!=='string'||result.token.length<32))throw Error();
   const available=result.available===true&&result.models?.includes(model);
   if(required&&!available)throw Error();
   token=result.token||'';return available;

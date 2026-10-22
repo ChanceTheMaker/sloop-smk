@@ -1,10 +1,8 @@
 # Sloop SMK
 
-Current release: **2.6.0-b9-dc2**, with repaired USB updating. Pro recovery, normal-USB reinstall, keys/knobs/sound and onward Doom installation passed. Elite checks remain pending. [Repair evidence](docs/SMK_USB_RECOVERY_B9.md).
+Current release: **2.8.0-b3**, based on upstream Sloop 2.8, for **M-VAVE SMK-37 Pro & Elite**. Includes the new sequencer and editing screens, broader dual-core rendering, and paired blue/green/yellow/orange pad lights with white hit feedback and Low startup brightness. [Release notes and validation](docs/SLOOP_28_INTEGRATION.md).
 
-Sloop 2.6 adapted for **M-VAVE SMK-37 Pro & Elite**, with a themed browser Studio and a playable SMK simulator.
-
-This repository carries the Felucca SMK hardware foundation and the Sloop musical/UI core. It is separate from [Felucca SMK](https://github.com/ChanceTheMaker/felucca-smk).
+This repository carries the Felucca SMK hardware foundation and Sloop musical/UI core. It is separate from [Felucca SMK](https://github.com/ChanceTheMaker/felucca-smk).
 
 ## What you can do
 
@@ -16,37 +14,13 @@ This repository carries the Felucca SMK hardware foundation and the Sloop musica
 - Browser sessions preserve virtual projects, user presets, four sample slots, synth drum kits, current FM6 voices and MIDI settings. Export a session file to keep an independent copy.
 - The hardware candidate includes the bounded SMK USB updater. Its image and a return-to-Felucca 0.9.22 package pass the host loader test.
 
-## Dual-core FM6
-
-**2.6.0-b8-dc1** adds paired FM6 voice rendering on CPU1 with automatic serial
-fallback. The existing sound engine, polyphony, storage and USB updater layout
-are preserved. Other engines and the browser runtime stay serial. See the
-[dual-core notes](docs/SLOOP_DUAL_CORE.md) for the build, tests and limits.
-The owner confirmed clean FM6 chords, responsive controls and a cold restart on
-the Pro. CPU1 completed 16,016 jobs with zero reported timeouts or faults.
-
 ## Firmware status
 
-**The public beta is 2.6.0-b8-dc1**, following the Pro FM6/CPU1 and
-cold-restart checks, with earlier b5/b6 storage/TRS and b7 display evidence retained. The beta suffix
-identifies this SMK adaptation; the musical upstream remains Sloop 2.6.
+The public beta is **2.8.0-b3** (`SMK-37_954`). The browser Studio and simulator use the matching 2.8 core. Pro installation/restart, sequencer and USB audio checks, CPU1 activity and isolated pad hits have version-specific evidence in the [integration notes](docs/SLOOP_28_INTEGRATION.md).
 
-| Area | Current beta status |
-| --- | --- |
-| Project storage | Verified flash commits before reporting Saved; protected slots show LOCKED. Owner confirmed A-D persistence during b5 testing. |
-| User presets | 32 slots; U01 save, restart, full readback and load checked on b6. |
-| TRS MIDI OUT | Notes/chords, sustain, pitch, saved ON preference and held-note shutdown checked on b5/b6. Receiver expression check used FM-1 Sloop 2.6. |
-| Dual-core FM6 | CPU1 online before and after cold restart; 16,016 jobs, zero timeouts/rejected reads/faults during the focused Pro check. Other engines remain serial. |
-| USB audio | b2 stereo captures at requested 44.1/48 kHz passed; Windows may resample. These are not fresh b8-dc1 USB-audio timing measurements. |
-| Pads and lights | Same-pad blue feedback and individual color diagnostic; rare green flash remains on the watch list. |
-| Physical samples | Three 80 KiB slots, guarded preparation and uploads implemented; physical upload/restart testing deferred. Browser retains four virtual slots. |
-| Oscilloscope | b7 removes pre-redraw black clears and refreshes the scope every UI tick. Builds and host regression pass; owner confirmed the screen improvement. |
+Pads repeat blue, green, yellow and orange in adjacent pairs on each row. Only the hit pad turns white. Startup brightness is Low unless a valid saved preference exists. A saved-settings write error remains unresolved; brightness persistence is not confirmed. Full 2.8 hardware save/reload and original-firmware round trip, Elite hardware and long-duration audio remain unverified. Earlier release tests are not fresh 2.8 hardware evidence.
 
-B8-dc1 publication follows the focused device checks. See the
-[dual-core release notes](docs/SLOOP_DUAL_CORE.md), earlier
-[candidate release notes](docs/SLOOP_SMK_CANDIDATE.md) and the detailed
-[port status](docs/SLOOP_SMK_PORT.md) for version-specific evidence and limits.
-Bluetooth remains outside this round; physical TRS is output only.
+[Restore original M-VAVE firmware](https://chancethemaker.github.io/sloop-smk/restore-stock/) remains available for Pro and Elite, with model-specific packages and the existing Windows native USB isolation. No Bluetooth support is included.
 
 ### Storage protection
 
@@ -138,7 +112,7 @@ node web/test_project_save.mjs
 node web/test_sample_capability.mjs
 ```
 
-Zig 0.13.0 builds the WebAssembly runtime. Current hardware outputs are isolated in `build/sloop-smk-2.6.0-b8-dc1/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
+Zig 0.13.0 builds the WebAssembly runtime. Current hardware outputs are isolated in `build/sloop-smk-2.8.0-b3/`, with a manifest containing the version, hash, memory usage and enabled features. Build outputs and private packages stay under ignored `build/`. The raw application binary is **not** directly installable. Local package preparation is separate, and no build command accesses hardware.
 
 See [port status and validation](docs/SLOOP_SMK_PORT.md) for the pinned upstream revision, artifact hashes, remaining work and test evidence. See [workflow rules](docs/UPSTREAM_WORKFLOW.md) before importing updates or publishing firmware.
 
@@ -155,7 +129,7 @@ promote a candidate to the installer.
 
 ## Source and project layout
 
-Published source follows `integrate/sloop-2.6-smk`; the dual-core work is tracked in PR #6 and release tag `sloop-smk-2.6.0-b8-dc1`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.6 commit `4365a1d0075b9194de1c44826325abbd39751bc1`.
+Published source follows `integrate/sloop-2.6-smk` (the existing Pages branch); this release is tagged `sloop-smk-2.8.0-b3`. Musical upstream is [isod89/sloop-fm1](https://github.com/isod89/sloop-fm1), pinned to Sloop 2.8 commit `b77bf55e3bf804665b8f5dffb5955bd8443311f0`.
 
 | Directory | Contents |
 | --- | --- |
@@ -188,7 +162,7 @@ python tools/serve_native_smk.py --allow-hosted
 
 Then use the Sloop website, or `http://localhost:8892/`. Allow local-network
 access when prompted. The setup command verifies the official Pro 016 package
-and the published Sloop b9 app; it never accesses MIDI or installs firmware.
+and the published Sloop 2.8.0-b3 app; it never accesses MIDI or installs firmware.
 Close connected Studio/Simulator tabs and other MIDI apps before installing.
 If Chrome is already frozen, restart it first to release its previous session.
 Keep the helper running until the installer confirms the returned identity.
