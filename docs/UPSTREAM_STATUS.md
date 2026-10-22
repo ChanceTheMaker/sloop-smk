@@ -1,3 +1,9 @@
+## Hero presentation correction ? 2026-10-21
+
+Restored the original six-finish hero rotation and five-second dissolve loop,
+with blue/green/yellow/orange drum pads in adjacent pairs on every finish.
+The b3 firmware and original-firmware restore flow are unchanged.
+
 ## Public Sloop 2.8.0-b3 selection ? 2026-10-21
 
 Owner authorized publication of b3 and matching Studio/simulator. The public application and helper now select `SMK-37_954`, with source tag `sloop-smk-2.8.0-b3`. See [release evidence and limitations](SLOOP_28_INTEGRATION.md). Original-firmware restore and model-specific protection remain enabled. Earlier entries below describe their state at the time, not the current public selection.

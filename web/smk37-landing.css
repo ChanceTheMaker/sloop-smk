@@ -87,5 +87,3 @@
 /* Sloop's orange action accent and neutral chassis, independent of SMK finish. */
 :root[data-skin=sloop] .installer-page :is(#go,#install-button){background:linear-gradient(145deg,#ff984e,#ff621a);border-color:#ffa66e;color:#160a02;box-shadow:inset 0 1px #fff7,0 4px 0 #843609,0 8px 20px #ff621a20}
 :root[data-skin=sloop] .installer-page .hero-link{background:linear-gradient(145deg,#373940,#202126);border-color:#555761;color:#f2f2f2;box-shadow:inset 0 1px #fff2,0 3px 0 #090a0c}
-
-.smk-hero-screenshot { display:block; width:100%; height:auto; border-radius:12px; filter:drop-shadow(0 16px 14px #0005); margin:24px 0; }
