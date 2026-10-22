@@ -3,7 +3,9 @@
 On `feat/sloop-2.8-pad-colors`, b2 adds drum-theme pad colors and white physical
 hit feedback, plus the proven Doom LED framing fix. Pro installation and restart
 to `SMK-37_952` passed after owner approval. The USB brightness save returned a
-flash error; on-device MID selection and visual confirmation are pending.
+flash error. After on-device MID selection, the owner confirmed orange pads and
+isolated white hit feedback. Brightness persistence remains unverified and the
+settings-save error remains open.
 [Details and exact artifact](SLOOP_28_INTEGRATION.md#b2-pad-colors-featsloop-28-pad-colors).
 No publication or upstream submission.
 

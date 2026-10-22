@@ -143,6 +143,9 @@ The settings snapshot reported brightness OFF. A backed-up, CRC-checked settings
 update changing only its brightness bits to MID was refused at commit with
 `BK_PUT [2,1,4]` (flash/save error), including a stopped-transport attempt. Medium
 was therefore **not** reported as saved. No erase/reclaim bypass was attempted.
-The owner was asked to use PATCH menu > LIGHTS > PAD BRIGHTNESS > MID to test
-runtime colors. Physical confirmation and the settings-save issue remain open.
+After selecting PATCH menu > LIGHTS > PAD BRIGHTNESS > MID, the owner confirmed
+orange resting pads and white feedback only on the pressed pad. CPU1 telemetry
+reached 203,360 jobs with no timeouts, rejected reads, faults or barred worker.
+The settings-save error remains unresolved; this confirmation does not establish
+brightness persistence after a power cycle.
 Private settings snapshots and CPU1 checks are under the b2 hardware directory.
