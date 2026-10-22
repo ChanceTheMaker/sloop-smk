@@ -111,3 +111,38 @@ Physical controls and power-cycle confirmation are requested from the owner.
 Long-duration USB/audio, physical save/reload and this candidate's return to
 original firmware remain untested. Elite package validation is not an Elite
 hardware test. No public firmware selection has changed.
+
+## b2 pad colors (feat/sloop-2.8-pad-colors)
+
+All sixteen pads trigger the drum track, so resting pads use its RGB565 theme
+color (orange by default). Only physical hits/holds turn a pad white; a short
+hit remains visible for 120 ms. A released pad returns to the drum color.
+The existing LIGHTS setting remains OFF/LOW/MID/HIGH, with channel peaks
+0/16/48/96. Pad diagnostics retain individual RGB checks. The browser simulator
+also uses orange at rest and white for the pressed pad, including Elite finish.
+
+Ported Doom `5006bd76909b3c4c6b28249393cd0a8dbc069520` LED framing and DMA
+publication fix, preserving its license notice. Every frame includes 512 low
+bytes before and after the 384 color bytes; GPIO reset holds and a DMA barrier
+surround transfer. This avoids the previously observed unrelated-pad color
+changes when the LCD and lights share SPI. The logical pad permutation is unchanged.
+
+Build `SLOOP SMK 2.8.0-b2`, identity `SMK-37_952`, application 576,800 bytes,
+SHA-256 `e377bd2a9d97ee2441b7dfb7ddad6e582924a830456bdb6f2998016ae45f85a7`.
+Both Pro and Elite packages passed construction/protection checks. The candidate
+host suite passes, including all 65,536 hit combinations, custom theme, brightness
+Off/cap, short-hit expiry, wire reset framing, DMA publication and timeout cleanup.
+Native browser DSP/worklet tests pass at 44.1/48 kHz. Headless Chrome confirmed
+orange idle, white held pad, unchanged neighbor and orange after release.
+
+The owner approved b2 and Medium brightness after automatic approval review
+required a candidate-specific confirmation. Native installation from Sloop 950
+completed and restart verified `SMK-37_952`. The public installer still selects 2.6.
+
+The settings snapshot reported brightness OFF. A backed-up, CRC-checked settings
+update changing only its brightness bits to MID was refused at commit with
+`BK_PUT [2,1,4]` (flash/save error), including a stopped-transport attempt. Medium
+was therefore **not** reported as saved. No erase/reclaim bypass was attempted.
+The owner was asked to use PATCH menu > LIGHTS > PAD BRIGHTNESS > MID to test
+runtime colors. Physical confirmation and the settings-save issue remain open.
+Private settings snapshots and CPU1 checks are under the b2 hardware directory.

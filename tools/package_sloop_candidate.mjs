@@ -7,7 +7,7 @@ import {sha256hex} from '../web/fm1pkg.js';
 const [manifestPath,stockPath,output]=process.argv.slice(2);
 if(!manifestPath||!stockPath||!output)throw Error('Usage: node tools/package_sloop_candidate.mjs MANIFEST STOCK_FWSC NEW_OUTPUT_DIR');
 const m=JSON.parse(await fs.readFile(manifestPath,'utf8'));
-if(!m.public_build||m.upstream_version!=='2.8'||m.update_product!=='SMK-37_950'||m.update_version!=='SLOOP SMK 2.8.0-b1')throw Error('Unexpected candidate identity');
+if(!m.public_build||m.upstream_version!=='2.8'||m.update_product!=='SMK-37_952'||m.update_version!=='SLOOP SMK 2.8.0-b2')throw Error('Unexpected candidate identity');
 const app=new Uint8Array(await fs.readFile(path.join(path.dirname(manifestPath),m.image)));
 const stock=new Uint8Array(await fs.readFile(stockPath));
 const release={public:true,product:m.update_product,version:m.update_version,bytes:m.bytes,sha256:m.sha256};

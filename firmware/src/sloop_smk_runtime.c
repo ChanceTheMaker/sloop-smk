@@ -16,7 +16,7 @@ static void smk37_trs_output(uint32_t packet);
 #endif
 #define FELUCCA_ICONS 1
 #ifndef SLOOP_SMK_VERSION
-#define SLOOP_SMK_VERSION "SLOOP SMK 2.8.0-b1"
+#define SLOOP_SMK_VERSION "SLOOP SMK 2.8.0-b2"
 #endif
 #define FELUCCA_VERSION SLOOP_SMK_VERSION
 /* seq.c precedes gfx.c here; establish upstream's cold/UI size policy before

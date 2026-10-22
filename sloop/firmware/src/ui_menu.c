@@ -74,7 +74,7 @@ UI_SMALL static const char *mi_value(uint32_t i, uint16_t *c)
     case MI_LIGHTS: return LIGHTS_NAME[lights_lvl % LIGHTS_N];
     case MI_KEYS:
 #ifdef SLOOP_SMK
-        return lights_lvl?"BLUE":"OFF";
+        return lights_lvl?"DRUM":"OFF";
 #endif
         *c = lights_lvl ? C_HI : C_DIM;               /* (needs LIGHTS) */
         return KEYS_NAME[lights_keys % KEYS_N];

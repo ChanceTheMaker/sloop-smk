@@ -1,3 +1,12 @@
+## Sloop 2.8 pad-color follow-up ? 2026-10-21
+
+On `feat/sloop-2.8-pad-colors`, b2 adds drum-theme pad colors and white physical
+hit feedback, plus the proven Doom LED framing fix. Pro installation and restart
+to `SMK-37_952` passed after owner approval. The USB brightness save returned a
+flash error; on-device MID selection and visual confirmation are pending.
+[Details and exact artifact](SLOOP_28_INTEGRATION.md#b2-pad-colors-featsloop-28-pad-colors).
+No publication or upstream submission.
+
 ## Sloop 2.8 candidate ? 2026-10-21
 
 Pinned musical upstream: `b77bf55e3bf804665b8f5dffb5955bd8443311f0` (v2.8),

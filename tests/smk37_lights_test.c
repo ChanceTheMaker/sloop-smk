@@ -13,7 +13,7 @@ static void poll(void)
     assert(registers[0x50080/4] & 0x100); /* screen never selected */
     assert(registers[0x51020/4] == 0x20010);
     assert(registers[0x11d04/4] == 8);
-    assert(registers[0x11d10/4] == 420);
+    assert(registers[0x11d10/4] == SMK37_LIGHT_BYTES);
     assert(!(registers[0x50088/4] & 0x400));
     assert(registers[0x50088/4] & 0x200); /* PC9 analog input preserved */
     assert(!(registers[0x5008c/4] & 0x200));
@@ -30,31 +30,31 @@ static uint32_t decode(const uint8_t *data)
 }
 int main(void)
 {
-    uint8_t buffer[420];
+    uint8_t buffer[SMK37_LIGHT_BYTES];
     unsigned pad_seen=0, indicator_seen[2]={0,0};
     for (unsigned pad=0; pad<16; ++pad) {
         assert(!(pad_seen&(1u<<smk37_pad_light_order[pad])));
         pad_seen |= 1u<<smk37_pad_light_order[pad];
         for (unsigned color=0; color<3; ++color) for (unsigned level=0; level<=255; ++level) {
             smk37_light_encode(buffer,pad,color,level);
-            for (unsigned i=0; i<36; ++i) assert(buffer[i]==0);
+            for (unsigned i=0; i<SMK37_LIGHT_RESET_BYTES; ++i) assert(buffer[i]==0);
             uint32_t expected = level>8 ? 8 : level;
             if (color==0) expected<<=8;
             if (color==1) expected<<=16;
             for (unsigned led=0; led<16; ++led)
-                assert(decode(buffer+36+24*led)==(led==smk37_pad_light_order[pad] ? expected : 0));
+                assert(decode(buffer+SMK37_LIGHT_RESET_BYTES+24*led)==(led==smk37_pad_light_order[pad] ? expected : 0));
         }
     }
     assert(pad_seen==0xffff);
     for(unsigned mask=0;mask<=0xffffu;++mask) {
         smk37_light_encode_mask(buffer,(uint16_t)mask,2,4);
         for(unsigned p=0;p<16;++p)
-            assert(decode(buffer+36+24*smk37_pad_light_order[p])==((mask&(1u<<p)) ? 4u : 0));
+            assert(decode(buffer+SMK37_LIGHT_RESET_BYTES+24*smk37_pad_light_order[p])==((mask&(1u<<p)) ? 4u : 0));
     }
     smk37_light_encode(buffer,16,0,8);
-    for (unsigned led=0; led<16; ++led) assert(!decode(buffer+36+24*led));
+    for (unsigned led=0; led<16; ++led) assert(!decode(buffer+SMK37_LIGHT_RESET_BYTES+24*led));
     smk37_light_encode(buffer,0,3,8);
-    for (unsigned led=0; led<16; ++led) assert(!decode(buffer+36+24*led));
+    for (unsigned led=0; led<16; ++led) assert(!decode(buffer+SMK37_LIGHT_RESET_BYTES+24*led));
     for (unsigned i=0; i<19; ++i) {
         unsigned bank=smk37_indicator_order[i]>>4;
         uint32_t bit=~smk37_indicator_mask(i);

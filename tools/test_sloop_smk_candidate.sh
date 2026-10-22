@@ -4,7 +4,7 @@ set -eu
 cd "$(dirname "$0")/.."
 mkdir -p build/sloop-tests
 python3 tests/test_sloop_scope_refresh.py
-for name in sloop_smk_storage smk37_midi_tx smk37_midi_output smk37_pad_feedback smk37_lights; do
+for name in sloop_smk_storage smk37_midi_tx smk37_midi_output smk37_pad_feedback smk37_lights sloop_smk_pad_colors; do
     cc -std=gnu99 -O1 -w -Ifirmware/hal -fsanitize=address,undefined "tests/${name}_test.c" -o "build/sloop-tests/$name"
     "build/sloop-tests/$name"
 done
