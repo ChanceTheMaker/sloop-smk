@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-21",
+  "scope": "Installer/helper discovery and version-independent original firmware restoration only",
+  "firmware_binaries_changed": false,
+  "firmware_source_changed": false,
+  "validation": [
+    "native client and helper regressions",
+    "old and corrected peer-name discovery",
+    "isolated Chrome with simulated USB install/restore; no physical Chrome disconnect claim"
+  ],
+  "source_commit": "8f4fc026c19b7dd100a45050595ec31eb5b71888"
+}
