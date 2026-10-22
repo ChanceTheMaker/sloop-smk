@@ -86,8 +86,28 @@ Passed:
   play/stop, desktop/mobile rendering and mock-mode audio startup. No USB or
   Web MIDI opened by those browser checks.
 
-Hardware: read-only identity probe found `Doom-SMK-37_023`. Candidate installation,
-USB/audio timing, physical controls, cold boot, save/reload and return to original
-firmware remain pending. Elite package validation is not an Elite hardware test.
-No public firmware selection has changed. Do not promote this candidate based
-only on host tests.
+## SMK Pro hardware check — 2026-10-21
+
+The owner explicitly approved installing the candidate. The exact application
+above was packaged with original Pro 016 and installed from `Doom-SMK-37_023`
+through its native USB loader. Restart replied as `SMK-37_950`; editor INFO
+confirmed `SLOOP SMK 2.8.0-b1`, protocol 12. Chrome was not used for USB.
+
+LIVE transport started and the sequencer step advanced. Three temporary rolling
+notes exercised the sound engine. CPU1 jobs increased from 60,456 to 76,864,
+with zero timeouts, rejected reads, faults or barred-worker flags. The largest
+observed job was 6,286 timer ticks. This is a short functional test, not a
+worst-case performance benchmark.
+
+An eight-second stereo capture from the exact Windows input `Line (Felucca)`
+contained signal in every one-second window. Left/right peaks were 13,559/13,522
+with zero clipped samples. Windows captured at 48 kHz and may resample; this
+does not establish the physical USB endpoint rate. Previous transport and
+master-volume state were restored; no project save/erase was requested.
+Evidence remains private in `build/sloop-smk-2.8.0-b1/hardware/` (`smoke.json`,
+`usb-48000.json`, `usb-48000.wav`).
+
+Physical controls and power-cycle confirmation are requested from the owner.
+Long-duration USB/audio, physical save/reload and this candidate's return to
+original firmware remain untested. Elite package validation is not an Elite
+hardware test. No public firmware selection has changed.

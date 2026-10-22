@@ -16,6 +16,9 @@ def main():
         info=c.exchange([125,70,76,1],[])
         firmware=bytes(info[:info.index(0)]).decode('ascii')
         if not firmware.startswith('SLOOP SMK '): raise ValueError('Expected Sloop SMK, got '+firmware)
+        names=NAMES.copy()
+        if firmware.startswith('SLOOP SMK 2.8.'):
+            names[2]='render_blocks'  # 2.8 submits whole render units, not FM6 pairs.
         print(firmware,flush=True)
         end=time.monotonic()+a.seconds
         while True:
@@ -28,7 +31,7 @@ def main():
                 time.sleep(.003)
             if raw is None: raise TimeoutError('No CPU1 diagnostic reply; close other MIDI apps')
             if len(raw)!=45: raise ValueError('Invalid CPU1 diagnostics length')
-            print(json.dumps(dict(zip(NAMES,[u7(raw[i:i+5]) for i in range(0,45,5)]))),flush=True)
+            print(json.dumps(dict(zip(names,[u7(raw[i:i+5]) for i in range(0,45,5)]))),flush=True)
             if time.monotonic()>=end: break
             time.sleep(2)
 if __name__=='__main__': main()
