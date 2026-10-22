@@ -26,7 +26,7 @@ static void arrangement_apply(uint32_t scene) {(void)scene;}
 static uint32_t section_bars(uint32_t s) {(void)s;return 1;}
 static const page_t *cur_page(void) {return &PAGES[ui.page];}
 static int project_used(uint32_t i) {return (ready>>i)&1u;}
-static void project_save(uint32_t i) {ready|=1u<<i;scene_saves++;}
+static uint32_t project_save(uint32_t i) {ready|=1u<<i;scene_saves++;return 0;}
 static void project_load(uint32_t i) {(void)i;loads++;}
 static void settings_save(void) {}
 static void arrangement_save(void) {order_saves++;}

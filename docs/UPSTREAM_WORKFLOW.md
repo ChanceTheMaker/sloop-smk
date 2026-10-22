@@ -1,6 +1,6 @@
 # Sloop SMK adaptation
 
-Primary musical upstream: isod89/sloop-fm1 at 4365a1d0075b9194de1c44826325abbd39751bc1 (2.6).
+Primary musical upstream: isod89/sloop-fm1 at b77bf55e3bf804665b8f5dffb5955bd8443311f0 (2.8 candidate).
 SMK hardware baseline: Felucca SMK fb03412. Vendor packages and device backups stay private.
 This task explicitly authorizes the Sloop firmware/UI port. Never flash a device automatically.
 

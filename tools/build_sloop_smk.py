@@ -24,13 +24,13 @@ def main():
     parser.add_argument('--enable-storage',action='store_true',help='Enable guarded native project/preset persistence')
     parser.add_argument('--enable-samples',action='store_true',help='Candidate physical samples; explicit on-device initialization required')
     parser.add_argument('--enable-trs',action='store_true',help='Candidate SMK TRS MIDI output')
-    parser.add_argument('--dual-core', action='store_true', help='Candidate CPU1 FM6 voice renderer with serial fallback')
+    parser.add_argument('--dual-core', action='store_true', help='Candidate CPU1 render-unit scheduler with serial fallback')
     parser.add_argument('--skip-generate',action='store_true')
     parser.add_argument('--usb-test-number',type=int,default=None,choices=range(30,100))
     args = parser.parse_args()
     if args.enable_samples and not args.enable_storage: parser.error('--enable-samples requires --enable-storage')
-    if args.usb_test_number is None: args.usb_test_number=49 if args.dual_core else 39
-    version="SLOOP SMK 2.6.0-b10-dc2" if args.dual_core else "SLOOP SMK 2.6.0-b9"
+    if args.usb_test_number is None: args.usb_test_number=50 if args.dual_core else 51
+    version="SLOOP SMK 2.8.0-b1" if args.dual_core else "SLOOP SMK 2.8.0-b1-serial"
     args.public_release=True
     args.enable_saves=args.enable_presets=args.enable_storage
     args.enable_usb_audio=args.enable_usb_update=True
@@ -61,7 +61,7 @@ def main():
     elf = out / "smk37-integration.elf"
     # This allocation is a hypothesis based on shared CPU family + reserved
     # boot/vector addresses. The manifest explicitly does not certify RAM.
-    build.tc("pi32v2/bin/ld", "-T", build.FW / "app.ld",
+    build.tc("pi32v2/bin/ld", "--gc-sections", "-e", "_start", "-T", build.FW / "app.ld",
              out / "crt0.o", out / "vec.o", out / "app.o", "-o", elf)
     symbols = build.tc("common/bin/objdump", "-t", elf)
     sections = build.tc("common/bin/objdump", "-h", elf)
@@ -120,8 +120,8 @@ def main():
         "trs_midi_output_hardware_validated": False,
         "usb_audio_rates": [44100, 48000] if args.enable_usb_audio else [],
         "update_product": f"SMK-37_9{args.usb_test_number:02d}", "update_version": version,
-        "upstream_revision": "4365a1d0075b9194de1c44826325abbd39751bc1",
-        "upstream_version": "2.6",
+        "upstream_revision": "b77bf55e3bf804665b8f5dffb5955bd8443311f0",
+        "upstream_version": "2.8",
         "prior_unit_evidence": "Felucca SMK 0.9.22 on the owner Pro; Sloop artifact not flashed.",
         "flash_write_gate": "Protected model/trim check; per-object blank or valid Sloop commit; foreign data refused" if args.enable_storage else "Only embedded bounded RAM updater; application has no storage writer",
         "pending_hardware_checks": ["Sloop startup and all controls", "USB update/restart", "long-run USB/audio timing"],

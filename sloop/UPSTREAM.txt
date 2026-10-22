@@ -1,6 +1,15 @@
 Source: https://github.com/isod89/sloop-fm1
-Revision: 4365a1d0075b9194de1c44826325abbd39751bc1 (main checked 2026-10-11)
-Release baseline: v2.6
+Revision: b77bf55e3bf804665b8f5dffb5955bd8443311f0 (v2.8; checked 2026-10-21)
+Release baseline: v2.8
+Previous baseline: 4365a1d0075b9194de1c44826325abbd39751bc1 (v2.6)
+Import method: pinned source import, not a Git merge. See docs/SLOOP_28_INTEGRATION.md.
+
+2.8 SMK differences: retained protected storage/sample adapters and RAM preset
+cache; project save status and commit ordering; .pool/.lowram allocation;
+SMK controls/UI/TRS and scope behavior; native checked CPU1 render-unit bridge.
+CPU1 OFF uses SMK preference bit3; existing TRS bit26 remains unchanged.
+Failed CPU1 jobs are dropped, never re-rendered after partial voice advancement.
+The earlier entries below document the origin of retained SMK adaptations.
 Local source changes: large preset/project/editor buffers allocated to .pool; editor.c SMK version text and disabled physical sample addresses/capability; storage.c platform sector hook; project.c platform probe hook. Default upstream storage mapping remains unchanged without those hooks.
 Other SMK adapters live outside this directory. Original licenses and copyright notices retained.
 

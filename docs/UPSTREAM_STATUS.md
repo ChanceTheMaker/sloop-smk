@@ -1,3 +1,14 @@
+## Sloop 2.8 candidate ? 2026-10-21
+
+Pinned musical upstream: `b77bf55e3bf804665b8f5dffb5955bd8443311f0` (v2.8),
+imported from v2.6 `4365a1d0075b9194de1c44826325abbd39751bc1` on
+`integrate/sloop-2.8-smk`, based on published recovery source `10eaeeb`.
+Includes the sequencer, device UI, browser editor and matching browser DSP.
+The public installer continues selecting 2.6; 2.8 is not published or hardware
+validated. No upstream contribution submitted. [Changes, checks and limits](SLOOP_28_INTEGRATION.md).
+
+Earlier records below describe their respective releases.
+
 ## SMK flash compatibility ? sloop-smk-2.6.0-b10-dc2
 
 Focused exact-ID and diagnostic port from Felucca 0.9.28; upstream revision unchanged.

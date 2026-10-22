@@ -17,8 +17,9 @@ static const int8_t FM1_KEYMAP[5][16]={
     {32,33,34,35,36,37,38,39,40,-1,-1,-1,-1,-1,-1,-1},
     {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}};
 static void fm1_led_key(uint32_t id,int on) {(void)id;(void)on;}
-static uint32_t edges_btn,notes_seen;
-static uint32_t fm1_input_edges(int x) {uint32_t e=edges_btn;(void)x;edges_btn=0;return e;}
+static uint32_t edges_btn,notes_seen,smk_physical_buttons;
+static volatile uint32_t fm1_remote_btn;
+static uint32_t fm1_input_edges(int x) {uint32_t next=smk_physical_buttons|fm1_remote_btn; uint32_t e=edges_btn|(next&~fm1_in.buttons); (void)x; fm1_in.buttons=next; edges_btn=0;return e;}
 static uint32_t fm1_input_note_edges(void) {uint32_t e=fm1_in.notes&~notes_seen;notes_seen=fm1_in.notes;return e;}
 #ifndef SLOOP_SMK_HARDWARE
 static void fm1_wdt_feed(void) {}
@@ -37,6 +38,7 @@ static struct {uint32_t up,config,suspended,setups,sof_seen,resets;} usb;
 #endif
 #ifndef SLOOP_SMK_HARDWARE
 static int usb_cdc_now(void) {return 0;}
+static int usb_rate_now(void) {return 0;}
 #endif
 #include "../../sloop/firmware/src/panel.c"
 #include "../../sloop/firmware/src/ui.c"

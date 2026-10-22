@@ -27,7 +27,7 @@ SECTIONS
     _dsp_load = LOADADDR(.dsp_text);
     .data : { . = ALIGN(4); _data_start = .; *(.data*) *(.sdata*) . = ALIGN(4); _data_end = .; } > RAM AT > XIP
     _data_load = LOADADDR(.data);
-    .bss (NOLOAD) : { _bss_start = .; *(.bss*) *(.sbss*) *(COMMON) . = ALIGN(4); _bss_end = .; } > RAM
+    .bss (NOLOAD) : { _bss_start = .; *(.bss*) *(.sbss*) *(.lowram*) *(COMMON) . = ALIGN(4); _bss_end = .; } > RAM
     .pool (NOLOAD) : { _pool_start = .; *(.pool*) . = ALIGN(4); _pool_end = .; } > POOL
     .cpu1_stacks (NOLOAD) : {
         . = ALIGN(32); _cpu1_stacks_lo = .;

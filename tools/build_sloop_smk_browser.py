@@ -39,7 +39,7 @@ if not a.skip_generate:
     for script,header in [('gen_tables.py','felucca_tables.h'),('gen_samples.py','felucca_samples.h'),('gen_fm6_patches.py','felucca_fm6.h'),('gen_drumkits.py','felucca_drumkits.h'),('gen_font.py','felucca_font.h'),('gen_icons.py','felucca_icons.h')]:
         subprocess.run([sys.executable,str(ROOT/'sloop/tools'/script),str(gen/header)],check=True,cwd=ROOT/'sloop')
 exports = ['synth_init','synth_midi','synth_render','fw_event','fw_release','fw_screen','fw_status',
-           'fw_request','fw_reply','fw_command','fw_changed','fw_snapshot','fw_snapshot_size','fw_restore']
+           'fw_request','fw_reply','fw_command','fw_changed','fw_snapshot','fw_snapshot_size','fw_snapshot_v1_size','fw_restore']
 out = ROOT/'web/audio/smk-engine.wasm'
 subprocess.run([a.zig, 'cc', '-target','wasm32-freestanding','-O2','-fno-builtin','-fwrapv','-nostdlib',
                 '-Wl,--no-entry','-Wl,-z,stack-size=0x80000','-Wl,--initial-memory=0x1000000','-Wl,--max-memory=0x1000000',

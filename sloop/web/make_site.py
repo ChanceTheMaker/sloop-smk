@@ -10,6 +10,10 @@
   webapp/editor/sloop-editor.html  the editor in one file, for offline use (SLOOP 2.6): its icon font inlined,
                               its links to the installer and the font licence online; opened from the disk in
                               Chrome / Edge (file:// is a secure context: Web MIDI asks for permission)
+  webapp/sw.js, webapp/sloop.webmanifest, webapp/icon-*.png  the site without internet (SLOOP 2.6): an app to
+                              install; opened once online, the installer, the editor and the firmware are kept
+                              by the browser and work offline, still on https (on Android a downloaded file opens
+                              as content://, where Chrome refuses Web MIDI)
   src/                        not touched
 
   web/make_site.py build/felucca-X.Y.fwsc X.Y OUT_DIR [--beta]
@@ -39,10 +43,54 @@ def offline_editor(html):
         if html.count(a) != 1:
             raise SystemExit(f"editor.html must contain {a} once; update make_site.py")
         html = html.replace(a, b)
-    html, n = re.subn(r"<!--DL-->.*?<!--/DL-->", "", html, flags=re.S)
-    if n != 1:
-        raise SystemExit("editor.html must contain <!--DL-->...<!--/DL--> once; update make_site.py")
+    for pat, what in ((r"<!--DL-->.*?<!--/DL-->", "<!--DL-->...<!--/DL-->"),       # (the file has no site
+                      (r"<!--PWA-->.*?<!--/PWA-->", "<!--PWA-->...<!--/PWA-->"),    # around it: no app to
+                      (r"/\*PWA\*/.*?/\*/PWA\*/", "/*PWA*/.../*/PWA*/"),           # install, no copy kept)
+                      (r'<button id="install"[^>]*></button>\s*', '<button id="install">')):
+        html, n = re.subn(pat, "", html, flags=re.S)
+        if n != 1:
+            raise SystemExit(f"editor.html must contain {what} once; update make_site.py")
     return html
+
+
+ICONS = ("icon-192.png", "icon-512.png", "icon-maskable-512.png")
+
+
+def app_files(out, version, fw_name):
+    """webapp/: the manifest, the icons and sw.js with the list of what it keeps (relative to webapp/) and a
+    stamp of their contents, so any change makes a new sw.js and the browser takes the new site"""
+    app = out / "webapp"
+    for f in ICONS:
+        shutil.copy(HERE / f, app / f)
+    manifest = {
+        "name": "SLOOP", "short_name": "SLOOP", "id": "editor/", "start_url": "editor/", "scope": "./",
+        "display": "standalone", "background_color": "#000000", "theme_color": "#000000",
+        "description": "SLOOP for the M-VAVE FM-1: the editor and the installer, also without internet",
+        "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                  {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                  {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}],
+    }
+    (app / "sloop.webmanifest").write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
+    keep = {"installer/": app / "installer" / "index.html", "editor/": app / "editor" / "index.html",
+            "../firmware/" + fw_name: out / "firmware" / fw_name, "sloop.webmanifest": app / "sloop.webmanifest"}
+    for f in ("fukiai.ttf", "FUKIAI-LICENSE.txt"):
+        if (app / "editor" / f).exists():
+            keep["editor/" + f] = app / "editor" / f
+    for f in ("preview.js", "preview-worklet.js", "sloop-preview.wasm"):
+        if (app / "editor" / f).exists():
+            keep["editor/" + f] = app / "editor" / f
+    for f in ICONS:
+        keep[f] = app / f
+    h = hashlib.sha256()
+    for k in sorted(keep):
+        h.update(k.encode() + b"\0" + keep[k].read_bytes())
+    sw = (HERE / "sw.js").read_text(encoding="utf-8")
+    for mark in ("/*STAMP*/", "/*FILES*/[]"):
+        if sw.count(mark) != 1:
+            raise SystemExit(f"sw.js must contain {mark} once; update make_site.py")
+    sw = sw.replace("/*STAMP*/", f"{version}-{h.hexdigest()[:12]}").replace("/*FILES*/[]", json.dumps(sorted(keep)))
+    (app / "sw.js").write_text(sw, encoding="utf-8")
+    return sorted(keep)
 BLOCKS, BLK, KEEP = 20, 0x30, 0x2F
 
 
@@ -103,6 +151,15 @@ def main(pkg, version, out):
     for f in ("fukiai.ttf", "FUKIAI-LICENSE.txt"):
         if (HERE / f).exists():
             shutil.copy(HERE / f, ed / f)
+    # Optional browser DSP, built separately without the hardware toolchain.
+    for f in ("preview.js", "preview-worklet.js"):
+        shutil.copy(HERE / f, ed / f)
+    dsp = HERE.parent / "build" / "preview" / "sloop-preview.wasm"
+    if dsp.exists():
+        shutil.copy(dsp, ed / dsp.name)
+    elif (ed / dsp.name).exists():
+        (ed / dsp.name).unlink()  # never serve an old audio build as the current one
+    app_files(out, version, name)
     (out / "index.html").write_text(
         '<!doctype html><meta charset="utf-8"><title>SLOOP</title>'
         '<meta http-equiv="refresh" content="0; url=webapp/installer/">'

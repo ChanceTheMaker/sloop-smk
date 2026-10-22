@@ -18,3 +18,6 @@ build/sloop-tests/persistence
 
 cc -std=gnu99 -O1 -w -fno-builtin -fsanitize=address -Ibuild/sloop-gen -Ifirmware/hal tests/sloop_smk_storage_reset_test.c -o build/sloop-tests/reset
 build/sloop-tests/reset
+
+cc -std=gnu99 -O1 -w -fno-builtin -fsanitize=address -Ibuild/sloop-gen -Ifirmware/hal tests/sloop_smk_28_test.c -o build/sloop-tests/upgrade28
+build/sloop-tests/upgrade28

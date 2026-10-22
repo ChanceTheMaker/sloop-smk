@@ -76,4 +76,19 @@ class NativeSmkTests(unittest.TestCase):
     def test_exact_restart(self):
         self.identity('SMK-37_949');self.assertEqual(self.run_stage('verify','SMK-37_949')[-1]['identity'],self.id.text)
         with self.assertRaisesRegex(RuntimeError,'Unexpected restart'):self.run_stage('verify','SMK-37 Pro_016')
+    def test_candidate_requires_explicit_private_stage(self):
+        manifest=json.loads((self.directory/'verified.json').read_text())
+        manifest['expected']='SMK-37_950'
+        (self.directory/'verified.json').write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(RuntimeError,'Invalid verified package'):self.run_stage('begin')
+        with self.assertRaisesRegex(RuntimeError,'Not the reviewed'):
+            native.worker('begin',self.directory,'',candidate=True)
+        self.assertEqual(self.sent,[])
+    def test_candidate_payload_validated_before_handoff(self):
+        from sloop_candidate import PINNED
+        (self.directory/'verified.json').write_text(json.dumps(PINNED))
+        self.identity('Doom-SMK-37_023')
+        with self.assertRaisesRegex(RuntimeError,'Candidate payload changed'):
+            native.worker('begin',self.directory,'',candidate=True)
+        self.assertEqual(self.sent,[])
 if __name__=='__main__':unittest.main()

@@ -31,7 +31,6 @@ static uint8_t reply[2048];static unsigned reply_n;
 static void ota_wire_send(const uint8_t*p,uint32_t n){assert(n<=sizeof reply);memcpy(reply,p,n);reply_n=n;}
 static int ota_frame_get(const uint8_t**p,uint32_t*n){(void)p;(void)n;return 0;}
 static void ota_frame_done(void){}
-static uint32_t st_crc32(const void*p,uint32_t n){return smk37_store_crc(p,n);}
 static int ed_flash_busy(void){return song.playing||transport_req;}
 static void fl_inval(uint32_t a,uint32_t n){(void)a;(void)n;}
 static int fl_erase4k_quiet(uint32_t a,uint32_t*t){(void)a;(void)t;return -1;}

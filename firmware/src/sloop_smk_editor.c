@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only */
 #if !FELUCCA_FLASH
 static uint8_t flash_ok;
-static uint32_t st_crc32(const void *p,uint32_t n){const uint8_t*b=p;uint32_t c=~0u;while(n--){c^=*b++;for(unsigned i=0;i<8;i++)c=(c>>1)^((0u-(c&1u))&0xedb88320u);}return ~c;}
 static void fl_inval(uint32_t a,uint32_t n){(void)a;(void)n;}
 #endif
 #ifdef SLOOP_SMK_HARDWARE

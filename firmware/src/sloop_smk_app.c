@@ -245,6 +245,7 @@ void smk37_audio_irq(void)
 
         }
         for (i = 0; i < HALF_FRAMES * 2u; ++i) out[i] *= 128;
+        cpu1_load_half(HALF_FRAMES * 1000000u / FS);
         smk37_audio_ack_half();
         ++smk37_rendered;
         if (smk37_audio_free_half() != half) ++smk37_late;
@@ -347,6 +348,14 @@ void smk37_cstart(const uint32_t *boot_parameters)
     fm1_irq_init();
     fm1_mailbox_clear();
     sloop_init();
+    /* Read-only boot scan after IRQ setup, before descriptors and CPU1 start:
+     * USB rate and 2ND CORE OFF must apply on this boot. No format/erase. */
+#if FELUCCA_FLASH
+    persist_boot();panel_init();settings_init();palette_set(settings.palette);autosave_resume();
+#endif
+#if FELUCCA_UAC
+    usb_rate_mode=usb_rate;
+#endif
     /* Playable startup. Diagnostics remain reachable with the page encoder. */
 
     smk37_boot_state.stage = SMK37_BOOT_USB;
@@ -367,7 +376,7 @@ void smk37_cstart(const uint32_t *boot_parameters)
     smk37_scan_set_analog(smk37_analog_mask(&smk37_adc.scan));
     smk37_scan_init(fm1_irq_attach, smk37_isr_scanner);
     smk37_boot_state.stage = SMK37_BOOT_AUDIO;
-    smk37_multicore_start(smk37_boot_state.failures);
+    if (!cpu1_off) smk37_multicore_start(smk37_boot_state.failures);
     (void)smk37_audio_init(smk37_dma, HALF_FRAMES * 2u,
                           smk37_isr_audio, 3, &smk37_audio_hooks);
     last = fm1_ticks();
@@ -376,10 +385,6 @@ void smk37_cstart(const uint32_t *boot_parameters)
 #endif
     fm1_irq_enable_all();
     smk37_boot_state.stage = SMK37_BOOT_RUNNING;
-#if FELUCCA_FLASH
-    /* Probe/read only after interrupts are initialized. No erase or format on boot. */
-    persist_boot();panel_init();settings_init();palette_set(settings.palette);autosave_resume();
-#endif
     for (;;) {
         uint32_t now = fm1_ticks();
         remainder += now - last;

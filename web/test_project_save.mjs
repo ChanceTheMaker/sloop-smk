@@ -14,7 +14,7 @@ for(const rc of [1,2,3,4,99]){
  response=[1,0,0,rc];messages=[];errors=[];await c.api.project(1,0);
  assert.equal(errors.length,1);assert.equal(messages.length,0);assert.equal(c.api.dev.slotUsed[0],0);assert.equal(c.api.busy(),0);
 }
-response=[1,0,1,0];messages=[];errors=[];await c.api.project(1,0);assert.deepEqual(messages,['savedSlot']);assert.equal(errors.length,0);
+response=[1,0,1,0];messages=[];errors=[];await c.api.project(1,0);assert.deepEqual(messages,['secSaved']);assert.equal(errors.length,0);
 response=[1,0,1];messages=[];await c.api.project(1,0);assert.match(messages[0],/does not confirm flash persistence/);
-c.api.browser(true);messages=[];await c.api.project(1,0);assert.deepEqual(messages,['savedSlot']);
+c.api.browser(true);messages=[];await c.api.project(1,0);assert.deepEqual(messages,['secSaved']);
 console.log('PASS: device project save failures never report success; b2 missing status disclosed; verified and browser saves accepted');

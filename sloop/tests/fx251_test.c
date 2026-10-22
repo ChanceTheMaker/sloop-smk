@@ -613,9 +613,224 @@ static void t_clicks(void)
     }
 }
 
+/* (2.7) LEVEL and PAN glide (drums.c mix_glide, after JIANT FM 0.6.8): a knob's jump is spread over ~3 ms, no step */
+static void t_glide(void)
+{
+    static int32_t dry[64u * CTL];
+    int32_t ml[CTL], mr[CTL], rv[CTL], dl[CTL], g0, g1;
+    double rt, r[64];
+    uint32_t b, i;
+    /* the gain a block applies, against the same render without the change (fork_dry: the state copied) */
+#define GAIN_OF(blk) ({ double xy_ = 0, xx_ = 0; for (i = (blk) * CTL; i < ((blk) + 1u) * CTL; i++) \
+                        xy_ += (double)out_l[i] * dry[i], xx_ += (double)dry[i] * dry[i]; xx_ > 0 ? xy_ / xx_ : 1.0; })
+    setup();
+    trk[0].p[P_LEVEL] = 100;
+    trk_note_on(&trk[0], 45, 100);
+    render(300);
+    fork_dry(64);
+    memcpy(dry, shared_dry, sizeof dry);
+    trk[0].p[P_LEVEL] = 40;                             /* a big jump at once (a fast knob, MIDI) */
+    render(64);
+    rt = (double)LEVEL_Q12[40] / LEVEL_Q12[100];
+    for (b = 0; b < 64u; b++)
+        r[b] = GAIN_OF(b);
+    printf("  LEVEL 100 -> 40: gain %.3f %.3f %.3f %.3f .. block 24 %.3f .. 63 %.3f (target %.3f)\n", r[0], r[1], r[2], r[3],
+           r[24], r[63], rt);
+    check(r[0] > 0.8 && r[1] < r[0] && r[2] < r[1] && fabs(r[24] - rt) < 0.01 && fabs(r[63] - rt) < 0.005 &&
+          trk[0].lvl == LEVEL_Q12[40],
+          "LEVEL: a jump glides over ~3 ms (the first block keeps most of the old level), then lands exactly");
+    setup();
+    trk_note_on(&trk[0], 45, 100);
+    render(300);
+    fork_dry(64);
+    memcpy(dry, shared_dry, sizeof dry);
+    trk[0].p[P_PAN] = 63;                               /* centre -> right: the left side (out_l) fades, not cut */
+    render(64);
+    for (b = 0; b < 64u; b++)
+        r[b] = GAIN_OF(b);
+    rt = (4096.0 - 63 * 64) / 4096.0;
+    printf("  PAN 0 -> 63, left: gain %.3f %.3f %.3f %.3f .. block 24 %.3f .. 63 %.3f (target %.3f)\n", r[0], r[1], r[2], r[3],
+           r[24], r[63], rt);
+    check(r[0] > 0.8 && r[1] < r[0] && fabs(r[24] - rt) < 0.01 && fabs(r[63] - rt) < 0.005 && trk[0].gpl == 4096 - 63 * 64,
+          "PAN: a jump glides too (the left fades over a few blocks), then lands exactly");
+    song.g[G_DRLVL] = 100;
+    drums.gon = 0;
+    drums_mix(ml, mr, rv, dl, 0, CTL);
+    g0 = drums.glv;
+    song.g[G_DRLVL] = 20;
+    drums_mix(ml, mr, rv, dl, 0, CTL);
+    g1 = drums.glv;
+    for (b = 0; b < 40u; b++)
+        drums_mix(ml, mr, rv, dl, 0, CTL);
+    check(g0 == 100 * 200 && g1 > 20 * 200 + (g0 - 20 * 200) / 2 && drums.glv == 20 * 200,
+          "drums: LEVEL glides the same way (a quarter a block), then lands exactly");
+    check(mix_glide(1000, 1008) == 1008 && mix_glide(1000, 2000) == 1250 && mix_glide(2000, 1000) == 1750,
+          "mix_glide: a quarter of the way a block, the last 8 units at once");
+#undef GAIN_OF
+}
+
+/* (2.7) the punch-in FX over MIDI: GLO > MIDI 3's FX CH, notes F3 .. G5 as the FM-1's keys with FX held */
+static void note_in(uint32_t ch, uint32_t note, uint32_t vel)
+{
+    midi_in_q[mi_w % MQ] = (vel ? 0x09u : 0x08u) | ((vel ? 0x90u : 0x80u) | ch) << 8 | note << 16 | vel << 24;
+    mi_w++;
+    render(2);
+}
+static void t_midi_fx(void)
+{
+    int r0, r1, r2, r3, r4, r5, r6, r7;
+    setup();
+    mi_r = mi_w;
+    song.g[G_ROUTE] = 0;
+    song.g[G_FXCH] = 0;
+    punch.req = -1, punch.keybit = 0;
+    note_in(4, 53, 100);                                /* FX CH OFF: channel 5 plays the selected track as before */
+    r0 = punch.req;
+    note_in(4, 53, 0);
+    song.g[G_FXCH] = 5;                                 /* channel 5 */
+    note_in(4, 53, 100);                                /* F3: the first white key, effect 0 */
+    r1 = punch.req;
+    note_in(4, 53, 0);
+    r2 = punch.req;
+    note_in(4, 54, 90);                                 /* F#3: the first black key, effect 16 (KILL LOW) */
+    r3 = punch.req;
+    note_in(4, 55, 90);                                 /* G3 while F#3 is held: the newest wins */
+    r4 = punch.req;
+    note_in(4, 54, 0);                                  /* F#3 up: not the one held now, nothing changes */
+    r5 = punch.req;
+    note_in(4, 55, 0);
+    r6 = punch.req;
+    note_in(4, 40, 100);                                /* below F3: nothing */
+    note_in(5, 53, 100);                                /* another channel: a note for a track, not an effect */
+    r7 = punch.req;
+    note_in(4, 40, 0);
+    note_in(5, 53, 0);
+    printf("  FX CH 5: F3 -> %d, up -> %d; F#3 -> %d, G3 -> %d, F#3 up -> %d, G3 up -> %d\n", r1, r2, r3, r4, r5, r6);
+    check(r0 == -1 && r1 == 0 && r2 == -1 && r3 == 16 && r4 == 1 && r5 == 1 && r6 == -1 && r7 == -1,
+          "MIDI FX CH (2.7): its notes hold the punch-in effects as FX + the FM-1's keys (white 1..16, black 17..27)");
+    note_in(4, 79, 100);                                /* G5: the last white key, effect 15 */
+    r1 = punch.req;
+    punch.keybit = 1u << 3;                             /* an FM-1 key took it over (FX + key) */
+    note_in(4, 79, 0);
+    r2 = punch.req;
+    punch.keybit = 0, punch.req = -1;
+    song.g[G_ROUTE] = 1;                                /* IN = CLOCK: no notes, no effects */
+    note_in(4, 53, 100);
+    r3 = punch.req;
+    note_in(4, 53, 0);
+    song.g[G_ROUTE] = 2 + 4;                            /* IN = CH 5 only: the FX channel still works */
+    song.g[G_FXCH] = 7;
+    note_in(6, 53, 100);
+    r4 = punch.req;
+    note_in(6, 53, 0);
+    song.g[G_ROUTE] = 0, song.g[G_FXCH] = 0;
+    check(r1 == 15 && r2 == 15 && r3 == -1 && r4 == 0,
+          "MIDI FX CH: G5 the 16th effect; an FM-1 key taking over keeps it; IN = CLOCK ignores it; IN = CH n leaves it");
+    render(8);
+}
+
+/* (2.7) GLO > MIDI 3 > DR MAP: GM (as before) or 1-16 (16 notes in a row from note 36: the sounds in order, each 16) */
+static void t_drmap(void)
+{
+    static const uint8_t NOTES[6] = {36, 48, 51, 52, 35, 60};
+    uint8_t gm[6], seq16[6];
+    uint32_t i, dch;
+    setup();
+    mi_r = mi_w;
+    song.g[G_ROUTE] = 0;
+    dch = (uint32_t)song.g[G_DRCH] - 1u;                /* the drums' channel (10) */
+    for (i = 0; i < 6u; i++) {
+        song.g[G_DRMAP] = 0;
+        pen_lane = 99;
+        note_in(dch, NOTES[i], 100);
+        note_in(dch, NOTES[i], 0);
+        gm[i] = pen_lane;
+        song.g[G_DRMAP] = 1;
+        pen_lane = 99;
+        note_in(dch, NOTES[i], 100);
+        note_in(dch, NOTES[i], 0);
+        seq16[i] = pen_lane;
+    }
+    song.g[G_DRMAP] = 0;
+    printf("  GM: 36 -> %u, 48 -> %u, 60 -> %u; 1-16: 36 -> %u, 48 -> %u, 51 -> %u, 52 -> %u, 35 -> %u, 60 -> %u\n",
+           gm[0], gm[1], gm[5], seq16[0], seq16[1], seq16[2], seq16[3], seq16[4], seq16[5]);
+    check(gm[0] == lane_of_note(36) && gm[1] == lane_of_note(48) && gm[5] == lane_of_note(60) && seq16[0] == 0 &&
+          seq16[1] == 12 && seq16[2] == 15 && seq16[3] == 0 && seq16[4] == 15 && seq16[5] == 8 &&
+          !strcmp(GP[G_DRMAP].names[1], "1-16") && GP[G_DRMAP].def == 0,
+          "DR MAP (2.7): GM as before; 1-16: note 36 the kick, 16 notes the 16 sounds in order, again each 16");
+    render(8);
+}
+
+/* 2.7: a user zone's loop. looped 2 (the editor's LOOP / LOOP+TAIL): [ls, le] again while the note is held, let go the
+ * rest to the end (the tail); 1 (the factory sets): always; 0: one-shot; LOOP OFF (the engine's param): none */
+static void t_loophold(void)
+{
+    static smp_zone_t z;
+    voice_t v;
+    uint32_t i, maxp = 0, mode;
+    int ok = 1;
+    memset(&z, 0, sizeof z);
+    z.off = 0, z.n = 2000, z.ls = 500, z.le = 1499, z.rate = 0x10000u, z.lo = 0, z.hi = 127;
+    for (mode = 0; mode < 3u; mode++) {
+        z.looped = (uint8_t)mode;
+        memset(&v, 0, sizeof v);
+        v.gate = 1;
+        for (i = maxp = 0; i < 5000u && v.ph[0] < z.n; i++) {     /* held: 5000 samples */
+            sample_next(&z, &v, 1);
+            maxp = v.ph[0] > maxp ? v.ph[0] : maxp;
+        }
+        if (mode == 0u && v.ph[0] != z.n) ok = 0;                 /* one-shot: to the end */
+        if (mode && (maxp > z.le + 1u || v.ph[0] < z.ls || v.ph[0] > z.le + 1u)) ok = 0;   /* in the loop */
+        v.gate = 0;                                               /* let go */
+        for (i = 0; i < 5000u && v.ph[0] < z.n; i++)
+            sample_next(&z, &v, 1);
+        if (mode == 2u && v.ph[0] != z.n) ok = 0;                 /* HELD: the tail, to the end */
+        if (mode == 1u && (v.ph[0] < z.ls || v.ph[0] > z.le + 1u)) ok = 0;   /* always: still in the loop */
+    }
+    z.looped = 2;                                                 /* LOOP OFF: one-shot even held */
+    memset(&v, 0, sizeof v);
+    v.gate = 1;
+    for (i = 0; i < 5000u && v.ph[0] < z.n; i++)
+        sample_next(&z, &v, 0);
+    if (v.ph[0] != z.n) ok = 0;
+    check(ok, "2.7 sample loop: HELD loops [ls, le] while held, then the tail to the end; 1 always; 0 and LOOP OFF one-shot");
+}
+
+/* (2.7) GLO > MIDI 3 > REMOTE: on its channel CC 102.. hold the buttons (by label); other channels and other CCs as before */
+static void t_remote(void)
+{
+    uint32_t a, b, c, d, e, f;
+    setup();
+    mi_r = mi_w;
+    song.g[G_ROUTE] = 0;
+    remote_lbl = remote_up = 0;
+    song.g[G_RMCH] = 0;
+    cc_in(15, 112, 127);                                /* REMOTE OFF: nothing */
+    a = remote_lbl;
+    song.g[G_RMCH] = 16;
+    cc_in(15, 112, 127);                                /* CC 112 = 102 + 10: PLAY down */
+    b = remote_lbl;
+    cc_in(15, 113, 100);                                /* REC down too */
+    c = remote_lbl;
+    cc_in(15, 112, 0);                                  /* PLAY up: waits until it was seen down */
+    d = remote_up;
+    cc_in(14, 102, 127);                                /* another channel: not a button */
+    cc_in(15, 101, 127);                                /* a CC before the range: not a button */
+    e = remote_lbl;
+    cc_in(15, 115, 127);                                /* OCT+ (the last) */
+    f = remote_lbl;
+    song.g[G_RMCH] = 0;
+    remote_lbl = remote_up = 0;
+    check(a == 0 && b == 1u << 10 && c == (1u << 10 | 1u << 11) && d == 1u << 10 && e == c && f == (c | 1u << 13),
+          "REMOTE (2.7): on its channel CC 102 + k holds button k (PLAY 112, REC 113, OCT+ 115); others as before");
+    render(4);
+}
+
 int main(void)
 {
     setvbuf(stdout, 0, _IONBF, 0);
+    t_midi_fx();
+    t_glide();
     t_insert();
     t_filter();
     t_esync();
@@ -628,6 +843,9 @@ int main(void)
     t_limiter();
     t_limiter_bass();
     t_throw();
+    t_drmap();                                          /* (last: its drum hits ring on) */
+    t_remote();
+    t_loophold();
     printf("fx251: %s\n", fails ? "FAILED" : "all checks ok");
     return fails;
 }

@@ -4,7 +4,7 @@ class SMKProcessor extends AudioWorkletProcessor {
     super();
     this.e = new WebAssembly.Instance(options.processorOptions.module).exports;
     this.e.synth_init(); this.memory = new Uint8Array(this.e.memory.buffer);
-    if (options.processorOptions.snapshot?.byteLength === this.e.fw_snapshot_size()) {
+    if (options.processorOptions.snapshot && this.sessionSizeOK(options.processorOptions.snapshot.byteLength)) {
       this.memory.set(new Uint8Array(options.processorOptions.snapshot), this.e.fw_snapshot());
       if (this.e.fw_restore()) this.port.postMessage({type:'restore-error'});
     }
@@ -24,7 +24,7 @@ class SMKProcessor extends AudioWorkletProcessor {
         else if(d.type==='release')this.e.fw_release();
         else if(d.type==='visible'){this.visible=d.value;if(this.visible)this.screen();}
         else if(d.type==='restore') {
-          if(d.buffer?.byteLength!==this.e.fw_snapshot_size())throw Error('Invalid session size');
+          if(!this.sessionSizeOK(d.buffer?.byteLength))throw Error('Invalid session size');
           const ptr=this.e.fw_snapshot(),backup=this.memory.slice(ptr,ptr+this.e.fw_snapshot_size());
           this.memory.set(new Uint8Array(d.buffer),ptr);
           if(this.e.fw_restore()){this.memory.set(backup,ptr);this.e.fw_restore();throw Error('Invalid session data');}
@@ -37,6 +37,7 @@ class SMKProcessor extends AudioWorkletProcessor {
       } catch(e) {this.port.postMessage({id:d.id,error:e.message});}
     };
   }
+  sessionSizeOK(n){return n===this.e.fw_snapshot_size() || n===this.e.fw_snapshot_v1_size?.();}
   screen(){
     const p=this.e.fw_screen(),pixels=this.memory.slice(p,p+240*240*2).buffer;
     const status=Array.from(new Uint32Array(this.e.memory.buffer,this.e.fw_status(),16));

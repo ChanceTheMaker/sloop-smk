@@ -85,7 +85,7 @@ class Bridge:
 
 def emit(**event):print(json.dumps(event),flush=True)
 
-def worker(stage,directory,expected):
+def worker(stage,directory,expected,candidate=False):
     sys.path[:0]=[str(ROOT/'build/python-deps'),str(ROOT/'tools')]
     import fm1_install as wire
     wire.PORT_RE=re.compile(r'^(?!MIDIIN).*(?:SMK|GameDude|NESynth|Felucca|Sloop|Melodee|USB-Midi|Doom)',re.I)
@@ -98,7 +98,10 @@ def worker(stage,directory,expected):
         if stage=='verify' and text!=expected:raise RuntimeError('Unexpected restart: '+text+'; expected '+expected)
         emit(ok=True,identity=text,log='Connected: '+text);return
     manifest=json.loads((directory/'verified.json').read_text())
-    if manifest['model']!='SMK-37 Pro' or manifest['expected'] not in ('SMK-37_949','SMK-37 Pro_016'):raise RuntimeError('Invalid verified package')
+    if candidate:
+        from sloop_candidate import validate_candidate
+        validate_candidate(directory,manifest)
+    elif manifest['model']!='SMK-37 Pro' or manifest['expected'] not in ('SMK-37_949','SMK-37 Pro_016'):raise RuntimeError('Invalid verified package')
     def payload(kind):
         data=(directory/(kind+'.bin')).read_bytes();meta=manifest[kind]
         if len(data)!=meta['bytes'] or hashlib.sha256(data).hexdigest()!=meta['sha256']:raise RuntimeError('Firmware changed after verification')

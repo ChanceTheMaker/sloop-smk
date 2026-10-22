@@ -410,6 +410,44 @@ int main(void)
         bad += check("2.6 TEXTURE: kept in a project (SRC LEVEL TONE MOVE RATE WHEN DUCK), a section sets it, an older one: OFF; "
                      "the drum channel not taken from a project", ok);
     }
+    {   /* 2.7: KBD HOLD (ARP HOLD with the arp OFF) sounds now: a project saved before 2.7 (no 0x40 in rsv[0]) opens
+         * with HOLD OFF where the arp is OFF, so no note hangs; one saved by 2.7 keeps it; the arp ON: kept either way */
+        trk[0].p[P_AMODE] = 0, trk[0].p[P_AHOLD] = 1;
+        trk[1].p[P_AMODE] = 1, trk[1].p[P_AHOLD] = 1;
+        proj_capture(&q2);
+        ok = (q2.rsv[0] & 0x40u) != 0u;
+        trk[0].p[P_AHOLD] = 0, trk[1].p[P_AHOLD] = 0;
+        proj_apply(&q2, 1);
+        ok &= trk[0].p[P_AHOLD] == 1 && trk[1].p[P_AHOLD] == 1;
+        q2.rsv[0] &= (uint8_t)~0x40u;
+        proj_apply(&q2, 1);
+        ok &= trk[0].p[P_AHOLD] == 0 && trk[1].p[P_AHOLD] == 1;
+        trk[0].p[P_AHOLD] = 0, trk[1].p[P_AMODE] = 0, trk[1].p[P_AHOLD] = 0;
+        bad += check("2.7 KBD HOLD: saved by 2.7 (rsv 0x40) kept; an older project: HOLD OFF where the arp is OFF", ok);
+    }
+    {   /* 2.7: the DRUMS screen's SOUND page, each sound's TUNE and DECAY: kept in a project and a section (the drum
+         * track's free E1..E7, a check in G_SAVE); a project of an older SLOOP (no check): every sound as the kit has it */
+        uint32_t l;
+        for (l = 0; l < DRUM_LANES; l++)
+            drum_tune[l] = (int8_t)((int32_t)(l * 5u % 16u) - 8), drum_dec[l] = (int8_t)((int32_t)(l * 3u % 8u) - 4);
+        proj_capture(&q2);
+        memset(drum_tune, 0, sizeof drum_tune), memset(drum_dec, 0, sizeof drum_dec);
+        proj_apply(&q2, 0);                        /* (a section) */
+        ok = 1;
+        for (l = 0; l < DRUM_LANES; l++)
+            ok &= drum_tune[l] == (int8_t)((int32_t)(l * 5u % 16u) - 8) && drum_dec[l] == (int8_t)((int32_t)(l * 3u % 8u) - 4);
+        q2.g[G_SAVE] = 0;                           /* (as an older SLOOP saves it) */
+        proj_apply(&q2, 1);
+        for (l = 0; l < DRUM_LANES; l++)
+            ok &= !drum_tune[l] && !drum_dec[l];
+        drum_tune[3] = 7, drum_dec[9] = -4;
+        proj_capture(&q2);
+        q2.t[TRK_DRUM].e[2] ^= 0x10;                 /* (a value of an older SLOOP's engine there: the check fails) */
+        proj_apply(&q2, 1);
+        ok &= !drum_tune[3] && !drum_dec[9];
+        memset(drum_tune, 0, sizeof drum_tune), memset(drum_dec, 0, sizeof drum_dec);
+        bad += check("2.7 drum SOUND page: TUNE and DECAY of the 16 sounds kept in a project and a section; an older one: none", ok);
+    }
     {   /* what format 6 packs in fewer bits holds every value: the byte parameters (P_ITYPE .. P_LPOL: 0..255), TEXTURE's
          * SRC (4 bits), WHEN and DUCK (1), RATE (a byte), LEVEL and TONE + 64 (7 bits each) */
         uint32_t k;

@@ -25,10 +25,86 @@ API uint8_t*fw_request(void){return request;}
 API uint8_t*fw_reply(void){return reply;}
 API unsigned fw_command(unsigned n){reply_n=0;if(n<4||n>sizeof request||request[0]!=125||request[1]!=70||request[2]!=76)return 0;ed_handle(request,n);return reply_n;}
 API unsigned fw_changed(void){reply_n=0;ed_sync();return reply_n;}
-typedef struct {uint32_t magic;project_t current,slots[4];__typeof__(up_bank) bank;__typeof__(arrangement) arr;__typeof__(song_keep) order;__typeof__(dsu) drums;uint8_t patch[NPART][128];uint32_t prefs[4];uint16_t learn[ML_N];uint8_t midi[6];uint8_t samples[4][0x14000];uint32_t crc;} session_t;
-static session_t session;
-API uint8_t*fw_snapshot(void){session.magic=0x534c4f31;proj_capture(&session.current);memcpy(session.slots,proj_slot,sizeof proj_slot);memcpy(session.bank,up_bank,sizeof up_bank);session.arr=arrangement;session.order=song_keep;session.drums=dsu;for(unsigned i=0;i<NPART;i++)fm6_pack(fm6_patch[i],session.patch[i]);session.prefs[0]=settings.palette;session.prefs[1]=settings.lowcut;session.prefs[2]=settings.zoom;session.prefs[3]=lights_word();memcpy(session.learn,ml_tab,sizeof ml_tab);memcpy(session.midi,midi_set,sizeof midi_set);memcpy(session.samples,sample_memory,sizeof sample_memory);session.crc=st_crc32(&session,sizeof session-4);return (uint8_t*)&session;}
-API unsigned fw_snapshot_size(void){return sizeof session;}
-API int fw_restore(void){if(session.magic!=0x534c4f31||session.crc!=st_crc32(&session,sizeof session-4)||!proj_ok(&session.current))return -1;sloop_release();memcpy(proj_slot,session.slots,sizeof proj_slot);memcpy(up_bank,session.bank,sizeof up_bank);arrangement=session.arr;song_keep=session.order;dsu=session.drums;proj_apply(&session.current,1);for(unsigned i=0;i<NPART;i++){uint8_t v[FP_SIZE+1];fm6_unpack(session.patch[i],v);fm6_set_patch(i,v);}settings.palette=session.prefs[0]%NPALETTES;settings.lowcut=!!session.prefs[1];settings.zoom=!!session.prefs[2];lights_from_word(session.prefs[3]);for(unsigned k=0;k<ML_N;k++){unsigned v=session.learn[k];ml_tab[k]=(v>>9)&&ml_free_cc(v&127u)&&ml_id(v>>9)<P_COUNT?v:0;}
-for(unsigned k=0;k<4;k++)midi_set[k]=session.midi[k]<=16?session.midi[k]:k==3?10:k+1;midi_set[4]=!!session.midi[4];midi_set[5]=clamp(session.midi[5],1,12);
-song.g[G_CH1]=midi_set[0];song.g[G_CH2]=midi_set[1];song.g[G_CH3]=midi_set[2];song.g[G_DRCH]=midi_set[3];song.g[G_CHOTH]=midi_set[4];song.g[G_BEND]=midi_set[5];memcpy(sample_memory,session.samples,sizeof sample_memory);for(unsigned i=0;i<4;i++)smp_user_scan(i);ui.force=1;return 0;}
+/* v1 is the exact 2.6 session layout. Append v2 settings without moving its samples. */
+typedef struct {
+    uint32_t magic;
+    project_t current, slots[4];
+    __typeof__(up_bank) bank;
+    __typeof__(arrangement) arr;
+    __typeof__(song_keep) order;
+    __typeof__(dsu) drums;
+    uint8_t patch[NPART][128];
+    uint32_t prefs[4];
+    uint16_t learn[ML_N];
+    uint8_t midi[6], samples[4][0x14000];
+    uint32_t crc;
+} session_v1_t;
+typedef struct {
+    session_v1_t base;
+    side_rec_t side;
+    uint8_t midi[4], step_advance_off, drum_preview, fx_fade, filter_reso;
+    uint32_t crc;
+} session_v2_t;
+static session_v2_t snapshot;
+#define session snapshot.base
+API uint8_t *fw_snapshot(void)
+{
+    memset(&snapshot, 0, sizeof snapshot);
+    session.magic = 0x534c4f32;
+    proj_capture(&session.current);
+    memcpy(session.slots, proj_slot, sizeof proj_slot);
+    memcpy(session.bank, up_bank, sizeof up_bank);
+    session.arr = arrangement; session.order = song_keep; session.drums = dsu;
+    for (unsigned i=0;i<NPART;i++) fm6_pack(fm6_patch[i],session.patch[i]);
+    session.prefs[0]=settings.palette; session.prefs[1]=settings.lowcut;
+    session.prefs[2]=settings.zoom; session.prefs[3]=lights_word();
+    for (unsigned i=0;i<ML_N;i++) session.learn[i]=ml_tab[i];
+    memcpy(session.midi,midi_set,sizeof session.midi);
+    memcpy(session.samples,sample_memory,sizeof sample_memory);
+    session.crc=st_crc32(&session,sizeof session-4);
+    side_fill(&snapshot.side);
+    memcpy(snapshot.midi,midi_set+6,sizeof snapshot.midi);
+    snapshot.step_advance_off=step_adv_off; snapshot.drum_preview=drum_preview;
+    snapshot.fx_fade=fxfade; snapshot.filter_reso=flt_reso;
+    snapshot.crc=st_crc32(&snapshot,sizeof snapshot-4);
+    return (uint8_t*)&snapshot;
+}
+API unsigned fw_snapshot_size(void) { return sizeof snapshot; }
+API unsigned fw_snapshot_v1_size(void) { return sizeof session; }
+API int fw_restore(void)
+{
+    int old=session.magic==0x534c4f31;
+    if ((!old && session.magic!=0x534c4f32) ||
+        session.crc!=st_crc32(&session,sizeof session-4) || !proj_ok(&session.current) ||
+        (!old && snapshot.crc!=st_crc32(&snapshot,sizeof snapshot-4))) return -1;
+    sloop_release();
+    memcpy(proj_slot,session.slots,sizeof proj_slot);
+    memcpy(up_bank,session.bank,sizeof up_bank);
+    arrangement=session.arr; song_keep=session.order; dsu=session.drums;
+    proj_apply(&session.current,1);
+    for (unsigned i=0;i<NPART;i++) { uint8_t v[FP_SIZE+1]; fm6_unpack(session.patch[i],v); fm6_set_patch(i,v); }
+    settings.palette=session.prefs[0]%NPALETTES; settings.lowcut=!!session.prefs[1]; settings.zoom=!!session.prefs[2];
+    lights_from_word(session.prefs[3]);
+    for (unsigned k=0;k<ML_N;k++) {
+        unsigned v=session.learn[k]; ml_tab[k]=(v>>9)&&ml_free_cc(v&127u)&&ml_id(v>>9)<P_COUNT?v:0;
+    }
+    for (unsigned k=0;k<4;k++) midi_set[k]=session.midi[k]<=16?session.midi[k]:k==3?10:k+1;
+    midi_set[4]=!!session.midi[4]; midi_set[5]=clamp(session.midi[5],1,12);
+    memset(midi_set+6,0,4); memset(&theme,0,sizeof theme); theme_valid=0;
+    for (unsigned i=0;i<FAV_N;i++) fav[i]=FAV_NONE;
+    step_adv_off=drum_preview=fxfade=flt_reso=0;
+    if (!old) {
+        side_take(&snapshot.side);
+        midi_set[6]=snapshot.midi[0]<=16?snapshot.midi[0]:0;
+        midi_set[7]=!!snapshot.midi[1]; midi_set[8]=snapshot.midi[2]<=16?snapshot.midi[2]:0; midi_set[9]=!!snapshot.midi[3];
+        step_adv_off=!!snapshot.step_advance_off; drum_preview=!!snapshot.drum_preview;
+        fxfade=clamp(snapshot.fx_fade,0,15); flt_reso=clamp(snapshot.filter_reso,0,10);
+    }
+    song.g[G_CH1]=midi_set[0]; song.g[G_CH2]=midi_set[1]; song.g[G_CH3]=midi_set[2];
+    song.g[G_DRCH]=midi_set[3]; song.g[G_CHOTH]=midi_set[4]; song.g[G_BEND]=midi_set[5];
+    song.g[G_FXCH]=midi_set[6]; song.g[G_DRMAP]=midi_set[7]; song.g[G_RMCH]=midi_set[8]; song.g[G_CLKOUT]=midi_set[9]; song.g[G_FXFADE]=fxfade;
+    palette_set(settings.palette); fx_lowcut=!!settings.lowcut;
+    memcpy(sample_memory,session.samples,sizeof sample_memory);
+    for (unsigned i=0;i<4;i++) smp_user_scan(i);
+    ui.force=1; return 0;
+}

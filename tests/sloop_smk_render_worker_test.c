@@ -75,6 +75,17 @@ int main(int argc, char **argv) {
             for(unsigned k=0;k<6;k++) sloop_event(2,5+k*2,64+k*9);
         }
         if (block==4080) set_engine_of(&trk[0], 0);
+        /* 2.8 assigns whole render units to CPU1. Exercise every engine on
+         * that assigned part, alongside CPU0 FM6 and the drum unit. */
+        if (block>=400 && block%200==0) {
+            song.sel=2;
+            for(unsigned k=0;k<4;k++) sloop_event(2,k,0);
+            unsigned engine=((block-400)/200)%NENGINES;
+            set_engine_of(&trk[2],engine);apply_preset_to(&trk[2],0);
+            for(unsigned k=0;k<4;k++) sloop_event(2,k,75+k*8);
+            sloop_event(3,(block/200)%16,95);
+            sloop_event(3,(block/200)%16,0);
+        }
         int32_t *samples = synth_render();
         assert(AW_LOAD(&audio_worker.request) == AW_LOAD(&audio_worker.complete));
         assert(fwrite(samples, sizeof *samples, CTL*2, pcm) == CTL*2);

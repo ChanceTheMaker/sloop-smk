@@ -57,7 +57,7 @@ static void voice_render(int32_t *o, const dsnd_t *snd, uint32_t crush, uint32_t
     static dsv_t v;
     uint32_t blk;
     rng_state = 0x1234567u;                             /* (the noise's seed) */
-    ds_on(&v, snd, crush, DS_LANE_NOTE[l], 110);
+    ds_on(&v, snd, crush, DS_LANE_NOTE[l], 110, 0, 4u);   /* (as designed: TUNE 0, DECAY 0) */
     for (blk = 0; blk < 120u; blk++)
         if (!ds_render(&v, o + blk * CTL, CTL))
             memset(o + blk * CTL, 0, CTL * sizeof(int32_t));
@@ -97,6 +97,28 @@ static uint32_t put(uint32_t k, uint32_t part, const uint8_t *d, uint32_t nd)
     return ed_n == 3u ? ed_out[2] : 99u;
 }
 
+/* one hit of note on the drum track, 1.5 s: its zero crossings in the first 500 ms, its energy after 250 ms over the
+ * first 80 ms' */
+static uint32_t hit_win = 22050;                     /* the crossings' window: half a second (a sample: 80 ms) */
+static void hit_render(uint32_t note, double *zc, double *tail)
+{
+    static int32_t L[66150], R[66150], RV[66150], DL[66150];
+    uint32_t i, n = 66150, c = 0;
+    double e0 = 0, e1 = 0;
+    memset(&drums, 0, sizeof drums);
+    drums.set = -2;
+    memset(L, 0, sizeof L), memset(R, 0, sizeof R), memset(RV, 0, sizeof RV), memset(DL, 0, sizeof DL);
+    rng_state = 0x1234567u;
+    drum_on(note, 110);
+    for (i = 0; i < n; i += CTL)
+        drums_render(L + i, R + i, RV + i, DL + i, CTL);
+    for (i = 1; i < hit_win; i++)                        /* (half a second: past the kicks' pitch drop) */
+        c += (L[i] >= 0) != (L[i - 1] >= 0);
+    for (i = 0; i < 3528u; i++) e0 += (double)L[i] * L[i];
+    for (i = 11025; i < n; i++) e1 += (double)L[i] * L[i];
+    if (zc) *zc = c;
+    if (tail) *tail = e0 > 0 ? e1 / e0 : 0;
+}
 int main(void)
 {
     uint32_t i, k, ok;
@@ -235,6 +257,54 @@ int main(void)
         }
         printf("  kick, curvature at the block edges / inside: at most %.2f (%s)\n", worst, DS_KITS[worst_k].name);
         check(worst < 1.6, "the kicks of the synthesised kits: no step at the block edges (no whistle at 1.4 / 2.8 kHz)");
+    }
+    {   /* 2.7, the DRUMS screen's SOUND page: a sound's TUNE and DECAY, on a synthesised kit (808), a sampled one
+         * (ACOUSTIC) and SYN1; the editor's audition plays SYN1 as designed */
+        static const char *const KN[3] = {"808", "ACOUSTIC", "SYN1"};
+        for (k = 0; k < 3u; k++) {
+            uint32_t kit = 0, kk;
+            double z0, zu, zd, t0, ts, tl;
+            for (kk = 0; kk < DRUM_KITS; kk++) if (!strcmp(DRUM_KIT_NAMES[kk], KN[k])) kit = kk;
+            TDRUM->p[P_E0] = (int16_t)kit;
+            hit_win = k == 1u ? 3528u : 22050u;
+            memset(drum_tune, 0, sizeof drum_tune); memset(drum_dec, 0, sizeof drum_dec);
+            hit_render(36, &z0, &t0);                   /* the kick */
+            drum_tune[lane_of_note(36)] = 7; hit_render(36, &zu, 0);
+            drum_tune[lane_of_note(36)] = -8; hit_render(36, &zd, 0);
+            drum_tune[lane_of_note(36)] = 0;
+            drum_dec[lane_of_note(36)] = -4; hit_render(36, 0, &ts);
+            drum_dec[lane_of_note(36)] = 3; hit_render(36, 0, &tl);
+            drum_dec[lane_of_note(36)] = 0;
+            printf("  %-8s kick: crossings %.0f / +7 %.0f / -8 %.0f; tail %.4f / DECAY -4 %.4f / +3 %.4f\n", KN[k], z0, zu, zd, t0, ts, tl);
+            check(zu > z0 * 1.2 && zd < z0 * 0.85 && ts < t0 * 0.5 && (k == 1u ? tl >= t0 * 0.99 : tl > t0 * 1.3),
+                  k == 1u ? "SOUND page, a sampled kit: TUNE up / down, DECAY -4 fades it (+3: as the sample is)"
+                          : "SOUND page, a synthesised kit: TUNE up / down, DECAY -4 shorter, +3 longer");
+            memset(drum_tune, 0, sizeof drum_tune);
+            {   /* another sound's settings leave this one as it is */
+                double z1, t1;
+                drum_tune[lane_of_note(38)] = 7; drum_dec[lane_of_note(38)] = -4;
+                hit_render(36, &z1, &t1);
+                drum_tune[lane_of_note(38)] = 0; drum_dec[lane_of_note(38)] = 0;
+                check(z1 == z0 && t1 == t0, "SOUND page: the snare's TUNE and DECAY leave the kick as it is");
+            }
+        }
+        {   /* 2.7.2: a tone-less noise sound (the 808 closed hat, note 42) now answers TUNE too, by its brightness
+             * (more / fewer zero crossings), the way resampling a sampled kit would. Before 2.7.2 it did nothing. */
+            uint32_t kk, kit = 0;
+            double z0, zu, zd;
+            for (kk = 0; kk < DRUM_KITS; kk++) if (!strcmp(DRUM_KIT_NAMES[kk], "808")) kit = kk;
+            TDRUM->p[P_E0] = (int16_t)kit;
+            hit_win = 2205u;                            /* 0.1 s: the hat's burst */
+            memset(drum_tune, 0, sizeof drum_tune); memset(drum_dec, 0, sizeof drum_dec);
+            hit_render(42, &z0, 0);
+            drum_tune[lane_of_note(42)] = 7; hit_render(42, &zu, 0);
+            drum_tune[lane_of_note(42)] = -8; hit_render(42, &zd, 0);
+            drum_tune[lane_of_note(42)] = 0;
+            hit_win = 22050u;
+            printf("  808 closed hat: crossings %.0f / TUNE +7 %.0f / -8 %.0f\n", z0, zu, zd);
+            check(zu > z0 * 1.03 && zd < z0 * 0.97, "SOUND page (2.7.2): TUNE shifts a noise sound's brightness (the 808 hat)");
+        }
+        TDRUM->p[P_E0] = DRUM_DEFAULT_KIT;
     }
     printf(fails ? "dsyn: FAILED\n" : "dsyn: all checks ok\n");
     return fails;

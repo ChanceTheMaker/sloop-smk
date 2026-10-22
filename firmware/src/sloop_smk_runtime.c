@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-only
- * Sloop 2.6 musical/UI core on SMK peripherals. No FM-1 GPIO or flash driver. */
+ * Sloop 2.8 musical/UI core on SMK peripherals. No FM-1 GPIO or flash driver. */
 #include <stdint.h>
 #define SLOOP_SMK 1
 static uint8_t smk37_trs_enabled;
@@ -16,9 +16,16 @@ static void smk37_trs_output(uint32_t packet);
 #endif
 #define FELUCCA_ICONS 1
 #ifndef SLOOP_SMK_VERSION
-#define SLOOP_SMK_VERSION "SLOOP SMK 2.6.0-b7"
+#define SLOOP_SMK_VERSION "SLOOP SMK 2.8.0-b1"
 #endif
 #define FELUCCA_VERSION SLOOP_SMK_VERSION
+/* seq.c precedes gfx.c here; establish upstream's cold/UI size policy before
+ * its host fallback can define UI_SMALL as empty. DSP keeps the normal -Os. */
+#if defined(__clang__)
+#define UI_SMALL __attribute__((minsize))
+#else
+#define UI_SMALL
+#endif
 #include "felucca_tables.h"
 #include "../../sloop/firmware/src/libc.c"
 static struct { volatile uint32_t notes,buttons; } fm1_in;
@@ -39,6 +46,7 @@ static const uint8_t *sloop_sample_xip(unsigned k);
 #endif
 #endif
 #include "../../sloop/firmware/src/core.h"
+#include "sloop_smk_cpu1.h"
 #include "../../sloop/firmware/src/engines.c"
 #include "../../sloop/firmware/src/drums.c"
 #include "../../sloop/firmware/src/params.c"
@@ -71,6 +79,9 @@ static void midi_out_event(uint32_t p){
 #if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
 #include "sloop_smk_samples.c"
 #endif
+#if !FELUCCA_FLASH
+static uint32_t st_crc32(const void *p,uint32_t n){const uint8_t*b=p;uint32_t c=~0u;while(n--){c^=*b++;for(unsigned i=0;i<8;i++)c=(c>>1)^((0u-(c&1u))&0xedb88320u);}return ~c;}
+#endif
 #include "sloop_smk_ui.c"
 #if defined(SLOOP_SMK_HARDWARE) && SMK37_ENABLE_SAMPLES
 static void sloop_samples_service(void){
@@ -80,6 +91,7 @@ static void sloop_samples_service(void){
     ui.force=1;
 }
 #endif
+static uint32_t sloop_master_level = 1024;
 static uint8_t sloop_knob_bank,sloop_fader_bank,sloop_pad_bank;
 static uint64_t sloop_keys;
 #include "smk37_pad_feedback.h"
@@ -96,7 +108,7 @@ static void sloop_init(void){
         track_defaults(&trk[k]);track_defaults_steps(&trk[k]);
         if(k<NPART){set_engine_of(&trk[k],TRK_DEF[k][0]);apply_preset_to(&trk[k],TRK_DEF[k][1]);trk[k].engine=trk[k].eng_req;}
     }
-    TDRUM->p[P_E0]=DRUM_DEFAULT_KIT;song.master_q12=1024;
+    TDRUM->p[P_E0]=DRUM_DEFAULT_KIT;song.master_q12=sloop_master_level=1024;ed_master=0;
     memset(proj_slot,0,sizeof proj_slot);memset(up_bank,0,sizeof up_bank);
 #if !FELUCCA_FLASH
     persist_boot();
@@ -140,11 +152,11 @@ static void sloop_event(unsigned kind,unsigned id,int value){
     if(kind==0&&id<18){
         if(id<2){if(value){if(id==0)sloop_knob_bank^=1;else sloop_fader_bank^=1;}return;}
         unsigned b=sloop_buttons[id];
-        uint32_t bit=1u<<panel.btn[b];if(value){if(!(fm1_in.buttons&bit))edges_btn|=bit;fm1_in.buttons|=bit;}else fm1_in.buttons&=~bit;
+        uint32_t bit=1u<<panel.btn[b];if(value){if(!(fm1_in.buttons&bit))edges_btn|=bit;smk_physical_buttons|=bit;}else smk_physical_buttons&=~bit;fm1_in.buttons=smk_physical_buttons|fm1_remote_btn;
     }
     if(kind==1&&id<8){
         value=clamp(value,-32,32);
-        if(id==0&&!sloop_knob_bank){song.master_q12=clamp(song.master_q12+value*64,0,4096);ui.force=1;return;}
+        if(id==0&&!sloop_knob_bank){sloop_master_level=clamp(song.master_q12+value*64,0,4096);ed_master=0;song.master_q12=sloop_master_level;ui.force=1;return;}
         if(sloop_knob_bank&&id==1){if(song.sel<NPART)set_engine((TSEL->eng_req+NENGINES+value)%NENGINES);return;}
         if(sloop_knob_bank&&id==3){ui.page=(ui.page+NPAGES+value)%NPAGES;ui.home=0;ui.force=1;return;}
         const unsigned roles[8]={EN_ALGO,EN_SELECT,EN_PRESET,EN_ALGO,EN_K1,EN_K2,EN_K3,EN_K4};
@@ -164,9 +176,9 @@ static void sloop_release(void){
         if(ch<16){midi_out_event(11u|((0xb0u|ch)<<8)|(64u<<16));midi_out_event(14u|((0xe0u|ch)<<8)|(64u<<24));}
     }
     memset(&sloop_pad_feedback,0,sizeof sloop_pad_feedback);
-    sloop_keys=sloop_pads=sloop_sustain=fm1_in.notes=fm1_in.buttons=0;edges_btn=notes_seen=0;memset(encs,0,sizeof encs);layer_unlock();ui.home_t0=ui.hold_kind=ui.step_held=0;lk_r=lk_w;panic_req=15;
+    sloop_keys=sloop_pads=sloop_sustain=fm1_in.notes=fm1_in.buttons=smk_physical_buttons=fm1_remote_btn=0;edges_btn=notes_seen=0;memset(encs,0,sizeof encs);layer_unlock();ui.home_t0=ui.hold_kind=ui.step_held=0;lk_r=lk_w;panic_req=15;
 }
-static void sloop_tick(void){ui_input();ui_leds();ui_draw();autosave_tick();sections_flush();}
+static void sloop_tick(void){uint32_t k=(ed_master?ed_master-1u:0u)*1023u/126u;song.master_q12=ed_master?(k*k)>>8:sloop_master_level;ui_input();ui_leds();ui_draw();autosave_tick();sections_flush();}
 static uint32_t *sloop_get_status(void){
     uint32_t leds=0;for(unsigned k=2;k<18;k++){unsigned q=led_pos[panel.btn[(unsigned)sloop_buttons[k]]];if(q!=255&&((fm1_led[q>>3]>>(q&7))&1))leds|=1u<<k;}
     leds|=sloop_knob_bank|(sloop_fader_bank<<1);

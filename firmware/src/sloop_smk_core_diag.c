@@ -7,7 +7,7 @@ static int sloop_core_diag(const uint8_t *p, uint32_t n) {
     fm1_irq_off();
 #if SLOOP_DUAL_CORE
     counters[0]=audio_worker_online;
-    counters[1]=audio_worker.jobs; counters[2]=fm6_pairs;
+    counters[1]=audio_worker.jobs; counters[2]=smk_cpu1_blocks;
     counters[3]=audio_worker.timeouts; counters[4]=audio_worker.rejected;
     counters[5]=fm1_core1_fault.count;
     counters[6]=audio_worker.max_job_ticks;

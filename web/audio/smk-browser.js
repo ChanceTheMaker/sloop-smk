@@ -6,7 +6,7 @@ async function dbAccess(write,value,revision){
     const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('state');r.onerror=()=>reject(r.error);
     r.onsuccess=()=>{const db=r.result,tx=db.transaction('state',write?'readwrite':'readonly'),s=tx.objectStore('state');
       const key=KEY+':'+revision;
-      const q=write?s.put(value,key):s.get(key);let result;q.onsuccess=()=>result=q.result;
+      const q=write?s.put(value,key):s.get(key); if(write)s.put(value,KEY+':latest');let result;q.onsuccess=()=>result=q.result;
       tx.oncomplete=()=>{db.close();resolve(result);};tx.onerror=()=>{db.close();reject(tx.error);};};
   });
 }
@@ -23,7 +23,10 @@ export class SMKBrowserSynth extends BrowserSynth {
       const response=await fetch(new URL('./smk-engine.wasm?v='+this.revision,import.meta.url));if(!response.ok)throw Error('SMK runtime unavailable');
       const module=await WebAssembly.compile(await response.arrayBuffer());
       let snapshot;
-      try{const saved=await dbAccess(false,undefined,this.revision);if(saved?.schema===1&&saved.revision===this.revision)snapshot=saved.buffer;
+      try{let saved=await dbAccess(false,undefined,this.revision);
+        if(!saved)saved=await dbAccess(false,undefined,'latest');
+        if(!saved)saved=await dbAccess(false,undefined,'b83dc6ab0be35039c5055aea4b3f766a87ce253ea9d104c847730a4a6875e68e');
+        if(saved?.schema===1)snapshot=saved.buffer;
         this.storageMessage='Session saved automatically in this browser. Export a backup to keep it.';
       }catch{this.storageMessage='Browser storage unavailable. Export your session to keep it.';}
       await context.audioWorklet.addModule(new URL('./smk-worklet.js?v='+this.revision+'&startup=2',import.meta.url));
@@ -40,7 +43,7 @@ export class SMKBrowserSynth extends BrowserSynth {
       this.input={id:'smk-browser-in',name:'Sloop SMK Browser',state:'connected',type:'input',open:async()=>{}};
       const output={id:'smk-browser-out',name:'Sloop SMK Browser',state:'connected',type:'output',send:bytes=>{
         if(bytes[0]===0xf0){const cmd=bytes[4];this.request('command',{bytes:Array.from(bytes).slice(1,-1)}).then(d=>{if(d.bytes?.length)this.input.onmidimessage?.({data:d.bytes});}).catch(e=>console.error(e));
-          if([3,7,8,9,12,13,14,18,19,20,21,27,28,30,31,33,35,36,38,40,42,64,69,71,74,75,79].includes(cmd))this.scheduleSave();
+          if([3,7,8,9,12,13,14,18,19,20,21,27,28,30,31,33,35,36,38,40,42,64,69,71,74,75,77,79].includes(cmd))this.scheduleSave();
         }else this.midi(bytes);
       }};
       this.access={inputs:new Map([[this.input.id,this.input]]),outputs:new Map([[output.id,output]]),onstatechange:null};
@@ -58,7 +61,8 @@ export class SMKBrowserSynth extends BrowserSynth {
   async exportSession(){const {buffer}=await this.request('snapshot');return {format:'sloop-smk-browser',schema:1,revision:this.revision,data:btoa(Array.from(new Uint8Array(buffer),b=>String.fromCharCode(b)).join(''))};}
   async importSession(data){
     if(data?.format!=='sloop-smk-browser'||data.schema!==1||typeof data.data!=='string')throw Error('Not a Sloop SMK browser session');
-    if(data.revision!==this.revision)throw Error('This session belongs to a different browser runtime version');
+    // The native restore validates v1/v2 size, magic and CRC before changing state.
+    // A rebuilt runtime has a different hash even when its saved format is compatible.
     if(data.data.length>1600000)throw Error('Session is too large');
     const buffer=Uint8Array.from(atob(data.data),c=>c.charCodeAt(0)).buffer;
     await this.request('restore',{buffer});await this.save();
