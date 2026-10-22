@@ -78,7 +78,7 @@ class NativeSmkTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'Unexpected restart'):self.run_stage('verify','SMK-37 Pro_016')
     def test_candidate_requires_explicit_private_stage(self):
         manifest=json.loads((self.directory/'verified.json').read_text())
-        manifest['expected']='SMK-37_952'
+        manifest['expected']='SMK-37_954'
         (self.directory/'verified.json').write_text(json.dumps(manifest))
         with self.assertRaisesRegex(RuntimeError,'Invalid verified package'):self.run_stage('begin')
         with self.assertRaisesRegex(RuntimeError,'Not the reviewed'):

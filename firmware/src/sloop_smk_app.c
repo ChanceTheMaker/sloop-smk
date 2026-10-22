@@ -203,7 +203,8 @@ static void lcd_blit(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint1
 static void lcd_fill(uint32_t x,uint32_t y,uint32_t w,uint32_t h,uint16_t c){uint16_t row[240];if(w>240||x+w>240||y+h>240)return;for(unsigned i=0;i<w;i++)row[i]=swap16(c);for(unsigned i=0;i<h;i++)lcd_blit(x,y+i,w,1,row);}
 static uint8_t smk37_light_buffer[SMK37_LIGHT_BYTES] __attribute__((aligned(4)));
 static void smk37_light_service(void){
-    static uint64_t previous=UINT64_MAX;
+    static uint32_t previous=UINT32_MAX;
+    static uint16_t previous_colors[4];
     static uint8_t failed;
     if(failed)return;
     static const uint8_t brightness[4]={0,16,48,96};
@@ -211,10 +212,11 @@ static void smk37_light_service(void){
     smk37_scan_indicator_bits=sloop_get_status()[0];
     uint16_t pads=smk37_pad_feedback_mask(&sloop_pad_feedback,fm1_ms);
     unsigned level=brightness[lights_lvl%4],test=smk_pad_light_test;
-    uint16_t drum_color=TE_COL[TRK_DRUM];
+    uint16_t colors[4];
+    memcpy(colors,TE_COL,sizeof colors);
     fm1_irq_on();
-    uint64_t state=((uint64_t)drum_color<<32)|pads|(level<<16)|(test<<24);
-    if(state==previous)return;
+    uint32_t state=pads|(level<<16)|(test<<24);
+    if(state==previous&&!memcmp(colors,previous_colors,sizeof colors))return;
     if(test){
         unsigned color=2;
         pads=test==1?0:(uint16_t)(1u<<((test-2)%16));
@@ -222,10 +224,10 @@ static void smk37_light_service(void){
         smk37_light_encode_mask(smk37_light_buffer,pads,color,level);
     }else{
         uint32_t rgb[16];
-        sloop_smk_pad_colors(rgb,pads,drum_color,level);
+        sloop_smk_pad_colors(rgb,pads,colors,level);
         smk37_light_encode_rgb(smk37_light_buffer,rgb);
     }
-    if(smk37_lights_send(smk37_light_buffer,4000000u))previous=state;
+    if(smk37_lights_send(smk37_light_buffer,4000000u)){previous=state;memcpy(previous_colors,colors,sizeof colors);}
     else {failed=1;smk37_scan_indicator_bits=0;}
 }
 

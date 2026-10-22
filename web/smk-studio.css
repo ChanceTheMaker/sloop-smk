@@ -133,13 +133,18 @@ body[data-editor-view="firmware"] :is(.panel,#tabs,#trackbar,.play-keyboard,.key
 
 .sim-pad-shortcut{display:block;font:10px/1.4 system-ui,sans-serif;opacity:.85;pointer-events:none}
 
-/* Sloop's physical pads all play its drum track; a hit turns only that pad white. */
+/* Repeating two-pad Sloop color groups; a hit turns only that pad white. */
 .smk-simulator-shell .sim-pad,
 .smk-simulator-shell[data-finish=elite] .sim-pad:not(.lit) {
-  background:var(--t4,#ff621a); border-color:var(--t4,#ff621a); color:#201006;
+  background:var(--pad-color); border-color:var(--pad-color); color:#201006;
   box-shadow:inset 0 1px 2px #fff4,0 0 8px #ff621a33;
 }
 .smk-simulator-shell .sim-pad:is(.lit,[aria-pressed=true]),
 .smk-simulator-shell[data-finish=elite] .sim-pad:is(.lit,[aria-pressed=true]) {
   background:#fff; border-color:#fff; color:#222; box-shadow:0 0 12px #fff8;
 }
+
+.smk-simulator-shell .sim-pad:nth-child(8n+1), .smk-simulator-shell .sim-pad:nth-child(8n+2) { --pad-color:var(--t1,#287cff); }
+.smk-simulator-shell .sim-pad:nth-child(8n+3), .smk-simulator-shell .sim-pad:nth-child(8n+4) { --pad-color:var(--t2,#1ecc70); }
+.smk-simulator-shell .sim-pad:nth-child(8n+5), .smk-simulator-shell .sim-pad:nth-child(8n+6) { --pad-color:var(--t3,#ffc618); }
+.smk-simulator-shell .sim-pad:nth-child(8n+7), .smk-simulator-shell .sim-pad:nth-child(8n+8) { --pad-color:var(--t4,#ff621a); }

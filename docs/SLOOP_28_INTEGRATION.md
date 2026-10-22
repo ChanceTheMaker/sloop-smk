@@ -149,3 +149,33 @@ reached 203,360 jobs with no timeouts, rejected reads, faults or barred worker.
 The settings-save error remains unresolved; this confirmation does not establish
 brightness persistence after a power cycle.
 Private settings snapshots and CPU1 checks are under the b2 hardware directory.
+
+## b3 paired palette and Low default
+
+Requested follow-up: two pads per Sloop color, repeated across both rows:
+1?2/9?10 blue, 3?4/11?12 green, 5?6/13?14 yellow, 7?8/15?16 orange.
+The four theme track colors supply the palette; the pads retain their original
+drum-lane controls. Physical hits/holds still turn only the affected pad white.
+The browser simulator uses the same two-pad grouping.
+
+Startup now initializes brightness to LOW (channel peak 16) before loading
+preferences. A valid saved setting still wins, including explicitly saved OFF.
+Absent/unreadable settings therefore no longer leave all pads dark, without a
+settings write or flash reclaim. This does not resolve the separate b2 settings
+save refusal. Existing MID/HIGH menu choices remain available.
+
+Build `SLOOP SMK 2.8.0-b3`, identity `SMK-37_954`, application 576,656 bytes,
+SHA-256 `93bff5f4ac5f8f91e8ada1cdc8ba7b79b67790e21ecca53ff738095d98b0f7ff`.
+Pro and Elite package construction/protection checks pass. Tests cover all
+65,536 pressed-pad combinations, the exact Low palette, white isolation and
+short-hit expiry, reset framing, default LOW and honoring saved OFF.
+Browser DSP/worklet checks pass at 44.1/48 kHz; Chrome verified all 16 color
+assignments, white press, unchanged neighbor and return to its original color.
+
+Owner explicitly approved b3 installation. Native update from Sloop 952
+completed, restart verified `SMK-37_954`, and INFO confirmed `2.8.0-b3`.
+A read-only settings snapshot immediately after boot reported lights word 1
+(brightness LOW), with no settings write needed. CPU1 jobs advanced from 30,808
+to 38,104; timeouts, rejected reads, faults and barred worker were all zero.
+Paired colors were checked in the browser; physical appearance awaits owner
+observation. Public installer remains unchanged.

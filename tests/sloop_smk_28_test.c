@@ -7,6 +7,8 @@ static void tick(void) { fm1_ms+=40; sloop_tick(); }
 int main(void)
 {
     synth_init();
+    assert(lights_lvl==LIGHTS_LOW);
+    lights_from_word(0); assert(lights_lvl==LIGHTS_OFF); /* Explicit saved OFF remains valid. */
     for (unsigned trs=0;trs<2;trs++) for (unsigned off=0;off<2;off++) {
         smk37_trs_enabled=trs; cpu1_off=off; lights_lvl=LIGHTS_HIGH;
         uint32_t w=lights_word();

@@ -4,14 +4,14 @@ import hashlib,json,os,sys,subprocess,tempfile,time
 from pathlib import Path
 
 PINNED={'model': 'SMK-37 Pro',
- 'expected': 'SMK-37_952',
- 'version': 'SLOOP SMK 2.8.0-b2',
- 'application_sha256': 'e377bd2a9d97ee2441b7dfb7ddad6e582924a830456bdb6f2998016ae45f85a7',
+ 'expected': 'SMK-37_954',
+ 'version': 'SLOOP SMK 2.8.0-b3',
+ 'application_sha256': '93bff5f4ac5f8f91e8ada1cdc8ba7b79b67790e21ecca53ff738095d98b0f7ff',
  'upstream_revision': 'b77bf55e3bf804665b8f5dffb5955bd8443311f0',
  'image': {'bytes': 705216,
-           'sha256': 'bdeb148fdbc1d3f76ab87095bed796111de1802aa395394c671ece143e3961ea'},
+           'sha256': '9062569d62eae440a422adcdbbfe5d429a9a3118bb34ec426caf497244d13d29'},
  'packet': {'bytes': 627712,
-            'sha256': '12a014010ad1945790c8dd7e96c6df437830269616f58105491f5fafc1301c28'}}
+            'sha256': '28a1cdd53eca83f5300bfe259e9d81fff3a01f2a8ede62f0af4d2b1cbe3c56bb'}}
 
 
 def validate_candidate(directory,manifest):

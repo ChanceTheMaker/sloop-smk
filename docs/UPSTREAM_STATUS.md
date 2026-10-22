@@ -1,3 +1,12 @@
+## Sloop 2.8 paired pads and startup brightness ? 2026-10-21
+
+b3 (`SMK-37_954`) is installed on the owner's Pro after explicit approval.
+Pads repeat blue/green/yellow/orange in adjacent pairs, with white physical-hit
+feedback. Startup defaults LOW when no valid saved preference is available;
+post-install readback confirmed brightness 1. CPU1 is active with zero errors.
+[Artifact and validation](SLOOP_28_INTEGRATION.md#b3-paired-palette-and-low-default).
+The separate saved-settings write failure remains open. No public release.
+
 ## Sloop 2.8 pad-color follow-up ? 2026-10-21
 
 On `feat/sloop-2.8-pad-colors`, b2 adds drum-theme pad colors and white physical
