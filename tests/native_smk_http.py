@@ -1,4 +1,4 @@
-﻿"""Exercise helper HTTP boundaries without starting any device operation."""
+"""Exercise helper HTTP boundaries without starting any device operation."""
 import json,subprocess,sys,time,urllib.request,urllib.error,socket
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
@@ -25,6 +25,8 @@ for hosted in [False,True]:
   for headers in [{'Origin':origin},{'Origin':origin,'X-Sloop-Token':'wrong'},{'Origin':'null','X-Sloop-Token':cap['token']}]:
    assert request('POST','/api/smk/jobs',headers,b'{}').status==403
   assert cap['app']=='sloop-smk' and cap['firmware']=='SMK-37_954'
+  assert cap['restore_product']=='SMK-37 Pro_016'
+  assert cap['application_sha256']==json.loads((root/'web/firmware/public-release.json').read_text())['sha256']
   h={'Origin':origin,'X-Sloop-Token':cap['token'],'Content-Type':'application/json'}
   assert request('POST','/api/smk/jobs',h,b'{"action":"shell","model":"smk-pro","app":"sloop-smk"}').status==400
   assert request('POST','/api/smk/jobs',h,b'{"action":"install","model":"fm1","app":"sloop-smk"}').status==400

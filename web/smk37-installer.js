@@ -1,4 +1,4 @@
-import {hasNativeSmk,runNativeSmk,nativeModel} from './native-smk.js?v=2.8.0-b3';
+import {hasNativeSmk,runNativeSmk,nativeModel} from './native-smk.js?v=restore-compat2';
 import {requestMidiSession,releaseMidiSession} from './midi-session.js?v=session1';
 import {createProgress} from './update-progress.js?v=progress1';
 // SPDX-License-Identifier: GPL-3.0-only
@@ -74,7 +74,7 @@ sync();
 button.addEventListener('click',async()=>{
   if(button.disabled)return;busy=true;sync();progress.start();
   try{
-    if(await hasNativeSmk(nativeModel(model.value))){
+    if(await hasNativeSmk(nativeModel(model.value),fetch,'install',release.sha256)){
       if(usingPrivate)throw Error('The Windows USB helper installs the published Sloop release. Open the public installer for this operation.');
       await runNativeSmk('install',log);
     }else{

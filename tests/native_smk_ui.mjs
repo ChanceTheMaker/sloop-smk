@@ -5,6 +5,7 @@ import path from 'node:path';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const base='https://chancethemaker.github.io/sloop-smk/';
 const helper='http://127.0.0.1:8892',token='t'.repeat(43);
+const appHash=JSON.parse(await fs.readFile('web/firmware/public-release.json','utf8')).sha256;
 const types={'.js':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
@@ -34,7 +35,7 @@ try{
   const req=route.request(),url=new URL(req.url());
   if(url.pathname.endsWith('/capabilities')){
    probes++;if(mode==='absent')return route.abort('connectionrefused');
-   return route.fulfill({json:{available:true,models:['smk-pro'],protocol:1,token,app:mode==='wrong'?'other-app':'sloop-smk',firmware:'SMK-37_954'}});
+   return route.fulfill({json:{available:true,models:['smk-pro'],protocol:1,token,app:mode==='wrong'?'other-app':'sloop-smk',application_sha256:mode==='legacy'?undefined:appHash,firmware:mode==='legacy'?'SMK-37_938':'SMK-37_954'}});
   }
   if(req.method()==='POST'){
    assert.equal(req.headers()['x-sloop-token'],token);
@@ -46,7 +47,7 @@ try{
  await page.goto(base);await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('ready.'));
  assert.equal(probes,0,'No helper access during page loading');
  await page.locator('#ack').check();
- for(const failure of ['absent','wrong']){
+ for(const failure of ['absent','wrong','legacy']){
   mode=failure;await page.locator('#install-button').click();
   await page.waitForFunction(()=>!document.querySelector('#install-button').disabled);
   assert.match(await page.locator('#status').textContent(),/browser MIDI updater was not started/);
@@ -71,11 +72,12 @@ try{
  });
  assert.equal(await page.locator('iframe[data-midi-session]').count(),0);
  assert.equal(await page.evaluate(()=>closedPorts),2);
+ mode='legacy';
  await page.goto(base+'restore-stock/');
  await page.locator('#prepare').click();await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('verified.'));
  await page.locator('#ack').check();await page.locator('#restore').click();
  await page.waitForFunction(()=>document.querySelector('#status').textContent.includes('restored and USB identity confirmed'));
  assert.equal(await page.evaluate(()=>midiCalls),0);
  assert.deepEqual(actions,['install','install','restore']);assert.deepEqual(errors,[]);
- console.log('PASS Sloop hosted install and restore: native-only on Windows Pro, missing/wrong/failed helper never falls back; MIDI documents released.');
+ console.log('PASS Sloop hosted install and restore: legacy 938 helper restores OG but cannot install b3; native-only on Windows Pro; missing/wrong/failed helper never falls back; MIDI documents released.');
 }finally{await browser.close();}

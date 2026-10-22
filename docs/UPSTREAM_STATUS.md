@@ -1,3 +1,28 @@
+## USB helper compatibility correction ? 2026-10-21
+
+The running owner's helper advertised Sloop 938 while the new page required
+954 for every operation, incorrectly blocking original-firmware restoration.
+The helper was reachable, available and allowed the hosted origin; this was
+not a device failure or Chrome permission denial.
+
+Restore now checks the Sloop protocol-1 restore contract and selected Pro model,
+not the helper's advertised custom-release name/version. An explicitly declared
+incompatible restore target is rejected. Install checks the selected application
+SHA-256 against the helper's package capability rather than a version label.
+The operation verified by the capability check is bound to the later job request.
+Missing/wrong helper, token/protocol errors and mismatched install payloads still
+stop before USB; no fallback opens Chrome MIDI on Windows Pro. Error messages
+now distinguish those causes. The update option says it installs Sloop, and the
+helper source link points to the maintained checkout instead of the old tag.
+
+Tests cover legacy 938 restoration, arbitrary/missing custom-release names,
+exact install payload selection, action isolation and hosted HTTP protections.
+Chrome exercises install rejection and OG restore success with the legacy helper;
+Pro/Elite official packages and restore transport tests pass without hardware.
+The owner's idle helper was replaced on the same port under the shared USB lock;
+its live capabilities report the correct app digest and Pro 016 restore target.
+No device firmware was changed in this correction.
+
 ## Hero presentation correction ? 2026-10-21
 
 Restored the original six-finish hero rotation and five-second dissolve loop,

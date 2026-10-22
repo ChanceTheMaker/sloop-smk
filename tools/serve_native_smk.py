@@ -11,6 +11,7 @@ def main():
     hosted_origin='https://chancethemaker.github.io'
     api_token=secrets.token_urlsafe(32)
     a=p.parse_args();bridge=Bridge()
+    release=json.loads((ROOT/'web/firmware/public-release.json').read_text(encoding='utf-8'))
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT/'web'),**kwargs)
         def api_allowed(self,write=False):
@@ -46,7 +47,7 @@ def main():
             u=urlparse(self.path)
             if u.path.startswith('/api/smk/'):
                 if not self.api_allowed():self.send_error(403);return
-                if u.path=='/api/smk/capabilities':self.json_reply({'available':bridge.available,'models':['smk-pro'] if bridge.available else [],'protocol':1,'token':api_token,'app':'sloop-smk','firmware':'SMK-37_954'});return
+                if u.path=='/api/smk/capabilities':self.json_reply({'available':bridge.available,'models':['smk-pro'] if bridge.available else [],'protocol':1,'token':api_token,'app':'sloop-smk','firmware':release['product'],'application_sha256':release['sha256'],'restore_product':'SMK-37 Pro_016'});return
                 if u.path.startswith('/api/smk/jobs/'):
                     job=bridge.status(u.path.removeprefix('/api/smk/jobs/'))
                     self.json_reply(job if job else {'error':'Unknown operation'},200 if job else 404);return
